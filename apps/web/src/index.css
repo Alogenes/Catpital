@@ -1,0 +1,46 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 涨跌色：默认绿涨红跌；data-red-up="true" 时红涨绿跌（中文默认） */
+:root {
+  --c-up: 31 191 117;
+  --c-down: 240 68 79;
+  color-scheme: dark;
+}
+:root[data-red-up='true'] {
+  --c-up: 240 68 79;
+  --c-down: 31 191 117;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  background: #0b0d12;
+}
+
+body {
+  overscroll-behavior: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* 等宽数字，避免跳价时布局抖动 */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-thumb {
+  background: #272d3a;
+  border-radius: 4px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-shake {
+    animation: none !important;
+  }
+}

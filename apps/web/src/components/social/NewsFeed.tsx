@@ -1,0 +1,68 @@
+import type { MarketEventPayload } from '@catpital/shared';
+import { useEffect } from 'react';
+import { useTranslation } from 'react-i18next';
+import { api } from '../../lib/api';
+import { fmt, fmtPct } from '../../lib/format';
+import { useMarkets } from '../../stores/markets';
+
+interface EventRow {
+  id: string;
+  headline: string;
+  content: string;
+  i18n: MarketEventPayload['i18n'];
+  gapPercent: string;
+  priceBefore: string | null;
+  priceAfter: string | null;
+  triggeredAt: number | null;
+  durationSec: number;
+}
+
+/** 金融快讯：已触发的定时事件（未来事件不公开） */
+export function NewsFeed({ market }: { market: string }) {
+  const { t, i18n } = useTranslation();
+  const news = useMarkets((s) => s.news);
+  const setNews = useMarkets((s) => s.setNews);
+
+  useEffect(() => {
+    void api.get<EventRow[]>(`/markets/${market}/events`).then((rows) =>
+      setNews(
+        market,
+        rows.map((r) => ({
+          eventId: r.id,
+          market,
+          headline: r.headline,
+          content: r.content,
+          i18n: r.i18n,
+          gapPercent: r.gapPercent,
+          priceBefore: r.priceBefore ?? '0',
+          priceAfter: r.priceAfter ?? '0',
+          durationSec: r.durationSec,
+          ts: r.triggeredAt ?? 0,
+        })),
+      ),
+    );
+  }, [market, setNews]);
+
+  const items = news.filter((n) => n.market === market);
+  if (!items.length) return <p className="py-6 text-center text-sm text-ink-500">{t('market.noNews')}</p>;
+  return (
+    <ul className="space-y-2">
+      {items.map((n) => {
+        const loc = n.i18n[i18n.language];
+        const up = !n.gapPercent.startsWith('-');
+        return (
+          <li key={n.eventId} className="rounded-lg border border-ink-800 bg-ink-850 p-3">
+            <div className="flex items-start justify-between gap-3">
+              <h4 className="text-sm font-semibold">{loc?.headline ?? n.headline}</h4>
+              <span className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-xs ${up ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>{fmtPct(n.gapPercent)}</span>
+            </div>
+            {(loc?.content ?? n.content) && <p className="mt-1 text-xs text-ink-400">{loc?.content ?? n.content}</p>}
+            <p className="mt-1 font-mono text-[11px] text-ink-500">
+              {new Date(n.ts).toLocaleString()} · {fmt(n.priceBefore)} → {fmt(n.priceAfter)}
+            </p>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}

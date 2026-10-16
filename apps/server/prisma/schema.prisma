@@ -1,0 +1,758 @@
+// =============================================================================
+// Catpital —— Discord 模拟炒股 数据库 Schema（PostgreSQL）
+//
+// 精度强约束：
+//   - 所有金额 / 价格 / 数量 / 杠杆 / 费率 / 收益率 一律 @db.Decimal(36, 8)
+//     （Prisma 读出为 Prisma.Decimal，其底层即 decimal.js，禁止转换成 JS number）
+//   - 唯一例外：Int 计数器、秒数、世代号等天然整数字段
+//
+// 命名约定：
+//   - Discord Snowflake 以 String 存储（超出 JS 安全整数范围）
+//   - 带符号金额（amount）正数 = 入账，负数 = 出账
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// -----------------------------------------------------------------------------
+// 枚举
+// -----------------------------------------------------------------------------
+
+enum MarketKind {
+  STOCK
+  CRYPTO
+}
+
+enum MarketDataSource {
+  PROCEDURAL // 程序随机（GBM + 均值回归 + 跳跃扩散）
+  LIVE_API // 外部 API 适配器
+}
+
+enum MarketStatus {
+  ACTIVE
+  HALTED // 熔断/暂停：拒绝新单，但风控照常运行
+  DELISTED
+}
+
+enum PositionSide {
+  LONG
+  SHORT
+}
+
+enum PositionStatus {
+  OPEN
+  CLOSED // 被手动/反向单/TP/SL 平掉
+  LIQUIDATED // 被强平斩杀
+}
+
+enum OrderSide {
+  BUY // 现货买入 / 做多 / 平空
+  SELL // 现货卖出 / 做空 / 平多
+}
+
+enum OrderType {
+  MARKET
+  LIMIT
+}
+
+enum OrderStatus {
+  PENDING
+  FILLED
+  CANCELLED
+  REJECTED
+}
+
+enum OrderSource {
+  USER
+  TAKE_PROFIT
+  STOP_LOSS
+  LIQUIDATION
+}
+
+enum Liquidity {
+  MAKER
+  TAKER
+}
+
+enum LedgerType {
+  INITIAL_GRANT // 建号初始资金
+  EXTERNAL_DEPOSIT // 外部接口充值（计入收益率外部资金流）
+  EXTERNAL_WITHDRAW // 外部接口提现（计入收益率外部资金流）
+  MARGIN_LOCK // 开仓/加仓划入逐仓保证金
+  MARGIN_ADD // 追加保证金
+  MARGIN_RELEASE // 平仓释放保证金
+  REALIZED_PNL // 已实现盈亏
+  TRADING_FEE // 手续费
+  LIQUIDATION_DEFICIT // 穿仓：超出逐仓保证金部分从总本金倒扣
+  ORDER_LOCK // 限价单冻结
+  ORDER_UNLOCK // 限价单解冻
+  BANKRUPTCY_WRITE_OFF // 破产抹平负债（计入外部资金流）
+  BANKRUPTCY_RELIEF // 东山再起救济金（计入外部资金流）
+  ADMIN_ADJUST // 管理员调整（计入外部资金流）
+}
+
+enum LifeStatus {
+  ACTIVE
+  ENDED // 已申请破产
+}
+
+enum EventStatus {
+  PENDING
+  ACTIVE // 已跳空，漂移修正持续中
+  COMPLETED // 持续时间结束，参数已复原
+  CANCELLED
+}
+
+enum EventSource {
+  ADMIN_COMMAND
+  JSON_SEED
+  DASHBOARD
+}
+
+enum CandleInterval {
+  M1
+  M5
+  M15
+  H1
+  D1
+}
+
+enum LeaderboardPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum LeaderboardBoard {
+  RETURN_PCT
+  NET_WORTH
+}
+
+enum BroadcastKind {
+  BIG_WIN
+  LIQUIDATION
+  DEFICIT // 穿仓负债
+  BANKRUPTCY
+  MARKET_EVENT
+}
+
+enum TransferDirection {
+  DEPOSIT
+  WITHDRAW
+}
+
+enum TransferStatus {
+  PENDING
+  COMPLETED
+  REJECTED
+}
+
+// -----------------------------------------------------------------------------
+// 用户、钱包、流水
+// -----------------------------------------------------------------------------
+
+model User {
+  id         String   @id // Discord UID (snowflake)
+  username   String
+  globalName String?
+  avatarHash String?
+  locale     String   @default("zh-CN")
+  isAdmin    Boolean  @default(false)
+  generation Int      @default(1) // 破产世代数（第 N 世）
+  /// 偏好设置：{ lang, vfx, bgm, sfx, danmaku, volume }，由 zod 校验
+  settings   Json     @default("{}")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  lastSeenAt DateTime @default(now())
+
+  wallet        Wallet?
+  lives         Life[]
+  positions     Position[]
+  orders        Order[]
+  ledger        LedgerEntry[]
+  liquidations  Liquidation[]
+  resumes       BankruptcyResume[]
+  transfers     ExternalTransfer[]
+  periodStats   LeaderboardPeriodStat[]
+  snapshots     LeaderboardSnapshot[]
+  createdEvents ScheduledEvent[]
+
+  @@map("users")
+}
+
+/// 统一平台货币钱包。所有资金变动必须在事务内 SELECT ... FOR UPDATE 锁定本行后进行。
+model Wallet {
+  userId    String   @id
+  /// 可用余额。允许为负（穿仓负债）。
+  balance   Decimal  @default(0) @db.Decimal(36, 8)
+  /// 限价挂单冻结金额（保证金 + 预估手续费），恒 >= 0
+  locked    Decimal  @default(0) @db.Decimal(36, 8)
+  /// 乐观锁版本号（风控引擎批量强平时用于检测并发写）
+  version   Int      @default(0)
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("wallets")
+}
+
+/// 资金流水（只增不改，审计用）。每笔钱包变动都对应 >= 1 条流水。
+model LedgerEntry {
+  id             BigInt     @id @default(autoincrement())
+  userId         String
+  lifeId         String
+  type           LedgerType
+  /// 带符号金额：正入负出
+  amount         Decimal    @db.Decimal(36, 8)
+  balanceAfter   Decimal    @db.Decimal(36, 8)
+  /// 是否属于"外部资金流"（收益率公式中的 F），由 type 决定，冗余存储便于聚合
+  isExternal     Boolean    @default(false)
+  marketId       String?
+  positionId     String?
+  orderId        String?
+  /// 幂等键：同一业务动作重复提交不会重复记账
+  idempotencyKey String?    @unique
+  memo           String?
+  createdAt      DateTime   @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  life Life @relation(fields: [lifeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, isExternal, createdAt])
+  @@index([lifeId])
+  @@map("ledger_entries")
+}
+
+// -----------------------------------------------------------------------------
+// "人生"（一世 = 从建号或上次破产 到 本次破产），增量维护统计，破产时 O(1) 生成履历
+// -----------------------------------------------------------------------------
+
+model Life {
+  id              String     @id @default(cuid())
+  userId          String
+  generation      Int
+  status          LifeStatus @default(ACTIVE)
+  startedAt       DateTime   @default(now())
+  endedAt         DateTime?
+  startingBalance Decimal    @db.Decimal(36, 8)
+
+  // ---- 增量统计（每次成交/强平时在同一事务内更新）----
+  peakNetWorth             Decimal  @db.Decimal(36, 8)
+  peakNetWorthAt           DateTime @default(now())
+  troughNetWorth           Decimal  @db.Decimal(36, 8)
+  /// 平仓（含部分平仓）次数，胜率分母
+  closedTradeCount         Int      @default(0)
+  winCount                 Int      @default(0)
+  lossCount                Int      @default(0)
+  openCount                Int      @default(0)
+  liquidationCount         Int      @default(0)
+  deficitCount             Int      @default(0) // 穿仓次数
+  totalVolume              Decimal  @default(0) @db.Decimal(36, 8) // 累计成交名义价值
+  totalFeesPaid            Decimal  @default(0) @db.Decimal(36, 8)
+  totalRealizedPnl         Decimal  @default(0) @db.Decimal(36, 8)
+  /// 最高单笔收益率（ROE = 已实现盈亏 / 所用保证金）
+  bestTradeRoe             Decimal? @db.Decimal(36, 8)
+  bestTradePnl             Decimal? @db.Decimal(36, 8)
+  /// 最惨强平战役：单次强平总亏损（保证金损失 + 穿仓倒扣）
+  worstLiquidationLoss     Decimal? @db.Decimal(36, 8)
+  worstLiquidationMarketId String?
+  totalDeficit             Decimal  @default(0) @db.Decimal(36, 8)
+  maxLeverageUsed          Decimal  @default(1) @db.Decimal(36, 8)
+  /// 加权杠杆累计：Σ(杠杆 × 名义价值)，配合 totalVolume 求平均杠杆
+  leverageVolumeSum        Decimal  @default(0) @db.Decimal(36, 8)
+  longVolume               Decimal  @default(0) @db.Decimal(36, 8)
+  shortVolume              Decimal  @default(0) @db.Decimal(36, 8)
+  /// 持仓时长累计（秒），用于"秒男/长线"称号
+  totalHoldingSeconds      BigInt   @default(0)
+  danmakuCount             Int      @default(0)
+
+  user      User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ledger    LedgerEntry[]
+  positions Position[]
+  orders    Order[]
+  resume    BankruptcyResume?
+
+  @@unique([userId, generation])
+  @@index([userId, status])
+  @@map("lives")
+}
+
+// -----------------------------------------------------------------------------
+// 市场与行情
+// -----------------------------------------------------------------------------
+
+model Market {
+  id            String           @id @default(cuid())
+  code          String           @unique // 如 "MEOW", "BTC-SIM"
+  name          String
+  /// { "zh-CN": "喵喵科技", "en-US": "Meow Tech" }
+  nameI18n      Json             @default("{}")
+  kind          MarketKind
+  dataSource    MarketDataSource @default(PROCEDURAL)
+  status        MarketStatus     @default(ACTIVE)
+  /// LIVE_API 模式：适配器 key（"binance" | "yahoo" | "alphavantage"）与外部代码
+  adapterKey    String?
+  adapterSymbol String?
+
+  /// 交易时段：{ timezone: "Asia/Shanghai", sessions: [{ days:[1..5], open:"09:30", close:"15:00" }] }
+  /// 空数组 = 7x24（加密市场）
+  tradingHours   Json @default("{\"timezone\":\"UTC\",\"sessions\":[]}")
+  tickIntervalMs Int  @default(1000)
+
+  // ---- 合约规格 ----
+  tickSize              Decimal @db.Decimal(36, 8) // 最小价格变动
+  lotSize               Decimal @db.Decimal(36, 8) // 最小数量变动
+  minNotional           Decimal @db.Decimal(36, 8) // 最小下单名义价值
+  maxLeverage           Decimal @default(100) @db.Decimal(36, 8)
+  /// 维持保证金率 mmr（如 0.005 = 0.5%）
+  maintenanceMarginRate Decimal @db.Decimal(36, 8)
+  // ---- 差异化手续费 ----
+  makerFeeRate          Decimal @db.Decimal(36, 8)
+  takerFeeRate          Decimal @db.Decimal(36, 8)
+  /// 强平额外罚金费率（叠加在 taker 费率上，可为 0）
+  liquidationFeeRate    Decimal @default(0) @db.Decimal(36, 8)
+
+  initialPrice Decimal   @db.Decimal(36, 8)
+  lastPrice    Decimal   @db.Decimal(36, 8)
+  lastTickAt   DateTime?
+  sortOrder    Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  engineConfig MarketEngineConfig?
+  positions    Position[]
+  orders       Order[]
+  candles      Candle[]
+  events       ScheduledEvent[]
+  liquidations Liquidation[]
+
+  @@map("markets")
+}
+
+/// 程序随机行情参数（年化口径，引擎内按 tick 步长换算）
+/// dS/S = (μ + driftOverride) dt + σ·volMultiplier dW + κ(ln θ − ln S) dt + J dN
+model MarketEngineConfig {
+  marketId            String    @id
+  /// μ：基础漂移（年化），后台可调牛熊
+  drift               Decimal   @default(0) @db.Decimal(36, 8)
+  /// σ：基础波动率（年化）
+  volatility          Decimal   @db.Decimal(36, 8)
+  /// κ：均值回归速度；0 = 纯 GBM
+  meanReversionSpeed  Decimal   @default(0) @db.Decimal(36, 8)
+  /// θ：均值回归目标价；null = 使用 initialPrice
+  meanReversionTarget Decimal?  @db.Decimal(36, 8)
+  /// λ：跳跃强度（年化期望次数）——随机黑天鹅/白天鹅
+  jumpIntensity       Decimal   @default(0) @db.Decimal(36, 8)
+  /// 跳跃幅度对数正态参数
+  jumpMean            Decimal   @default(0) @db.Decimal(36, 8)
+  jumpStdDev          Decimal   @default(0) @db.Decimal(36, 8)
+  /// 基础成交量（每 tick 均值）与成交量-波动耦合系数
+  baseVolume          Decimal   @db.Decimal(36, 8)
+  volumeVolCoupling   Decimal   @default(1) @db.Decimal(36, 8)
+  /// 时间加速因子：模拟时间 / 真实时间（让游戏内一天更短）
+  timeScale           Decimal   @default(1) @db.Decimal(36, 8)
+  /// 价格下限保护（避免 GBM 数值退化到 0）
+  priceFloor          Decimal   @db.Decimal(36, 8)
+  // ---- 运行时覆盖（由定时事件写入，事件结束复原）----
+  driftOverride       Decimal   @default(0) @db.Decimal(36, 8)
+  volMultiplier       Decimal   @default(1) @db.Decimal(36, 8)
+  overrideUntil       DateTime?
+  updatedAt           DateTime  @updatedAt
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@map("market_engine_configs")
+}
+
+/// K 线（持久化 1m 及以上；Tick 只存在 Redis Stream 中）
+model Candle {
+  marketId   String
+  interval   CandleInterval
+  openTime   DateTime
+  open       Decimal        @db.Decimal(36, 8)
+  high       Decimal        @db.Decimal(36, 8)
+  low        Decimal        @db.Decimal(36, 8)
+  close      Decimal        @db.Decimal(36, 8)
+  volume     Decimal        @db.Decimal(36, 8)
+  tradeCount Int            @default(0)
+
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@id([marketId, interval, openTime])
+  @@index([marketId, interval, openTime(sort: Desc)])
+  @@map("candles")
+}
+
+/// 手动编写的定时金融事件
+model ScheduledEvent {
+  id            String      @id @default(cuid())
+  marketId      String
+  triggerAt     DateTime
+  headline      String
+  content       String
+  /// { "en-US": { headline, content } }
+  i18n          Json        @default("{}")
+  /// 瞬间跳空幅度：-0.30 = -30%，0.25 = +25%
+  gapPercent    Decimal     @db.Decimal(36, 8)
+  /// 后续趋势漂移修正值（年化，叠加到 μ）
+  driftAdjust   Decimal     @default(0) @db.Decimal(36, 8)
+  /// 事件期间波动率乘数
+  volMultiplier Decimal     @default(1) @db.Decimal(36, 8)
+  durationSec   Int
+  status        EventStatus @default(PENDING)
+  source        EventSource
+  createdById   String?
+  /// 触发时刻快照（审计 & 播报）
+  priceBefore   Decimal?    @db.Decimal(36, 8)
+  priceAfter    Decimal?    @db.Decimal(36, 8)
+  triggeredAt   DateTime?
+  completedAt   DateTime?
+  createdAt     DateTime    @default(now())
+
+  market    Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  createdBy User?  @relation(fields: [createdById], references: [id], onDelete: SetNull)
+
+  /// 引擎每秒轮询：WHERE status = PENDING AND triggerAt <= now()
+  @@index([status, triggerAt])
+  @@index([marketId, triggerAt])
+  @@map("scheduled_events")
+}
+
+// -----------------------------------------------------------------------------
+// 交易：持仓 / 订单 / 强平
+// -----------------------------------------------------------------------------
+
+/// 逐仓净持仓。每个玩家在每个市场最多 1 个 OPEN 持仓：
+/// 通过 openKey = "<userId>:<marketId>"（OPEN 时）/ NULL（平仓后）+ 唯一索引保证，
+/// PostgreSQL 唯一索引允许多个 NULL，因此历史持仓不受影响，且无需手写 partial index。
+model Position {
+  id               String         @id @default(cuid())
+  userId           String
+  marketId         String
+  lifeId           String
+  openKey          String?        @unique
+  side             PositionSide
+  status           PositionStatus @default(OPEN)
+  /// 当前持仓数量 Q（> 0）
+  quantity         Decimal        @db.Decimal(36, 8)
+  /// 加权平均开仓价 E
+  entryPrice       Decimal        @db.Decimal(36, 8)
+  /// 逐仓保证金 M（含追加部分）
+  margin           Decimal        @db.Decimal(36, 8)
+  /// 有效杠杆 = Q·E / M（合并/追加保证金后会变化）
+  leverage         Decimal        @db.Decimal(36, 8)
+  /// 强平斩杀线（每次 Q/E/M 变化时重算）
+  liquidationPrice Decimal        @db.Decimal(36, 8)
+  takeProfitPrice  Decimal?       @db.Decimal(36, 8)
+  stopLossPrice    Decimal?       @db.Decimal(36, 8)
+  /// 累计追加保证金
+  addedMargin      Decimal        @default(0) @db.Decimal(36, 8)
+  /// 本仓位生命周期内累计已实现盈亏/手续费
+  realizedPnl      Decimal        @default(0) @db.Decimal(36, 8)
+  feesPaid         Decimal        @default(0) @db.Decimal(36, 8)
+  /// 生命周期内最大数量（用于展示）
+  peakQuantity     Decimal        @db.Decimal(36, 8)
+  /// 平仓价 / 时间
+  exitPrice        Decimal?       @db.Decimal(36, 8)
+  openedAt         DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  closedAt         DateTime?
+  version          Int            @default(0)
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market      Market       @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  life        Life         @relation(fields: [lifeId], references: [id], onDelete: Cascade)
+  orders      Order[]
+  liquidation Liquidation?
+
+  @@index([userId, status])
+  @@index([marketId, status])
+  @@map("positions")
+}
+
+model Order {
+  id              String      @id @default(cuid())
+  userId          String
+  marketId        String
+  lifeId          String
+  positionId      String?
+  /// 客户端幂等 ID（同一用户唯一）
+  clientOrderId   String?
+  side            OrderSide
+  type            OrderType
+  source          OrderSource @default(USER)
+  status          OrderStatus @default(PENDING)
+  /// 只减仓：现货"卖出"与 TP/SL/强平单为 true，不会反向开仓
+  reduceOnly      Boolean     @default(false)
+  /// 下单杠杆（只用于本单新开/加仓部分）
+  leverage        Decimal     @db.Decimal(36, 8)
+  quantity        Decimal     @db.Decimal(36, 8)
+  limitPrice      Decimal?    @db.Decimal(36, 8)
+  /// 限价单冻结金额
+  lockedAmount    Decimal     @default(0) @db.Decimal(36, 8)
+  /// 成交后附加到持仓上的止盈止损（限价开仓单使用）
+  takeProfitPrice Decimal?    @db.Decimal(36, 8)
+  stopLossPrice   Decimal?    @db.Decimal(36, 8)
+  fillPrice       Decimal?    @db.Decimal(36, 8)
+  /// 成交拆分：平掉的数量 / 新开的数量
+  closedQuantity  Decimal     @default(0) @db.Decimal(36, 8)
+  openedQuantity  Decimal     @default(0) @db.Decimal(36, 8)
+  liquidity       Liquidity?
+  feeRate         Decimal?    @db.Decimal(36, 8)
+  fee             Decimal     @default(0) @db.Decimal(36, 8)
+  /// 平仓部分的已实现盈亏与 ROE（用于"最高单笔收益率"）
+  realizedPnl     Decimal?    @db.Decimal(36, 8)
+  realizedRoe     Decimal?    @db.Decimal(36, 8)
+  rejectReason    String?
+  createdAt       DateTime    @default(now())
+  filledAt        DateTime?
+
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market   Market    @relation(fields: [marketId], references: [id], onDelete: Cascade)
+  life     Life      @relation(fields: [lifeId], references: [id], onDelete: Cascade)
+  position Position? @relation(fields: [positionId], references: [id], onDelete: SetNull)
+
+  @@unique([userId, clientOrderId])
+  @@index([marketId, status, type])
+  @@index([userId, createdAt])
+  @@map("orders")
+}
+
+/// 强平（斩杀）记录 —— 无穿仓保护，记录每一分倒扣
+model Liquidation {
+  id               String       @id @default(cuid())
+  positionId       String       @unique
+  userId           String
+  marketId         String
+  lifeId           String
+  side             PositionSide
+  quantity         Decimal      @db.Decimal(36, 8)
+  entryPrice       Decimal      @db.Decimal(36, 8)
+  margin           Decimal      @db.Decimal(36, 8)
+  leverage         Decimal      @db.Decimal(36, 8)
+  /// 理论斩杀线 vs 触发时刻真实最新价（跳空时两者差距巨大）
+  liquidationPrice Decimal      @db.Decimal(36, 8)
+  executionPrice   Decimal      @db.Decimal(36, 8)
+  realizedPnl      Decimal      @db.Decimal(36, 8)
+  fee              Decimal      @db.Decimal(36, 8)
+  /// 结算净额 = M + PnL − fee（可为负）
+  settlement       Decimal      @db.Decimal(36, 8)
+  /// 穿仓额 D = max(0, −settlement)，从总本金倒扣
+  deficit          Decimal      @db.Decimal(36, 8)
+  /// 本次战役总亏损 = M − max(settlement, 0) + D
+  totalLoss        Decimal      @db.Decimal(36, 8)
+  balanceBefore    Decimal      @db.Decimal(36, 8)
+  balanceAfter     Decimal      @db.Decimal(36, 8)
+  /// 是否由定时事件跳空触发
+  scheduledEventId String?
+  createdAt        DateTime     @default(now())
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  market   Market   @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([marketId, createdAt])
+  @@map("liquidations")
+}
+
+// -----------------------------------------------------------------------------
+// 个人破产与《股市人生履历》
+// -----------------------------------------------------------------------------
+
+model BankruptcyResume {
+  id                   String   @id @default(cuid())
+  userId               String
+  lifeId               String   @unique
+  generation           Int
+  startedAt            DateTime
+  endedAt              DateTime
+  survivedSeconds      BigInt
+  startingBalance      Decimal  @db.Decimal(36, 8)
+  peakNetWorth         Decimal  @db.Decimal(36, 8)
+  finalBalance         Decimal  @db.Decimal(36, 8) // 破产时余额（<= 0）
+  debtWrittenOff       Decimal  @db.Decimal(36, 8)
+  reliefGranted        Decimal  @db.Decimal(36, 8)
+  bestTradeRoe         Decimal? @db.Decimal(36, 8)
+  bestTradePnl         Decimal? @db.Decimal(36, 8)
+  worstLiquidationLoss Decimal? @db.Decimal(36, 8)
+  totalFeesPaid        Decimal  @db.Decimal(36, 8)
+  totalVolume          Decimal  @db.Decimal(36, 8)
+  winRate              Decimal  @db.Decimal(36, 8) // 0 ~ 1
+  closedTradeCount     Int
+  liquidationCount     Int
+  deficitCount         Int
+  avgLeverage          Decimal  @db.Decimal(36, 8)
+  maxLeverageUsed      Decimal  @db.Decimal(36, 8)
+  /// 趣味称号 i18n key 列表，如 ["title.leverageGambler", "title.feeDonor"]
+  titles               String[]
+  /// 完整统计快照（前端渲染卡片 & 未来扩展字段）
+  stats                Json
+  discordChannelId     String?
+  discordMessageId     String?
+  createdAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  life Life @relation(fields: [lifeId], references: [id], onDelete: Cascade)
+
+  @@index([userId, generation])
+  @@map("bankruptcy_resumes")
+}
+
+// -----------------------------------------------------------------------------
+// 排行榜
+// -----------------------------------------------------------------------------
+
+/// 每用户每周期的累计口径（实时榜单从 Redis 读取；此表为期初基准与结算依据）
+model LeaderboardPeriodStat {
+  id                   String            @id @default(cuid())
+  userId               String
+  period               LeaderboardPeriod
+  /// "2026-10-16" | "2026-W42" | "2026-10"
+  periodKey            String
+  periodStart          DateTime
+  periodEnd            DateTime
+  /// 期初总净值 V0（用户中途加入则为 0，初始资金计入外部流）
+  startNetWorth        Decimal           @db.Decimal(36, 8)
+  /// Σ f_i：周期内外部净转入（充值、提现、破产抹债、救济金、管理员调整）
+  netExternalFlow      Decimal           @default(0) @db.Decimal(36, 8)
+  /// Σ f_i · w_i：时间加权外部净转入（Modified Dietz）
+  weightedExternalFlow Decimal           @default(0) @db.Decimal(36, 8)
+  endNetWorth          Decimal?          @db.Decimal(36, 8)
+  returnPct            Decimal?          @db.Decimal(36, 8)
+  /// 是否满足最低本金门槛
+  eligible             Boolean           @default(false)
+  finalizedAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, period, periodKey])
+  @@index([period, periodKey])
+  @@map("leaderboard_period_stats")
+}
+
+/// 周期结算后的定格榜单
+model LeaderboardSnapshot {
+  id        String            @id @default(cuid())
+  period    LeaderboardPeriod
+  periodKey String
+  board     LeaderboardBoard
+  rank      Int
+  userId    String
+  value     Decimal           @db.Decimal(36, 8)
+  createdAt DateTime          @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([period, periodKey, board, rank])
+  @@index([userId])
+  @@map("leaderboard_snapshots")
+}
+
+// -----------------------------------------------------------------------------
+// 播报 / Discord 公会配置
+// -----------------------------------------------------------------------------
+
+model Broadcast {
+  id               String        @id @default(cuid())
+  kind             BroadcastKind
+  userId           String?
+  marketId         String?
+  /// 渲染所需全部参数（i18n key + 变量，金额以字符串存储）
+  payload          Json
+  discordChannelId String?
+  discordMessageId String?
+  createdAt        DateTime      @default(now())
+
+  @@index([createdAt])
+  @@map("broadcasts")
+}
+
+model GuildConfig {
+  guildId            String   @id
+  broadcastChannelId String?
+  adminRoleIds       String[]
+  locale             String   @default("zh-CN")
+  /// 各类播报开关：{ BIG_WIN: true, LIQUIDATION: true, ... }
+  broadcastToggles   Json     @default("{}")
+  updatedAt          DateTime @updatedAt
+
+  @@map("guild_configs")
+}
+
+// -----------------------------------------------------------------------------
+// 外部货币接口（HMAC 签名）
+// -----------------------------------------------------------------------------
+
+model ApiClient {
+  id         String   @id @default(cuid())
+  name       String
+  /// HMAC-SHA256 密钥（应用层 AES-GCM 加密后存储）
+  secretEnc  String
+  scopes     String[] // ["transfer:deposit", "transfer:withdraw", "wallet:read"]
+  webhookUrl String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+
+  transfers  ExternalTransfer[]
+  deliveries WebhookDelivery[]
+
+  @@map("api_clients")
+}
+
+model ExternalTransfer {
+  id            String            @id @default(cuid())
+  clientId      String
+  userId        String
+  direction     TransferDirection
+  amount        Decimal           @db.Decimal(36, 8) // 恒正
+  status        TransferStatus    @default(PENDING)
+  /// 外部系统流水号，(clientId, externalRef) 唯一 → 幂等
+  externalRef   String
+  rejectReason  String?
+  ledgerEntryId BigInt?
+  createdAt     DateTime          @default(now())
+  completedAt   DateTime?
+
+  client ApiClient @relation(fields: [clientId], references: [id])
+  user   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([clientId, externalRef])
+  @@index([userId, createdAt])
+  @@map("external_transfers")
+}
+
+/// 出站 Webhook 投递记录（带重试）
+model WebhookDelivery {
+  id          String    @id @default(cuid())
+  clientId    String
+  eventType   String
+  payload     Json
+  attempts    Int       @default(0)
+  nextRetryAt DateTime?
+  deliveredAt DateTime?
+  lastError   String?
+  createdAt   DateTime  @default(now())
+
+  client ApiClient @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  @@index([deliveredAt, nextRetryAt])
+  @@map("webhook_deliveries")
+}
+
+/// 入站请求防重放：HMAC 签名 nonce（也可仅放 Redis，此表作冷备审计）
+model ApiNonce {
+  nonce     String   @id
+  clientId  String
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("api_nonces")
+}

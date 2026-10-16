@@ -1,0 +1,284 @@
+{
+  "_meta": {
+    "name": "简体中文"
+  },
+  "app": {
+    "loading": "正在进入交易大厅…",
+    "connecting": "连接中",
+    "online": "实时",
+    "offline": "已断开，重连中…",
+    "devLogin": "本地调试登录",
+    "devLoginHint": "当前不在 Discord 内运行，使用开发登录（需后端 DEV_LOGIN=1）",
+    "userId": "Discord 用户 ID",
+    "username": "昵称",
+    "enter": "进入",
+    "authFailed": "登录失败：{{reason}}"
+  },
+  "wallet": {
+    "balance": "可用余额",
+    "locked": "挂单冻结",
+    "netWorth": "总净值",
+    "generation": "第 {{n}} 世",
+    "debt": "负债中"
+  },
+  "market": {
+    "open": "交易中",
+    "closed": "休市",
+    "halted": "暂停交易",
+    "live": "实时行情",
+    "sim": "模拟行情",
+    "vsOpen": "较初始价",
+    "news": "金融快讯",
+    "noNews": "暂无快讯"
+  },
+  "chart": {
+    "candle": "K线",
+    "line": "分时",
+    "area": "面积",
+    "M1": "1分",
+    "M5": "5分",
+    "M15": "15分",
+    "H1": "1时",
+    "D1": "日线",
+    "entry": "均价",
+    "tp": "止盈",
+    "sl": "止损",
+    "liq": "斩杀线",
+    "limit": "挂单"
+  },
+  "order": {
+    "spot": "现货",
+    "leverage": "杠杆",
+    "buy": "买入",
+    "sell": "卖出",
+    "long": "做多",
+    "short": "做空",
+    "market": "市价",
+    "limit": "限价",
+    "quantity": "数量",
+    "price": "价格",
+    "lev": "杠杆倍数",
+    "tp": "止盈价",
+    "sl": "止损价",
+    "optional": "可选",
+    "margin": "所需保证金",
+    "fee": "预估手续费",
+    "notional": "名义价值",
+    "liqPrice": "预估斩杀线",
+    "noLiq": "无（1x 不会强平）",
+    "max": "最大",
+    "available": "可用",
+    "sellHint": "现货卖出只会减少已有多仓",
+    "closing": "将先平掉 {{qty}} 反向持仓",
+    "submit": {
+      "buy": "买入 {{code}}",
+      "sell": "卖出 {{code}}",
+      "long": "做多 {{code}}",
+      "short": "做空 {{code}}"
+    },
+    "highLevWarn": "高杠杆！跳空行情下亏损可能超过保证金并倒扣本金"
+  },
+  "position": {
+    "title": "持仓",
+    "empty": "暂无持仓",
+    "LONG": "多",
+    "SHORT": "空",
+    "qty": "数量",
+    "entry": "开仓均价",
+    "mark": "最新价",
+    "liq": "斩杀线",
+    "margin": "保证金",
+    "upnl": "未实现盈亏",
+    "roe": "收益率",
+    "distance": "距斩杀 {{pct}}",
+    "close": "平仓",
+    "closeHalf": "平一半",
+    "addMargin": "追加保证金",
+    "add": "追加",
+    "tpsl": "止盈止损",
+    "save": "保存",
+    "clear": "清除",
+    "amount": "金额"
+  },
+  "orders": {
+    "title": "挂单",
+    "empty": "暂无挂单",
+    "cancel": "撤单",
+    "locked": "冻结 {{amount}}"
+  },
+  "toast": {
+    "filled": "{{code}} 成交 @ {{price}}",
+    "resting": "限价单已挂出",
+    "cancelled": "已撤单",
+    "tpHit": "{{code}} 止盈触发 @ {{price}}，盈亏 {{pnl}}",
+    "slHit": "{{code}} 止损触发 @ {{price}}，盈亏 {{pnl}}",
+    "liquidated": "{{code}} 被强平 @ {{price}}，损失 {{loss}}",
+    "deficit": "穿仓！超额亏损 {{deficit}} 已从本金倒扣，余额 {{balance}}",
+    "saved": "已保存",
+    "marginAdded": "保证金已追加"
+  },
+  "broadcast": {
+    "bigWin": "🎉 {{user}} 在 {{market}} 止盈 +{{pnl}}（收益率 {{roe}}%）",
+    "liquidation": "🗡️ {{user}} 的 {{market}} {{leverage}}x 仓位被斩杀，损失 {{totalLoss}}",
+    "deficit": "🩸 {{user}} 在 {{market}} 穿仓！倒欠 {{deficit}}，余额 {{balanceAfter}}",
+    "bankruptcy": "⚰️ {{user}} 宣告破产，结束第 {{generation}} 世 ·「{{titleText}}」",
+    "marketEvent": "📰 {{market}}：{{headline}}（{{gapPct}}%）"
+  },
+  "danmaku": {
+    "placeholder": "发条弹幕…",
+    "send": "发送",
+    "off": "弹幕已关闭"
+  },
+  "bankruptcy": {
+    "available": "你的总资产已归零",
+    "desc": "申请个人破产将抹平全部负债、发放救济金并开启新的一世。这一世的交易记录会生成《股市人生履历》。",
+    "apply": "申请个人破产",
+    "confirm": "确认破产（不可撤销）",
+    "resume": "股市人生履历",
+    "generation": "第 {{n}} 世",
+    "survived": "存活时长",
+    "peak": "巅峰总资产",
+    "bestRoe": "最高单笔收益率",
+    "worstLoss": "最惨强平战役",
+    "fees": "累计贡献手续费",
+    "winRate": "总胜率",
+    "trades": "平仓次数",
+    "liquidations": "被斩杀次数",
+    "avgLev": "平均杠杆",
+    "debt": "抹平负债",
+    "relief": "救济金",
+    "rebirth": "东山再起",
+    "copyLink": "复制战绩",
+    "copied": "已复制"
+  },
+  "title": {
+    "didNothing": {
+      "name": "什么都没做",
+      "desc": "一笔都没平过就破产了"
+    },
+    "speedrun": {
+      "name": "速通玩家",
+      "desc": "十分钟内破产"
+    },
+    "deficitKing": {
+      "name": "穿仓之王",
+      "desc": "穿仓欠下的钱比本金还多"
+    },
+    "eventVictim": {
+      "name": "黑天鹅受害者",
+      "desc": "被突发新闻当场斩杀"
+    },
+    "leverageManiac": {
+      "name": "杠杆狂魔",
+      "desc": "平均杠杆 50x 以上"
+    },
+    "oneHitWonder": {
+      "name": "昙花一现",
+      "desc": "曾有一笔 500% 收益"
+    },
+    "peakThenAbyss": {
+      "name": "从巅峰到深渊",
+      "desc": "资产曾翻三倍"
+    },
+    "feeDonor": {
+      "name": "交易所之友",
+      "desc": "手续费贡献超过本金三成"
+    },
+    "scalper": {
+      "name": "秒男",
+      "desc": "平均持仓不到两分钟"
+    },
+    "diamondHands": {
+      "name": "钻石手",
+      "desc": "平均持仓超过一天"
+    },
+    "winningLoser": {
+      "name": "赢麻了但破产",
+      "desc": "胜率 70% 仍然破产"
+    },
+    "coinFlipper": {
+      "name": "抛硬币的",
+      "desc": "胜率五五开"
+    },
+    "permaBull": {
+      "name": "永远的多头",
+      "desc": "八成以上都在做多"
+    },
+    "permaBear": {
+      "name": "空军司令",
+      "desc": "八成以上都在做空"
+    },
+    "immortal": {
+      "name": "不死鸟",
+      "desc": "撑了一个月以上"
+    },
+    "keyboardWarrior": {
+      "name": "键盘侠",
+      "desc": "发了一百条以上弹幕"
+    },
+    "leek": {
+      "name": "韭菜",
+      "desc": "平平无奇地被割了"
+    }
+  },
+  "settings": {
+    "title": "设置",
+    "language": "语言",
+    "vfx": "视觉特效",
+    "bgm": "背景音乐",
+    "sfx": "交易音效",
+    "danmaku": "弹幕显示",
+    "redUp": "红涨绿跌",
+    "volume": "音量",
+    "close": "完成"
+  },
+  "fx": {
+    "liquidated": "斩 杀",
+    "deficit": "穿 仓",
+    "bankrupt": "破 产",
+    "bigWin": "暴 富"
+  },
+  "duration": {
+    "dh": "{{d}} 天 {{h}} 小时",
+    "hm": "{{h}} 小时 {{m}} 分",
+    "ms": "{{m}} 分 {{s}} 秒",
+    "s": "{{s}} 秒"
+  },
+  "error": {
+    "insufficientFunds": "可用余额不足",
+    "marketClosed": "当前休市",
+    "marketHalted": "该市场暂停交易",
+    "marketNotFound": "市场不存在",
+    "noPrice": "暂无行情",
+    "invalidQuantity": "数量不合法（需为最小单位的整数倍）",
+    "invalidLeverage": "杠杆倍数超出范围",
+    "invalidPrice": "价格不合法（需为最小变动价位的整数倍）",
+    "invalidAmount": "金额不合法",
+    "belowMinNotional": "下单金额低于最小名义价值",
+    "nothingToReduce": "没有可减少的持仓",
+    "noPosition": "没有持仓",
+    "orderNotFound": "订单不存在",
+    "orderNotPending": "订单已不是挂单状态",
+    "tpWrongSide": "止盈价方向错误",
+    "slWrongSide": "止损价方向错误",
+    "bankruptcyNotEligible": "当前不满足破产条件",
+    "danmakuTooLong": "弹幕太长了",
+    "danmakuCooldown": "发太快了，歇一下",
+    "unauthorized": "登录已失效",
+    "forbidden": "没有权限",
+    "validation": "输入不合法",
+    "conflict": "操作冲突，请重试",
+    "notFound": "未找到",
+    "internal": "服务器开小差了",
+    "network": "网络错误",
+    "eventNotPending": "事件已不是待触发状态",
+    "oauthNotConfigured": "服务器未配置 Discord OAuth",
+    "oauthExchangeFailed": "Discord 授权失败",
+    "oauthProfileFailed": "获取 Discord 资料失败",
+    "badMessage": "消息格式错误",
+    "unknown": "未知错误（{{code}}）"
+  },
+  "warn": {
+    "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
+  }
+}

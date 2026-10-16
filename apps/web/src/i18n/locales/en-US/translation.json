@@ -1,0 +1,284 @@
+{
+  "_meta": {
+    "name": "English"
+  },
+  "app": {
+    "loading": "Entering the trading floor…",
+    "connecting": "Connecting",
+    "online": "Live",
+    "offline": "Disconnected, reconnecting…",
+    "devLogin": "Local dev login",
+    "devLoginHint": "Not running inside Discord — using dev login (backend needs DEV_LOGIN=1)",
+    "userId": "Discord user ID",
+    "username": "Nickname",
+    "enter": "Enter",
+    "authFailed": "Login failed: {{reason}}"
+  },
+  "wallet": {
+    "balance": "Available",
+    "locked": "In orders",
+    "netWorth": "Net worth",
+    "generation": "Life #{{n}}",
+    "debt": "In debt"
+  },
+  "market": {
+    "open": "Open",
+    "closed": "Closed",
+    "halted": "Halted",
+    "live": "Live feed",
+    "sim": "Simulated",
+    "vsOpen": "vs. initial",
+    "news": "Breaking news",
+    "noNews": "No news yet"
+  },
+  "chart": {
+    "candle": "Candles",
+    "line": "Line",
+    "area": "Area",
+    "M1": "1m",
+    "M5": "5m",
+    "M15": "15m",
+    "H1": "1h",
+    "D1": "1D",
+    "entry": "Entry",
+    "tp": "TP",
+    "sl": "SL",
+    "liq": "LIQ",
+    "limit": "Limit"
+  },
+  "order": {
+    "spot": "Spot",
+    "leverage": "Leverage",
+    "buy": "Buy",
+    "sell": "Sell",
+    "long": "Long",
+    "short": "Short",
+    "market": "Market",
+    "limit": "Limit",
+    "quantity": "Quantity",
+    "price": "Price",
+    "lev": "Leverage",
+    "tp": "Take profit",
+    "sl": "Stop loss",
+    "optional": "optional",
+    "margin": "Margin required",
+    "fee": "Est. fee",
+    "notional": "Notional",
+    "liqPrice": "Est. liquidation",
+    "noLiq": "None (1x never liquidates)",
+    "max": "Max",
+    "available": "Available",
+    "sellHint": "Spot sell only reduces an existing long",
+    "closing": "Will first close {{qty}} of the opposite position",
+    "submit": {
+      "buy": "Buy {{code}}",
+      "sell": "Sell {{code}}",
+      "long": "Long {{code}}",
+      "short": "Short {{code}}"
+    },
+    "highLevWarn": "High leverage! A price gap can wipe out more than your margin and eat into your balance"
+  },
+  "position": {
+    "title": "Positions",
+    "empty": "No open positions",
+    "LONG": "Long",
+    "SHORT": "Short",
+    "qty": "Qty",
+    "entry": "Entry",
+    "mark": "Last",
+    "liq": "Liq.",
+    "margin": "Margin",
+    "upnl": "Unrealized PnL",
+    "roe": "ROE",
+    "distance": "{{pct}} to liquidation",
+    "close": "Close",
+    "closeHalf": "Close 50%",
+    "addMargin": "Add margin",
+    "add": "Add",
+    "tpsl": "TP / SL",
+    "save": "Save",
+    "clear": "Clear",
+    "amount": "Amount"
+  },
+  "orders": {
+    "title": "Open orders",
+    "empty": "No open orders",
+    "cancel": "Cancel",
+    "locked": "{{amount}} locked"
+  },
+  "toast": {
+    "filled": "{{code}} filled @ {{price}}",
+    "resting": "Limit order placed",
+    "cancelled": "Order cancelled",
+    "tpHit": "{{code}} take profit @ {{price}}, PnL {{pnl}}",
+    "slHit": "{{code}} stop loss @ {{price}}, PnL {{pnl}}",
+    "liquidated": "{{code}} liquidated @ {{price}}, lost {{loss}}",
+    "deficit": "Negative equity! {{deficit}} beyond your margin was taken from your balance. Balance: {{balance}}",
+    "saved": "Saved",
+    "marginAdded": "Margin added"
+  },
+  "broadcast": {
+    "bigWin": "🎉 {{user}} took profit +{{pnl}} on {{market}} ({{roe}}% ROE)",
+    "liquidation": "🗡️ {{user}}'s {{leverage}}x {{market}} position got liquidated, lost {{totalLoss}}",
+    "deficit": "🩸 {{user}} blew through margin on {{market}}! Owes {{deficit}}, balance {{balanceAfter}}",
+    "bankruptcy": "⚰️ {{user}} declared bankruptcy, ending life #{{generation}} · \"{{titleText}}\"",
+    "marketEvent": "📰 {{market}}: {{headline}} ({{gapPct}}%)"
+  },
+  "danmaku": {
+    "placeholder": "Say something…",
+    "send": "Send",
+    "off": "Bullet chat is off"
+  },
+  "bankruptcy": {
+    "available": "Your net worth has hit zero",
+    "desc": "Declaring bankruptcy wipes your debt, grants relief funds and starts a new life. This life's trades become your Market Life Resume.",
+    "apply": "Declare bankruptcy",
+    "confirm": "Confirm (irreversible)",
+    "resume": "Market Life Resume",
+    "generation": "Life #{{n}}",
+    "survived": "Survived",
+    "peak": "Peak net worth",
+    "bestRoe": "Best single trade",
+    "worstLoss": "Worst liquidation",
+    "fees": "Fees donated",
+    "winRate": "Win rate",
+    "trades": "Closed trades",
+    "liquidations": "Liquidations",
+    "avgLev": "Avg. leverage",
+    "debt": "Debt written off",
+    "relief": "Relief funds",
+    "rebirth": "Rise again",
+    "copyLink": "Copy summary",
+    "copied": "Copied"
+  },
+  "title": {
+    "didNothing": {
+      "name": "Did Nothing",
+      "desc": "Went broke without closing a single trade"
+    },
+    "speedrun": {
+      "name": "Speedrunner",
+      "desc": "Bankrupt within ten minutes"
+    },
+    "deficitKing": {
+      "name": "King of Negative Equity",
+      "desc": "Owed more than the starting balance"
+    },
+    "eventVictim": {
+      "name": "Black Swan Victim",
+      "desc": "Liquidated by breaking news"
+    },
+    "leverageManiac": {
+      "name": "Leverage Maniac",
+      "desc": "Averaged 50x or more"
+    },
+    "oneHitWonder": {
+      "name": "One-Hit Wonder",
+      "desc": "Once hit a 500% trade"
+    },
+    "peakThenAbyss": {
+      "name": "Peak to Abyss",
+      "desc": "Tripled the account, then lost it all"
+    },
+    "feeDonor": {
+      "name": "Friend of the Exchange",
+      "desc": "Paid 30%+ of the start balance in fees"
+    },
+    "scalper": {
+      "name": "Scalper",
+      "desc": "Average hold under two minutes"
+    },
+    "diamondHands": {
+      "name": "Diamond Hands",
+      "desc": "Average hold over a day"
+    },
+    "winningLoser": {
+      "name": "Winning Loser",
+      "desc": "70% win rate and still broke"
+    },
+    "coinFlipper": {
+      "name": "Coin Flipper",
+      "desc": "A perfect fifty-fifty"
+    },
+    "permaBull": {
+      "name": "Perma-Bull",
+      "desc": "80%+ of volume was long"
+    },
+    "permaBear": {
+      "name": "Perma-Bear",
+      "desc": "80%+ of volume was short"
+    },
+    "immortal": {
+      "name": "Phoenix",
+      "desc": "Survived over a month"
+    },
+    "keyboardWarrior": {
+      "name": "Keyboard Warrior",
+      "desc": "Sent 100+ chat messages"
+    },
+    "leek": {
+      "name": "Bagholder",
+      "desc": "Got harvested, nothing special"
+    }
+  },
+  "settings": {
+    "title": "Settings",
+    "language": "Language",
+    "vfx": "Visual effects",
+    "bgm": "Background music",
+    "sfx": "Trade sounds",
+    "danmaku": "Bullet chat",
+    "redUp": "Red = up",
+    "volume": "Volume",
+    "close": "Done"
+  },
+  "fx": {
+    "liquidated": "LIQUIDATED",
+    "deficit": "IN DEBT",
+    "bankrupt": "BANKRUPT",
+    "bigWin": "JACKPOT"
+  },
+  "duration": {
+    "dh": "{{d}}d {{h}}h",
+    "hm": "{{h}}h {{m}}m",
+    "ms": "{{m}}m {{s}}s",
+    "s": "{{s}}s"
+  },
+  "error": {
+    "insufficientFunds": "Insufficient balance",
+    "marketClosed": "Market is closed",
+    "marketHalted": "Trading is halted",
+    "marketNotFound": "Market not found",
+    "noPrice": "No price yet",
+    "invalidQuantity": "Invalid quantity (must be a multiple of the lot size)",
+    "invalidLeverage": "Leverage out of range",
+    "invalidPrice": "Invalid price (must be a multiple of the tick size)",
+    "invalidAmount": "Invalid amount",
+    "belowMinNotional": "Order value is below the minimum",
+    "nothingToReduce": "No position to reduce",
+    "noPosition": "No position",
+    "orderNotFound": "Order not found",
+    "orderNotPending": "Order is no longer open",
+    "tpWrongSide": "Take profit is on the wrong side",
+    "slWrongSide": "Stop loss is on the wrong side",
+    "bankruptcyNotEligible": "You can't declare bankruptcy right now",
+    "danmakuTooLong": "Message too long",
+    "danmakuCooldown": "Slow down a little",
+    "unauthorized": "Session expired",
+    "forbidden": "Not allowed",
+    "validation": "Invalid input",
+    "conflict": "Conflict, please retry",
+    "notFound": "Not found",
+    "internal": "Server error",
+    "network": "Network error",
+    "eventNotPending": "Event is no longer pending",
+    "oauthNotConfigured": "Discord OAuth is not configured on the server",
+    "oauthExchangeFailed": "Discord authorization failed",
+    "oauthProfileFailed": "Could not load your Discord profile",
+    "badMessage": "Malformed message",
+    "unknown": "Unknown error ({{code}})"
+  },
+  "warn": {
+    "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
+  }
+}

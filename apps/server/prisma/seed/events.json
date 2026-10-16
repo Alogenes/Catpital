@@ -1,0 +1,34 @@
+[
+  {
+    "market": "MEOW",
+    "triggerAt": "2026-12-31T12:00:00Z",
+    "headline": "喵喵科技被曝财务造假，CEO 连夜跑路",
+    "content": "据知情人士透露，喵喵科技过去三年的猫粮销售额存在大量虚构。监管部门已介入调查。",
+    "i18n": {
+      "en-US": {
+        "headline": "Meow Technologies accused of accounting fraud, CEO flees overnight",
+        "content": "Sources say three years of cat-food revenue were fabricated. Regulators have opened an investigation."
+      }
+    },
+    "gapPercent": "-0.30",
+    "driftAdjust": "-2",
+    "volMultiplier": "2.5",
+    "durationSec": 600
+  },
+  {
+    "market": "WOOF",
+    "triggerAt": "2027-01-01T00:00:00Z",
+    "headline": "知名狗狗博主发推：汪汪币是未来的货币",
+    "content": "一条推文引发散户狂欢，汪汪币社区连夜刷屏。",
+    "i18n": {
+      "en-US": {
+        "headline": "Famous dog influencer tweets: WoofCoin is the currency of the future",
+        "content": "A single tweet sparks a retail frenzy overnight."
+      }
+    },
+    "gapPercent": "0.25",
+    "driftAdjust": "5",
+    "volMultiplier": "3",
+    "durationSec": 300
+  }
+]

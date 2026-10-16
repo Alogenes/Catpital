@@ -1,0 +1,48 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Vite
+.vite/
+
+# Test and coverage output
+coverage/
+.nyc_output/
+
+# Environment files and local secrets
+.env
+.env.*
+!.env.example
+
+# Local databases and embedded PostgreSQL data
+*.db
+*.sqlite
+*.sqlite3
+.pgdata/
+
+# Logs and temporary files
+*.log
+*.pid
+tmp/
+temp/
+
+# Tool and package-manager caches
+.turbo/
+.eslintcache
+.cache/
+.pnpm-debug.log*
+
+# Operating-system files
+.DS_Store
+Thumbs.db
+
+# IDE settings
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json

@@ -1,0 +1,20 @@
+{
+  "name": "catpital",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.22.0",
+  "scripts": {
+    "dev": "pnpm -r --parallel --filter \"./apps/*\" dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "db:generate": "pnpm --filter @catpital/server prisma:generate",
+    "db:migrate": "pnpm --filter @catpital/server prisma:migrate",
+    "dev:server": "pnpm --filter @catpital/server dev:embedded",
+    "db:seed": "pnpm --filter @catpital/server db:seed",
+    "dev:web": "pnpm --filter @catpital/web dev"
+  },
+  "devDependencies": {
+    "typescript": "^5.6.3"
+  }
+}
