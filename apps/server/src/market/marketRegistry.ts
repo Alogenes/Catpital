@@ -133,7 +133,14 @@ export class MarketRegistry {
       risk: this.risk,
       log: this.log,
       clock: this.clock,
-    });
+    }, cfg && m.dataSource === 'PROCEDURAL'
+      ? {
+          liquidity: fromDb(cfg.impactLiquidity),
+          cap: fromDb(cfg.impactCap),
+          volBoost: fromDb(cfg.impactVolBoost),
+          decaySec: cfg.impactDecaySec,
+        }
+      : undefined);
     this.engines.set(m.id, engine);
     return engine;
   }

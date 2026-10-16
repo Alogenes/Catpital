@@ -54,6 +54,7 @@ export class ProceduralSource implements PriceSource {
   private x: Decimal;
   private price: Decimal;
   private overrides: SourceOverrides = { driftOverride: ZERO, volMultiplier: ONE };
+  private boost = { multiplier: ONE, startMs: 0, durationMs: 0 };
 
   constructor(
     private readonly spec: ProceduralSpec,
@@ -87,10 +88,23 @@ export class ProceduralSource implements PriceSource {
     return dmax(this.floor(), roundToStep(rawPrice, this.spec.tickSize, 'nearest'));
   }
 
-  sample(): Quote {
+  boostVolatility(multiplier: Decimal, durationMs: number, now: Date) {
+    // 叠加取较大者：连续大单不会无限叠加
+    const cur = this.boostFactor(now.getTime());
+    this.boost = { multiplier: multiplier.gt(cur) ? multiplier : cur, startMs: now.getTime(), durationMs };
+  }
+
+  private boostFactor(nowMs: number): Decimal {
+    const { multiplier, startMs, durationMs } = this.boost;
+    if (durationMs <= 0 || nowMs >= startMs + durationMs) return ONE;
+    const remaining = D(startMs + durationMs - nowMs).div(D(durationMs));
+    return ONE.plus(multiplier.minus(ONE).mul(remaining));
+  }
+
+  sample(now: Date = new Date()): Quote {
     const p = this.params;
     const dt = D(this.spec.tickIntervalMs).mul(p.timeScale).div(MS_PER_YEAR);
-    const sigma = p.volatility.mul(this.overrides.volMultiplier);
+    const sigma = p.volatility.mul(this.overrides.volMultiplier).mul(this.boostFactor(now.getTime()));
     const mu = p.drift.plus(this.overrides.driftOverride);
     const theta = (p.meanReversionTarget ?? this.spec.initialPrice).ln();
 

@@ -84,7 +84,9 @@
       "long": "🚀 做多 {{code}} · {{lev}}x",
       "short": "📉 做空 {{code}} · {{lev}}x"
     },
-    "highLevWarn": "赌狗模式！跳空行情下亏损可能超过保证金并倒扣本金"
+    "highLevWarn": "赌狗模式！跳空行情下亏损可能超过保证金并倒扣本金",
+    "impactPump": "大单拉盘 +{{pct}}%",
+    "impactDump": "大单砸盘 -{{pct}}%"
   },
   "position": {
     "title": "持仓",
@@ -130,7 +132,9 @@
     "liquidation": "🗡️ {{user}} 的 {{market}} {{leverage}}x 仓位被斩杀，损失 {{totalLoss}}",
     "deficit": "🩸 {{user}} 在 {{market}} 穿仓！倒欠 {{deficit}}，余额 {{balanceAfter}}",
     "bankruptcy": "⚰️ {{user}} 宣告破产，结束第 {{generation}} 世 ·「{{titleText}}」",
-    "marketEvent": "📰 {{market}}：{{headline}}（{{gapPct}}%）"
+    "marketEvent": "📰 {{market}}：{{headline}}（{{gapPct}}%）",
+    "whalePump": "🐋 {{user}} 大单拉盘！{{market}} 瞬间 +{{pct}}%（{{priceBefore}} → {{priceAfter}}）",
+    "whaleDump": "🐋 {{user}} 大单砸盘！{{market}} 瞬间 {{pct}}%（{{priceBefore}} → {{priceAfter}}）"
   },
   "danmaku": {
     "placeholder": "发条弹幕…",
@@ -246,7 +250,17 @@
     "danmaku": "弹幕显示",
     "redUp": "红涨绿跌",
     "volume": "音量",
-    "close": "完成"
+    "close": "完成",
+    "degen": {
+      "title": "解除杠杆限制（最高 200x）",
+      "hint": "连点 3 下解锁 · 风险自负",
+      "warn1": "确定吗？200 倍杠杆，价格动 0.5% 就爆仓",
+      "warn2": "最后一次！跳空穿仓会倒扣本金，没人救你",
+      "unlocked": "杠杆上限已解锁",
+      "unlockedHint": "各市场最高可开到入场不即爆的上限（≤ 200x）",
+      "relock": "重新上锁",
+      "unlockedToast": "🔓 杠杆封印已解除！祝你好运，赌狗"
+    }
   },
   "fx": {
     "liquidated": "斩 杀",

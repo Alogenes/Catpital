@@ -9,6 +9,7 @@ const KIND_STYLE: Record<BroadcastPayload['kind'], string> = {
   DEFICIT: 'text-blood',
   BANKRUPTCY: 'text-ink-300',
   MARKET_EVENT: 'text-candy-sky',
+  WHALE: 'text-candy-sky font-black',
 };
 
 /** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停 */

@@ -1,4 +1,4 @@
-import { type Decimal, ZERO } from '@catpital/shared';
+import { type Decimal, type ImpactQuote, type OrderSide, ZERO, impactQuote } from '@catpital/shared';
 import type { PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
 import { toDb, wire } from '../lib/dec.js';
@@ -11,6 +11,13 @@ import type { PriceSource, SourceOverrides } from './sources/PriceSource.js';
 
 const CANDLE_FLUSH_MS = 10_000;
 const LAST_PRICE_FLUSH_MS = 5_000;
+
+export interface ImpactConfig {
+  liquidity: Decimal;
+  cap: Decimal;
+  volBoost: Decimal;
+  decaySec: number;
+}
 
 type Logger = { error: (obj: unknown, msg?: string) => void; warn: (obj: unknown, msg?: string) => void };
 
@@ -39,7 +46,29 @@ export class MarketEngine {
       log: Logger;
       clock?: () => Date;
     },
+    /** 大单冲击参数；未配置或 cap = 0 时不产生冲击（外部行情市场永远不冲击） */
+    private readonly impact?: ImpactConfig,
   ) {}
+
+  /** 冲击报价（不改变任何状态）：返回 null 表示该市场不受玩家大单影响 */
+  impactQuote(notional: Decimal, side: OrderSide): ImpactQuote | null {
+    const cfg = this.impact;
+    if (!cfg || this.source.kind !== 'PROCEDURAL' || cfg.cap.lte(0) || cfg.liquidity.lte(0)) return null;
+    const q = impactQuote(this.source.current(), notional, side, cfg, this.market.tickSize);
+    return q.pct.isZero() ? null : q;
+  }
+
+  /**
+   * 落实冲击：价格跳到冲击后价格、短暂放大波动率，并立刻按新价格跑一遍 K 线与风控
+   * （大户砸盘可以把别人的多单打爆）。必须在本市场串行队列内调用（成交之后）。
+   */
+  async commitImpact(q: ImpactQuote, volume: Decimal): Promise<Decimal> {
+    const now = this.now();
+    const after = this.source.applyGap(q.pct, now, 0);
+    if (this.impact && this.impact.volBoost.gt(1)) this.source.boostVolatility?.(this.impact.volBoost, this.impact.decaySec * 1000, now);
+    await this.processPrice(after, volume, now, {});
+    return after;
+  }
 
   private now() {
     return this.deps.clock?.() ?? new Date();

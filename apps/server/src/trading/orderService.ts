@@ -1,5 +1,8 @@
 import {
+  D,
   type Decimal,
+  type ImpactQuote,
+  maxSafeLeverage,
   type OrderSide,
   ONE,
   addMargin as addMarginCalc,
@@ -22,7 +25,17 @@ export interface MarketDirectory {
   get(marketId: string): MarketSnapshot | undefined;
   byCode(code: string): MarketSnapshot | undefined;
   price(marketId: string): Decimal | undefined;
+  /** 大单冲击（仅程序随机市场的引擎实现） */
+  engine?(marketId: string): ImpactEngine | undefined;
 }
+
+export interface ImpactEngine {
+  impactQuote(notional: Decimal, side: OrderSide): ImpactQuote | null;
+  commitImpact(q: ImpactQuote, volume: Decimal): Promise<Decimal>;
+}
+
+/** 冲击 ≥ 0.5% 时全服播报「大户拉盘 / 砸盘」 */
+const WHALE_BROADCAST_PCT = D('0.005');
 
 export interface PlaceOrderInput {
   market: string;
@@ -71,10 +84,21 @@ export class OrderService {
     return p;
   }
 
-  private validate(m: MarketSnapshot, input: PlaceOrderInput, refPrice: Decimal) {
+  /**
+   * 杠杆上限：默认为市场配置；玩家在设置里解锁后提升到 min(200, 安全上限)。
+   * 安全上限保证 1/L > 维持保证金率，否则开仓瞬间就在斩杀线上。
+   */
+  private async leverageCap(userId: string, m: MarketSnapshot, requested: Decimal): Promise<Decimal> {
+    if (requested.lte(m.maxLeverage)) return m.maxLeverage;
+    const user = await this.db.user.findUnique({ where: { id: userId }, select: { settings: true } });
+    const unlocked = Boolean((user?.settings as { degenUnlock?: boolean } | null)?.degenUnlock);
+    return unlocked ? D(maxSafeLeverage(m.maintenanceMarginRate)) : m.maxLeverage;
+  }
+
+  private validate(m: MarketSnapshot, input: PlaceOrderInput, refPrice: Decimal, maxLeverage: Decimal) {
     if (m.status !== 'ACTIVE') throw new TradeError('error.marketHalted');
     if (input.quantity.lte(0) || !isMultipleOf(input.quantity, m.lotSize)) throw new TradeError('error.invalidQuantity');
-    if (input.leverage.lt(ONE) || input.leverage.gt(m.maxLeverage)) throw new TradeError('error.invalidLeverage');
+    if (input.leverage.lt(ONE) || input.leverage.gt(maxLeverage)) throw new TradeError('error.invalidLeverage');
     if (input.type === 'LIMIT') {
       if (!input.limitPrice || input.limitPrice.lte(0) || !isMultipleOf(input.limitPrice, m.tickSize)) {
         throw new TradeError('error.invalidPrice');
@@ -99,7 +123,7 @@ export class OrderService {
       if (dup) return { kind: 'duplicate', order: dup };
     }
     const last = this.lastPrice(m);
-    this.validate(m, input, input.type === 'LIMIT' ? input.limitPrice! : last);
+    this.validate(m, input, input.type === 'LIMIT' ? input.limitPrice! : last, await this.leverageCap(userId, m, input.leverage));
 
     return this.queue.run(m.id, async () => {
       const now = this.clock();
@@ -111,12 +135,22 @@ export class OrderService {
 
       if (marketable) {
         if (!open) throw new TradeError('error.marketClosed');
+        // 大单冲击：成交价落在冲击中点；可成交的限价单若中点越过限价，则不产生冲击
+        const engine = this.markets.engine?.(m.id);
+        let quote = engine?.impactQuote(input.quantity.mul(price), input.side) ?? null;
+        if (
+          quote &&
+          input.type === 'LIMIT' &&
+          (input.side === 'BUY' ? quote.fillPrice.gt(input.limitPrice!) : quote.fillPrice.lt(input.limitPrice!))
+        ) {
+          quote = null;
+        }
         const out = await this.executor.executeFill({
           userId,
           market: m,
           side: input.side,
           quantity: input.quantity,
-          price,
+          price: quote?.fillPrice ?? price,
           leverage: input.leverage,
           reduceOnly: input.reduceOnly ?? false,
           liquidity: 'TAKER',
@@ -128,6 +162,25 @@ export class OrderService {
           enforceMinNotional: true,
         });
         await this.risk.afterFill(out, m);
+        // 只有玩家自己的市价成交会推动价格；TP/SL/强平不产生冲击，避免无限连锁
+        if (out.status === 'FILLED' && quote && engine) {
+          const filledQty = out.fill!.closedQuantity.plus(out.fill!.openedQuantity);
+          const after = await engine.commitImpact(quote, filledQty);
+          if (quote.pct.abs().gte(WHALE_BROADCAST_PCT)) {
+            const pump = quote.pct.gt(0);
+            await this.notifier.broadcast(
+              'WHALE',
+              pump ? 'broadcast.whalePump' : 'broadcast.whaleDump',
+              {
+                market: m.code,
+                pct: quote.pct.mul(100).toDecimalPlaces(2).toFixed(),
+                priceBefore: price.toFixed(),
+                priceAfter: after.toFixed(),
+              },
+              { userId, marketId: m.id, market: m.code },
+            );
+          }
+        }
         return this.toResult(out);
       }
       const order = await this.restLimitOrder(userId, m, input, now);

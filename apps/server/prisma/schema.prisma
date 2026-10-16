@@ -140,6 +140,7 @@ enum BroadcastKind {
   DEFICIT // 穿仓负债
   BANKRUPTCY
   MARKET_EVENT
+  WHALE // 大单拉盘/砸盘
 }
 
 enum TransferDirection {
@@ -360,6 +361,14 @@ model MarketEngineConfig {
   timeScale           Decimal   @default(1) @db.Decimal(36, 8)
   /// 价格下限保护（避免 GBM 数值退化到 0）
   priceFloor          Decimal   @db.Decimal(36, 8)
+  // ---- 大单冲击（Price Impact）：玩家市价单按名义价值推动价格；impactCap = 0 表示关闭 ----
+  /// 流动性池：名义价值 / 流动性池 = 冲击比例
+  impactLiquidity     Decimal   @default(0) @db.Decimal(36, 8)
+  /// 单笔冲击上限（0.01 = ±1%）
+  impactCap           Decimal   @default(0) @db.Decimal(36, 8)
+  /// 冲击后短暂的波动率放大倍数，线性衰减
+  impactVolBoost      Decimal   @default(1) @db.Decimal(36, 8)
+  impactDecaySec      Int       @default(20)
   // ---- 运行时覆盖（由定时事件写入，事件结束复原）----
   driftOverride       Decimal   @default(0) @db.Decimal(36, 8)
   volMultiplier       Decimal   @default(1) @db.Decimal(36, 8)

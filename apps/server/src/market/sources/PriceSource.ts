@@ -30,4 +30,6 @@ export interface PriceSource {
    */
   applyGap(gapPercent: Decimal, now: Date, durationSec: number): Decimal;
   setOverrides(overrides: SourceOverrides): void;
+  /** 大单冲击后短暂放大波动率（multiplier 在 durationMs 内线性衰减回 1）；外部行情源不实现 */
+  boostVolatility?(multiplier: Decimal, durationMs: number, now: Date): void;
 }

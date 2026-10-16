@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { D, applyFill } from '@catpital/shared';
+import { D, applyFill, impactQuote } from '@catpital/shared';
 import { LaneAllocator } from '../src/lib/danmakuLanes';
 import { budgetForPct, leveragePresets, leverageTier, sizeFromBudget } from '../src/lib/orderSizing';
 import { interpolate } from '../src/lib/rolling';
@@ -51,6 +51,15 @@ describe('margin-based order sizing', () => {
       const q = sizeFromBudget({ budget, price, leverage: lev, feeRate: D('0.0008'), lotSize: D(lot) });
       if (q.isZero()) continue;
       expect(fill(q.toFixed(), price.toFixed(), lev.toFixed(), '0.0008').requiredFunds.lte(budget)).toBe(true);
+    }
+  });
+
+  it('with whale impact, ALL IN still fits the budget at the impacted fill price', () => {
+    const impact = { liquidity: D(1_000_000), cap: D('0.01') };
+    for (const [budget, lev] of [['5000', 50], ['10000', 199], ['87.52', 25], ['100000', 10]] as const) {
+      const q = sizeFromBudget({ budget: D(budget), price: D(100), leverage: D(lev), feeRate: D('0.001'), lotSize: D('0.01'), impact });
+      const quote = impactQuote(D(100), q.mul(100), 'BUY', impact, D('0.01'));
+      expect(fill(q.toFixed(), quote.fillPrice.toFixed(), String(lev), '0.001').requiredFunds.lte(budget)).toBe(true);
     }
   });
 

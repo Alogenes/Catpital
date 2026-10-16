@@ -1,4 +1,4 @@
-import { D, type Decimal, type PositionView, applyFill } from '@catpital/shared';
+import { D, type Decimal, type PositionView, applyFill, impactQuote } from '@catpital/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,6 +17,7 @@ import { sound } from '../../lib/sound';
 import { useFeed } from '../../stores/feed';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
+import { useSettings } from '../../stores/settings';
 import { useTradePreview } from '../../stores/tradePreview';
 
 type Side = 'BUY' | 'SELL';
@@ -45,7 +46,10 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
   const last = useMarkets((s) => s.prices[market.code]?.price ?? market.price);
   const toast = useFeed((s) => s.toast);
 
-  const maxLev = Math.max(1, D(market.maxLeverage).floor().toNumber());
+  const degenUnlock = useSettings((s) => s.degenUnlock);
+  // 设置里解锁后上限提升到 min(200, 安全上限)（服务端同样校验）
+  const baseMaxLev = Math.max(1, D(market.maxLeverage).floor().toNumber());
+  const maxLev = degenUnlock ? Math.max(baseMaxLev, market.unlockMaxLeverage) : baseMaxLev;
   const leverage = Math.min(lev, maxLev);
   const tier = leverageTier(leverage);
   const tierColor = TIER_COLOR[tier];
@@ -56,6 +60,8 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
   const refPrice: Decimal = limitPx ?? D(last);
   const feeRate = D(limitOn ? market.makerFeeRate : market.takerFeeRate);
   const risk = { maintenanceMarginRate: D(market.maintenanceMarginRate), tickSize: D(market.tickSize) };
+  // 大单冲击只作用于市价单（限价单按挂单价成交，不推动价格）
+  const impact = !limitOn && market.impact ? { liquidity: D(market.impact.liquidity), cap: D(market.impact.cap) } : null;
 
   const sizing = useMemo(() => {
     if (!budget || budget.lte(0)) return null;
@@ -66,19 +72,25 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
       feeRate,
       lotSize: D(market.lotSize),
       buffer: limitOn ? undefined : MARKET_PRICE_BUFFER,
+      impact,
     });
-    if (quantity.lte(0)) return { quantity, fill: null };
+    if (quantity.lte(0)) return { quantity, fill: null, quote: null };
+    // 大单冲击：预估成交价（冲击中点）与冲击后价格，与后端同一份公式
+    const quote = impact ? impactQuote(refPrice, quantity.mul(refPrice), side, impact, D(market.tickSize)) : null;
+    const fillPrice = quote ? quote.fillPrice : refPrice;
     // 与后端同一份公式：合并/抵扣后的保证金、手续费、斩杀线
     const fill = applyFill(
       toState(position),
-      { orderSide: side, quantity, price: refPrice, leverage: D(leverage), feeRate, reduceOnly: false },
+      { orderSide: side, quantity, price: fillPrice, leverage: D(leverage), feeRate, reduceOnly: false },
       risk,
     );
-    return { quantity, fill };
+    return { quantity, fill, quote };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount, refPrice.toFixed(), leverage, side, limitOn, position, market.code]);
 
-  const notional = sizing?.fill ? sizing.quantity.mul(refPrice) : null;
+  const notional = sizing?.fill ? sizing.quantity.mul(sizing.quote?.fillPrice ?? refPrice) : null;
+  // 冲击 ≥ 0.01% 才提示，避免小单也显示"拉盘 +0.00%"
+  const impactPctShown = sizing?.quote && sizing.quote.pct.abs().gte('0.0001') ? sizing.quote.pct : null;
   const liq = sizing?.fill?.position?.liquidationPrice ?? null;
 
   // 把预估斩杀线同步给 K 线图（1x 多单斩杀线为 0 → 不画）
@@ -279,6 +291,14 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
           {sizing?.fill && (
             <span className="text-[10px] text-ink-500">
               {t('order.feeHint', { fee: fmt(sizing.fill.totalFee, 4), qty: fmt(sizing.quantity, decimalsOf(market.lotSize)) })}
+            </span>
+          )}
+          {impactPctShown && (
+            <span
+              className={`mt-0.5 rounded-full px-1.5 text-[10px] font-extrabold ${impactPctShown.gt(0) ? 'bg-up/15 text-up' : 'bg-down/15 text-down'} ${impactPctShown.abs().gte('0.005') ? 'animate-wiggle' : ''}`}
+              data-testid="preview-impact"
+            >
+              🐋 {t(impactPctShown.gt(0) ? 'order.impactPump' : 'order.impactDump', { pct: fmt(impactPctShown.abs().mul(100), 2) })}
             </span>
           )}
         </PreviewCard>

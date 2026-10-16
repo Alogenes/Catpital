@@ -15,13 +15,15 @@ export interface Settings {
   /** 红涨绿跌（中文默认开启） */
   redUp: boolean;
   volume: number;
+  /** 解除杠杆限制（最高 200x，受各市场安全上限约束；服务端同样校验） */
+  degenUnlock: boolean;
   /** 以下仅本地 */
   chartType: ChartType;
   interval: Interval;
 }
 
 const STORAGE_KEY = 'catpital.settings.v1';
-const CLOUD_KEYS = ['lang', 'vfx', 'bgm', 'sfx', 'danmaku', 'redUp', 'volume'] as const;
+const CLOUD_KEYS = ['lang', 'vfx', 'bgm', 'sfx', 'danmaku', 'redUp', 'volume', 'degenUnlock'] as const;
 
 function readLocal(): Partial<Settings> {
   try {
@@ -41,7 +43,7 @@ function writeLocal(s: Settings) {
 
 function defaults(): Settings {
   const lang = detectLanguage();
-  return { lang, vfx: true, bgm: false, sfx: true, danmaku: true, redUp: lang.startsWith('zh'), volume: 70, chartType: 'candle', interval: 'M1' };
+  return { lang, vfx: true, bgm: false, sfx: true, danmaku: true, redUp: lang.startsWith('zh'), volume: 70, degenUnlock: false, chartType: 'candle', interval: 'M1' };
 }
 
 /** 把设置作用到运行时：语言、涨跌色、音频 */
@@ -76,6 +78,11 @@ export const useSettings = create<SettingsStore>()((set, get) => {
       const cloudPatch = Object.fromEntries(CLOUD_KEYS.filter((k) => k in patch).map((k) => [k, next[k]]));
       if (Object.keys(cloudPatch).length === 0) return;
       if (syncTimer) clearTimeout(syncTimer);
+      // 杠杆解锁会被服务端下单校验读取，必须立即同步；其余偏好防抖
+      if ('degenUnlock' in patch) {
+        void api.put('/me/settings', cloudPatch).catch(() => {});
+        return;
+      }
       syncTimer = setTimeout(() => void api.put('/me/settings', cloudPatch).catch(() => {}), 800);
     },
     hydrateFromCloud(cloud) {

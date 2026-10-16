@@ -1,3 +1,4 @@
+import { maxSafeLeverage } from '@catpital/shared';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Core } from '../../app.js';
 import { fromDb, wire, wireOpt } from '../../lib/dec.js';
@@ -9,7 +10,11 @@ export const marketRoutes =
   (core: Core): FastifyPluginAsync =>
   async (app) => {
     app.get('/', async () => {
-      const rows = await core.db.market.findMany({ where: { status: { not: 'DELISTED' } }, orderBy: { sortOrder: 'asc' } });
+      const rows = await core.db.market.findMany({
+        where: { status: { not: 'DELISTED' } },
+        orderBy: { sortOrder: 'asc' },
+        include: { engineConfig: true },
+      });
       const now = new Date();
       return rows.map((m) => ({
         code: m.code,
@@ -30,6 +35,13 @@ export const marketRoutes =
         makerFeeRate: wire(fromDb(m.makerFeeRate)),
         takerFeeRate: wire(fromDb(m.takerFeeRate)),
         liquidationFeeRate: wire(fromDb(m.liquidationFeeRate)),
+        /** 设置里解锁后的杠杆上限（保证入场不即刻强平） */
+        unlockMaxLeverage: maxSafeLeverage(fromDb(m.maintenanceMarginRate)),
+        /** 大单冲击参数（外部行情市场为 null） */
+        impact:
+          m.dataSource === 'PROCEDURAL' && m.engineConfig && fromDb(m.engineConfig.impactCap).gt(0)
+            ? { liquidity: wire(fromDb(m.engineConfig.impactLiquidity)), cap: wire(fromDb(m.engineConfig.impactCap)) }
+            : null,
       }));
     });
 

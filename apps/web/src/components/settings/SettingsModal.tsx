@@ -3,6 +3,7 @@ import { LANGUAGES } from '../../i18n';
 import { sound } from '../../lib/sound';
 import { type Settings, useSettings } from '../../stores/settings';
 import { Modal } from '../common/Modal';
+import { DegenUnlock } from './DegenUnlock';
 
 function Toggle({ label, checked, onChange, testId }: { label: string; checked: boolean; onChange: (v: boolean) => void; testId?: string }) {
   return (
@@ -58,6 +59,9 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
           {toggles.map(([key, label]) => (
             <Toggle key={key} label={t(label)} checked={Boolean(s[key])} onChange={(v) => s.update({ [key]: v })} testId={`toggle-${key}`} />
           ))}
+        </div>
+        <div className="py-2.5">
+          <DegenUnlock />
         </div>
         <label className="flex items-center justify-between gap-4 py-2.5">
           <span className="text-sm">{t('settings.volume')}</span>

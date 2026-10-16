@@ -84,7 +84,9 @@
       "long": "🚀 Long {{code}} · {{lev}}x",
       "short": "📉 Short {{code}} · {{lev}}x"
     },
-    "highLevWarn": "DEGEN mode! A price gap can wipe out more than your margin and eat into your balance"
+    "highLevWarn": "DEGEN mode! A price gap can wipe out more than your margin and eat into your balance",
+    "impactPump": "Whale pump +{{pct}}%",
+    "impactDump": "Whale dump -{{pct}}%"
   },
   "position": {
     "title": "Positions",
@@ -130,7 +132,9 @@
     "liquidation": "🗡️ {{user}}'s {{leverage}}x {{market}} position got liquidated, lost {{totalLoss}}",
     "deficit": "🩸 {{user}} blew through margin on {{market}}! Owes {{deficit}}, balance {{balanceAfter}}",
     "bankruptcy": "⚰️ {{user}} declared bankruptcy, ending life #{{generation}} · \"{{titleText}}\"",
-    "marketEvent": "📰 {{market}}: {{headline}} ({{gapPct}}%)"
+    "marketEvent": "📰 {{market}}: {{headline}} ({{gapPct}}%)",
+    "whalePump": "🐋 {{user}} pumped {{market}} by +{{pct}}% in one order ({{priceBefore}} → {{priceAfter}})",
+    "whaleDump": "🐋 {{user}} dumped {{market}} by {{pct}}% in one order ({{priceBefore}} → {{priceAfter}})"
   },
   "danmaku": {
     "placeholder": "Say something…",
@@ -246,7 +250,17 @@
     "danmaku": "Bullet chat",
     "redUp": "Red = up",
     "volume": "Volume",
-    "close": "Done"
+    "close": "Done",
+    "degen": {
+      "title": "Unlock leverage (up to 200x)",
+      "hint": "Tap 3 times to unlock · at your own risk",
+      "warn1": "Sure? At 200x a 0.5% move wipes you out",
+      "warn2": "Last chance! Gaps will put your balance into debt",
+      "unlocked": "Leverage limit unlocked",
+      "unlockedHint": "Each market goes up to the highest leverage that is not liquidated on entry (≤ 200x)",
+      "relock": "Re-lock",
+      "unlockedToast": "🔓 Leverage seal broken! Good luck, degen"
+    }
   },
   "fx": {
     "liquidated": "LIQUIDATED",

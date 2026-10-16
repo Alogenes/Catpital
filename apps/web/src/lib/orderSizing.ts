@@ -1,4 +1,4 @@
-import { D, Decimal, ONE, ZERO, maxOpenQuantity } from '@catpital/shared';
+import { D, Decimal, type ImpactParams, ONE, ZERO, impactPct, maxOpenQuantity } from '@catpital/shared';
 
 /**
  * "按投入本金下单"：玩家输入愿意花的钱（保证金 + 手续费），由这里换算成合约数量。
@@ -15,10 +15,17 @@ export function sizeFromBudget(args: {
   feeRate: Decimal;
   lotSize: Decimal;
   buffer?: Decimal;
+  /** 大单冲击参数：成交价会偏离到冲击中点，需要把这部分滑点也算进去 */
+  impact?: ImpactParams | null;
 }): Decimal {
-  const { budget, price, leverage, feeRate, lotSize, buffer = ZERO } = args;
+  const { budget, price, leverage, feeRate, lotSize, buffer = ZERO, impact } = args;
   if (budget.lte(0) || price.lte(0)) return ZERO;
-  return maxOpenQuantity(budget, price.mul(ONE.plus(buffer)), leverage, feeRate, lotSize);
+  const size = (slip: Decimal) => maxOpenQuantity(budget, price.mul(ONE.plus(slip)), leverage, feeRate, lotSize);
+  const q0 = size(buffer);
+  if (!impact || q0.isZero()) return q0;
+  // 先按无冲击估一个数量，再按该数量的冲击中点重算：数量只会变小 → 冲击只会更小 → 结果安全
+  const halfImpact = impactPct(q0.mul(price), 'BUY', impact).div(2);
+  return size(buffer.plus(halfImpact));
 }
 
 /** 25% / 50% / 75% / 梭哈：按可用余额的比例，向下取到 0.01 */
@@ -45,7 +52,7 @@ export const TIER_COLOR: Record<LeverageTier, string> = {
 
 /** 杠杆快捷档位：常用档 ∩ [1, 最大杠杆]，并保证最大值本身在列表里 */
 export function leveragePresets(max: number): number[] {
-  const presets = [1, 5, 10, 25, 50, 100].filter((v) => v <= max);
+  const presets = [1, 5, 10, 25, 50, 100, 150, 200].filter((v) => v <= max);
   if (!presets.includes(max)) presets.push(max);
   return presets;
 }

@@ -6,6 +6,9 @@ import {
   bankruptcySettlement,
   canDeclareBankruptcy,
   checkTrigger,
+  impactPct,
+  impactQuote,
+  maxSafeLeverage,
   liquidationPrice,
   netWorth,
   periodReturn,
@@ -179,5 +182,35 @@ describe('公式 4：防刷收益率 (Modified Dietz)', () => {
     });
     expect(r.eligible).toBe(false);
     expect(r.returnPct).toBeNull();
+  });
+});
+
+describe('大单冲击 & 解锁杠杆', () => {
+  const p = { liquidity: D(1_000_000), cap: D('0.01') };
+  it('linear impact, capped, signed by side', () => {
+    expect(impactPct(D(5000), 'BUY', p).toFixed()).toBe('0.005');
+    expect(impactPct(D(5000), 'SELL', p).toFixed()).toBe('-0.005');
+    expect(impactPct(D(50_000), 'BUY', p).toFixed()).toBe('0.01');
+    expect(impactPct(D(50_000), 'BUY', { liquidity: D(0), cap: D('0.01') }).toFixed()).toBe('0');
+  });
+  it('fills at the midpoint, price moves the full impact', () => {
+    const q = impactQuote(D(100), D(10_000), 'BUY', p, D('0.01'));
+    expect([q.fillPrice.toFixed(), q.newPrice.toFixed()]).toEqual(['100.5', '101']);
+    const s = impactQuote(D(100), D(10_000), 'SELL', p, D('0.01'));
+    expect([s.fillPrice.toFixed(), s.newPrice.toFixed()]).toEqual(['99.5', '99']);
+  });
+  it('pump-and-dump round trip is never profitable', () => {
+    // 买 100 股 @100 → 价格 101；立刻卖 100 股 @101 → 成交 100.495，价格回到 99.99
+    const buy = impactQuote(D(100), D(10_000), 'BUY', p, D('0.001'));
+    const sell = impactQuote(buy.newPrice, buy.newPrice.mul(100), 'SELL', p, D('0.001'));
+    expect(sell.fillPrice.lte(buy.fillPrice)).toBe(true);
+  });
+  it('max safe leverage stays below instant liquidation', () => {
+    expect(maxSafeLeverage(D('0.005'))).toBe(199);
+    expect(maxSafeLeverage(D('0.004'))).toBe(200);
+    expect(maxSafeLeverage(D('0.01'))).toBe(99);
+    // 199x 的斩杀线必须低于入场价
+    const liq = liquidationPrice({ side: 'LONG', quantity: D(1), entryPrice: D(100), margin: D(100).div(199) }, { maintenanceMarginRate: D('0.005'), tickSize: D('0.0001') });
+    expect(liq.lt(100)).toBe(true);
   });
 });

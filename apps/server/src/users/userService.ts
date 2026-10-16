@@ -20,6 +20,8 @@ export const userSettingsSchema = z.object({
   danmaku: z.boolean().optional(),
   /** true = 红涨绿跌（中国习惯），false = 绿涨红跌 */
   redUp: z.boolean().optional(),
+  /** 解除杠杆限制（最高 200x，受各市场安全上限约束） */
+  degenUnlock: z.boolean().optional(),
   volume: z.number().int().min(0).max(100).optional(),
 });
 export type UserSettings = z.infer<typeof userSettingsSchema>;

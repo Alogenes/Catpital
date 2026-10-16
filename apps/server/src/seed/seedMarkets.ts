@@ -38,6 +38,10 @@ export const marketSeedSchema = z.object({
       volumeVolCoupling: dec.default('1'),
       timeScale: dec.default('1'),
       priceFloor: dec,
+      impactLiquidity: dec.optional(),
+      impactCap: dec.optional(),
+      impactVolBoost: dec.optional(),
+      impactDecaySec: z.number().int().min(0).optional(),
     })
     .optional(),
 });
