@@ -69,7 +69,7 @@ export class UserService {
         },
       });
       const wallet = await lockWallet(tx, user.id);
-      await postLedger(tx, wallet, life.id, [{ type: 'INITIAL_GRANT', amount: grant, idempotencyKey: `grant:${user.id}` }]);
+      await postLedger(tx, wallet, life.id, [{ type: 'INITIAL_GRANT', amount: grant, idempotencyKey: `grant:${user.id}` }], now);
       return user;
     });
   }

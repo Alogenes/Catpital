@@ -5,7 +5,11 @@ import { sound } from '../../lib/sound';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 
-/** 市场切换条：最新价、涨跌幅、休市状态、是否持仓 */
+/** 市场吉祥物（未知代码按类型兜底） */
+const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FISH: '🐟', BTC: '🪙' };
+export const mascotOf = (code: string, kind?: string) => MASCOT[code] ?? (kind === 'CRYPTO' ? '💎' : '📈');
+
+/** 市场切换卡片：吉祥物、最新价、涨跌幅、是否持仓 */
 export function MarketTabs() {
   const { i18n } = useTranslation();
   const list = useMarkets((s) => s.list);
@@ -15,12 +19,13 @@ export function MarketTabs() {
   const positions = useSession((s) => s.positions);
 
   return (
-    <nav className="flex gap-1.5 overflow-x-auto pb-1" data-testid="market-tabs">
+    <nav className="flex max-w-full shrink-0 gap-2 overflow-x-auto px-0.5 pb-1.5 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-testid="market-tabs">
       {list.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);
         const active = m.code === selected;
         const pos = positions[m.code];
+        const closed = !m.open || m.status !== 'ACTIVE';
         return (
           <button
             key={m.code}
@@ -28,18 +33,24 @@ export function MarketTabs() {
               sound.play('click');
               select(m.code);
             }}
-            className={`relative flex min-w-[124px] shrink-0 flex-col rounded-lg border px-3 py-1.5 text-left transition-colors ${
-              active ? 'border-accent/70 bg-accent/10' : 'border-ink-800 bg-ink-900 hover:border-ink-600'
-            } ${!m.open || m.status !== 'ACTIVE' ? 'opacity-60' : ''}`}
+            className={`relative flex w-[136px] shrink-0 items-center gap-2 overflow-hidden rounded-2xl border-2 px-2.5 py-2 text-left transition-all ${
+              active
+                ? '-translate-y-0.5 border-candy-grape bg-candy-grape/15 shadow-[0_5px_0_0_#6b4bc4]'
+                : 'border-ink-700/70 bg-ink-900/85 shadow-[0_4px_0_0_rgba(10,6,22,0.6)] hover:border-ink-500'
+            } ${closed ? 'opacity-60' : ''}`}
           >
-            <span className="flex items-center gap-1.5 text-sm font-semibold">
-              {m.code}
-              {pos && <span className={`h-1.5 w-1.5 rounded-full ${pos.side === 'LONG' ? 'bg-up' : 'bg-down'}`} />}
-            </span>
-            <span className="truncate text-[11px] text-ink-400">{m.nameI18n[i18n.language] ?? m.name}</span>
-            <span className="flex items-baseline justify-between gap-2 font-mono text-xs tabular-nums">
-              <span>{fmt(price, decimalsOf(m.tickSize))}</span>
-              <span className={change.gte(0) ? 'text-up' : 'text-down'}>{fmtPct(change)}</span>
+            <span className={`text-2xl ${active ? 'animate-bob' : ''}`}>{mascotOf(m.code, m.kind)}</span>
+            <span className="min-w-0 flex-1">
+              <span className="flex items-center gap-1 text-sm font-extrabold">
+                {m.code}
+                {pos && <span className={`h-2 w-2 rounded-full ${pos.side === 'LONG' ? 'bg-up' : 'bg-down'}`} title={pos.side} />}
+                {closed && <span className="text-[10px]">💤</span>}
+              </span>
+              <span className="block truncate text-[10px] text-ink-400">{m.nameI18n[i18n.language] ?? m.name}</span>
+              <span className="flex items-baseline justify-between gap-1 font-mono text-[11px] tabular-nums">
+                <span>{fmt(price, Math.min(decimalsOf(m.tickSize), 4))}</span>
+                <span className={change.gte(0) ? 'text-up' : 'text-down'}>{fmtPct(change, 1)}</span>
+              </span>
             </span>
           </button>
         );

@@ -1,3 +1,4 @@
+import type { BroadcastPayload } from '@catpital/shared';
 import type { BankruptcyResume, Order } from '@prisma/client';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
@@ -72,6 +73,44 @@ export const tradeRoutes =
     app.get<{ Params: { userId: string } }>('/users/:userId/resumes', async (req) => {
       const rows = await core.db.bankruptcyResume.findMany({ where: { userId: req.params.userId }, orderBy: { generation: 'desc' }, take: 50 });
       return rows.map(resumeView);
+    });
+
+    /** 实时榜单（当前周期）。带登录态时额外返回查看者自己的名次 */
+    app.get('/leaderboard', async (req) => {
+      const q = z
+        .object({
+          period: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('DAILY'),
+          board: z.enum(['RETURN_PCT', 'NET_WORTH']).default('RETURN_PCT'),
+          limit: z.coerce.number().int().min(1).max(100).default(20),
+        })
+        .parse(req.query);
+      let viewer: string | undefined;
+      if (req.headers.authorization) {
+        try {
+          viewer = (await req.jwtVerify<{ sub: string }>()).sub;
+        } catch {
+          /* 未登录也能看榜 */
+        }
+      }
+      return core.leaderboard.board(q.period, q.board, viewer, q.limit);
+    });
+
+    /** 最近的全服播报（前端跑马灯首屏数据；之后由 WS broadcast 频道实时追加） */
+    app.get('/broadcasts', async (req): Promise<BroadcastPayload[]> => {
+      const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(50).default(20) }).parse(req.query);
+      const rows = await core.db.broadcast.findMany({ orderBy: { createdAt: 'desc' }, take: limit });
+      return rows.map((r) => {
+        const p = r.payload as { i18nKey: string; vars: Record<string, string | number> };
+        return {
+          id: r.id,
+          kind: r.kind,
+          i18nKey: p.i18nKey,
+          vars: p.vars,
+          userId: r.userId ?? undefined,
+          market: r.marketId ? core.markets.get(r.marketId)?.code : undefined,
+          ts: r.createdAt.getTime(),
+        };
+      });
     });
 
     await app.register(async (authed) => {

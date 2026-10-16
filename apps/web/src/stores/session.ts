@@ -35,6 +35,12 @@ interface SessionStore {
   bankruptcyAvailable: boolean;
   /** 要展示的履历（破产后弹出） */
   resume: ResumeView | null;
+  /**
+   * 最近一次结算的盈亏（平仓净盈亏 / 强平总损失的负数）。
+   * 逐仓下"亏损平仓"时可用余额其实是增加的（保证金退回），所以钱包动效要靠它判断盈亏方向和飘字金额。
+   */
+  settlement: { id: number; amount: string; kind: 'close' | 'liquidation'; at: number } | null;
+  noteSettlement(amount: string, kind: 'close' | 'liquidation'): void;
 
   setStatus(status: SessionStore['status'], error?: string | null): void;
   hydrate(me: MeResponse, embedded: boolean): void;
@@ -58,7 +64,11 @@ export const useSession = create<SessionStore>()((set) => ({
   orders: [],
   bankruptcyAvailable: false,
   resume: null,
+  settlement: null,
 
+  noteSettlement(amount, kind) {
+    set((s) => ({ settlement: { id: (s.settlement?.id ?? 0) + 1, amount, kind, at: Date.now() } }));
+  },
   setStatus(status, error = null) {
     set({ status, error });
   },

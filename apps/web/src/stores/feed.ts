@@ -18,6 +18,9 @@ export interface Toast {
 
 interface FeedStore {
   banners: BroadcastPayload[];
+  /** 最近的全服播报（跑马灯用，新的在前） */
+  history: BroadcastPayload[];
+  setHistory(list: BroadcastPayload[]): void;
   fx: FxEvent | null;
   toasts: Toast[];
   danmaku: DanmakuPayload[];
@@ -29,17 +32,26 @@ interface FeedStore {
   dismissToast(id: number): void;
   pushDanmaku(d: DanmakuPayload): void;
   consumeDanmaku(): DanmakuPayload[];
+  /** 切换股市时清空尚未上屏的弹幕队列 */
+  clearDanmaku(): void;
 }
 
 let seq = 1;
 
 export const useFeed = create<FeedStore>()((set, get) => ({
   banners: [],
+  history: [],
   fx: null,
   toasts: [],
   danmaku: [],
+  setHistory(list) {
+    set({ history: list.slice(0, 20) });
+  },
   pushBanner(b) {
-    set((s) => (s.banners.some((x) => x.id === b.id) ? s : { banners: [...s.banners, b].slice(-20) }));
+    set((s) => ({
+      banners: s.banners.some((x) => x.id === b.id) ? s.banners : [...s.banners, b].slice(-20),
+      history: s.history.some((x) => x.id === b.id) ? s.history : [b, ...s.history].slice(0, 20),
+    }));
   },
   shiftBanner() {
     set((s) => ({ banners: s.banners.slice(1) }));
@@ -69,5 +81,8 @@ export const useFeed = create<FeedStore>()((set, get) => ({
     const items = get().danmaku;
     if (items.length) set({ danmaku: [] });
     return items;
+  },
+  clearDanmaku() {
+    set({ danmaku: [] });
   },
 }));

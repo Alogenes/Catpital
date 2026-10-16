@@ -44,14 +44,14 @@ export function NewsFeed({ market }: { market: string }) {
   }, [market, setNews]);
 
   const items = news.filter((n) => n.market === market);
-  if (!items.length) return <p className="py-6 text-center text-sm text-ink-500">{t('market.noNews')}</p>;
+  if (!items.length) return <p className="py-6 text-center text-sm text-ink-500">📭 {t('market.noNews')}</p>;
   return (
     <ul className="space-y-2">
       {items.map((n) => {
         const loc = n.i18n[i18n.language];
         const up = !n.gapPercent.startsWith('-');
         return (
-          <li key={n.eventId} className="rounded-lg border border-ink-800 bg-ink-850 p-3">
+          <li key={n.eventId} className="rounded-2xl border border-ink-700/70 bg-ink-850/80 p-3">
             <div className="flex items-start justify-between gap-3">
               <h4 className="text-sm font-semibold">{loc?.headline ?? n.headline}</h4>
               <span className={`shrink-0 rounded px-1.5 py-0.5 font-mono text-xs ${up ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>{fmtPct(n.gapPercent)}</span>
@@ -64,5 +64,18 @@ export function NewsFeed({ market }: { market: string }) {
         );
       })}
     </ul>
+  );
+}
+
+/** 左下 Bento 卡片：当前市场的金融快讯 */
+export function NewsCard({ market, className = '' }: { market: string; className?: string }) {
+  const { t } = useTranslation();
+  return (
+    <section className={`bento flex min-h-0 flex-col p-3 ${className}`} data-testid="news-card">
+      <h3 className="mb-2 px-1 text-sm font-extrabold">📰 {t('market.news')}</h3>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">
+        <NewsFeed market={market} />
+      </div>
+    </section>
   );
 }

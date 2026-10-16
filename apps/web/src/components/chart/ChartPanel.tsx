@@ -6,6 +6,7 @@ import { decimalsOf, fmt, fmtPct } from '../../lib/format';
 import { focusMarket } from '../../realtime/bridge';
 import { useMarkets } from '../../stores/markets';
 import { type ChartType, type Interval, useSettings } from '../../stores/settings';
+import { mascotOf } from '../layout/MarketTabs';
 import { DanmakuInput } from '../social/DanmakuInput';
 import { DanmakuLayer } from './DanmakuLayer';
 import { PriceChart } from './PriceChart';
@@ -22,32 +23,37 @@ export function PriceTicker({ market }: { market: MarketInfo }) {
   const name = market.nameI18n[i18n.language] ?? market.name;
   const badge =
     market.status === 'HALTED'
-      ? ['bg-amber-500/15 text-amber-400', t('market.halted')]
+      ? ['bg-candy-sun/15 text-candy-sun', `⏸ ${t('market.halted')}`]
       : market.open
-        ? ['bg-up/15 text-up', t('market.open')]
-        : ['bg-ink-700 text-ink-400', t('market.closed')];
+        ? ['bg-candy-mint/15 text-candy-mint', `● ${t('market.open')}`]
+        : ['bg-ink-700 text-ink-400', `💤 ${t('market.closed')}`];
 
   return (
-    <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-      <span className="text-lg font-bold tracking-wide">{market.code}</span>
-      <span className="text-sm text-ink-400">{name}</span>
+    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+      <span className="flex items-center gap-1.5">
+        <span className="text-2xl">{mascotOf(market.code, market.kind)}</span>
+        <span className="leading-tight">
+          <span className="block text-base font-black tracking-wide">{market.code}</span>
+          <span className="block text-[11px] text-ink-400">{name}</span>
+        </span>
+      </span>
       <span
         key={p?.ts}
-        className={`rounded px-1 font-mono text-2xl font-semibold tabular-nums ${dir === 'up' ? 'animate-flashUp text-up' : dir === 'down' ? 'animate-flashDown text-down' : ''}`}
+        className={`rounded-xl px-1.5 font-mono text-2xl font-black tabular-nums ${dir === 'up' ? 'animate-flashUp text-up' : dir === 'down' ? 'animate-flashDown text-down' : ''}`}
         data-testid="last-price"
       >
         {fmt(price, decimalsOf(market.tickSize))}
       </span>
-      <span className={`font-mono text-sm tabular-nums ${change.gte(0) ? 'text-up' : 'text-down'}`}>
-        {fmtPct(change)} <span className="text-ink-500">{t('market.vsOpen')}</span>
+      <span className={`rounded-full px-2 py-0.5 font-mono text-xs font-bold tabular-nums ${change.gte(0) ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>
+        {fmtPct(change)}
       </span>
-      <span className={`rounded px-1.5 py-0.5 text-xs ${badge[0]}`}>{badge[1]}</span>
-      <span className="text-xs text-ink-500">{market.dataSource === 'LIVE_API' ? t('market.live') : t('market.sim')}</span>
+      <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${badge[0]}`}>{badge[1]}</span>
+      <span className="hidden text-[11px] text-ink-500 xl:inline">{market.dataSource === 'LIVE_API' ? `📡 ${t('market.live')}` : `🎲 ${t('market.sim')}`}</span>
     </div>
   );
 }
 
-export function ChartPanel({ market }: { market: MarketInfo }) {
+export function ChartPanel({ market, className = '' }: { market: MarketInfo; className?: string }) {
   const { t } = useTranslation();
   const interval = useSettings((s) => s.interval);
   const chartType = useSettings((s) => s.chartType);
@@ -58,21 +64,21 @@ export function ChartPanel({ market }: { market: MarketInfo }) {
   }, [market.code, interval]);
 
   const tab = (active: boolean) =>
-    `rounded px-2 py-1 text-xs transition-colors ${active ? 'bg-ink-700 text-ink-100' : 'text-ink-400 hover:text-ink-200'}`;
+    `rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${active ? 'bg-candy-grape text-white shadow-[0_2px_0_0_#6b4bc4]' : 'text-ink-400 hover:text-ink-100'}`;
 
   return (
-    <section className="flex min-h-0 flex-col rounded-xl border border-ink-800 bg-ink-900">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-ink-800 px-3 py-2">
+    <section className={`bento flex min-h-0 flex-col overflow-hidden ${className}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-1 pt-3">
         <PriceTicker market={market} />
-        <div className="flex items-center gap-3">
-          <div className="flex gap-0.5">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-0.5 rounded-full bg-ink-850 p-0.5">
             {TYPES.map((ct) => (
               <button key={ct} className={tab(ct === chartType)} onClick={() => update({ chartType: ct })}>
                 {t(`chart.${ct}`)}
               </button>
             ))}
           </div>
-          <div className="flex gap-0.5">
+          <div className="flex gap-0.5 rounded-full bg-ink-850 p-0.5">
             {INTERVALS.map((iv) => (
               <button key={iv} className={tab(iv === interval)} onClick={() => update({ interval: iv })}>
                 {t(`chart.${iv}`)}
@@ -81,10 +87,11 @@ export function ChartPanel({ market }: { market: MarketInfo }) {
           </div>
         </div>
       </div>
-      <div className="relative min-h-[280px] flex-1">
+      <div className="relative min-h-[240px] flex-1 lg:min-h-[140px]">
         <PriceChart market={market} interval={interval} chartType={chartType} />
         <DanmakuLayer market={market.code} />
       </div>
+      {/* 弹幕栏与图表底部无缝衔接（同底色、无分割线） */}
       <DanmakuInput market={market.code} />
     </section>
   );

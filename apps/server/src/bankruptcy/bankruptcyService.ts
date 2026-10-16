@@ -64,7 +64,7 @@ export class BankruptcyService {
       wallet = await postLedger(tx, wallet, life.id, [
         { type: 'BANKRUPTCY_WRITE_OFF', amount: settle.debtWrittenOff, memo: 'debt written off' },
         { type: 'BANKRUPTCY_WRITE_OFF', amount: settle.dustForfeited.neg(), memo: 'dust forfeited' },
-      ]);
+      ], now);
       await tx.life.update({ where: { id: life.id }, data: { status: 'ENDED', endedAt: now } });
 
       const resume = await tx.bankruptcyResume.create({
@@ -112,7 +112,7 @@ export class BankruptcyService {
       });
       wallet = await postLedger(tx, wallet, newLife.id, [
         { type: 'BANKRUPTCY_RELIEF', amount: settle.reliefGranted, memo: `generation ${newLife.generation}` },
-      ]);
+      ], now);
       await tx.user.update({ where: { id: userId }, data: { generation: newLife.generation } });
       return { resume, wallet, generation: newLife.generation, stats, titles };
     });

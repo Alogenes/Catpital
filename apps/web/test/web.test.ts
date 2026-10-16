@@ -1,7 +1,10 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
+import { D, applyFill } from '@catpital/shared';
 import { LaneAllocator } from '../src/lib/danmakuLanes';
+import { budgetForPct, leveragePresets, leverageTier, sizeFromBudget } from '../src/lib/orderSizing';
+import { interpolate } from '../src/lib/rolling';
 import { fmt, fmtPct, fmtSigned, parseDec, sanitizeDecimalInput } from '../src/lib/format';
 
 describe('format (Decimal only)', () => {
@@ -23,6 +26,68 @@ describe('format (Decimal only)', () => {
     expect(sanitizeDecimalInput('0.123456789', 4)).toBe('0.1234');
     expect(parseDec('1.')).toBeNull();
     expect(parseDec('1.5')?.toFixed()).toBe('1.5');
+  });
+});
+
+describe('margin-based order sizing', () => {
+  const risk = { maintenanceMarginRate: D('0.005'), tickSize: D('0.01') };
+  const fill = (q: string, price: string, lev: string, fee: string) =>
+    applyFill(null, { orderSide: 'BUY', quantity: D(q), price: D(price), leverage: D(lev), feeRate: D(fee), reduceOnly: false }, risk);
+
+  it('ALL IN with a tiny balance never exceeds what is available', () => {
+    const budget = budgetForPct('7.894', 100);
+    expect(budget.toFixed()).toBe('7.89');
+    const q = sizeFromBudget({ budget, price: D('99.27'), leverage: D(10), feeRate: D('0.0006'), lotSize: D('0.01') });
+    expect(q.toFixed()).toBe('0.79');
+    expect(fill(q.toFixed(), '99.27', '10', '0.0006').requiredFunds.lte(budget)).toBe(true);
+  });
+
+  it('holds for many random budgets, leverages and lot sizes', () => {
+    for (let i = 0; i < 300; i++) {
+      const budget = D((1 + i * 37.13).toFixed(2));
+      const lev = D(1 + (i % 100));
+      const price = D((0.1 + i * 3.7).toFixed(4));
+      const lot = ['1', '0.01', '0.0001'][i % 3]!;
+      const q = sizeFromBudget({ budget, price, leverage: lev, feeRate: D('0.0008'), lotSize: D(lot) });
+      if (q.isZero()) continue;
+      expect(fill(q.toFixed(), price.toFixed(), lev.toFixed(), '0.0008').requiredFunds.lte(budget)).toBe(true);
+    }
+  });
+
+  it('market buffer sizes slightly smaller', () => {
+    const args = { budget: D(1000), price: D(100), leverage: D(10), feeRate: D('0.001'), lotSize: D('0.01') };
+    expect(sizeFromBudget({ ...args, buffer: D('0.003') }).lt(sizeFromBudget(args))).toBe(true);
+  });
+
+  it('pct buttons and zero / negative balances', () => {
+    expect(budgetForPct('100', 25).toFixed()).toBe('25');
+    expect(budgetForPct('-77328.99', 100).toFixed()).toBe('0');
+  });
+
+  it('leverage tiers and presets', () => {
+    expect([1, 5, 6, 25, 49, 50, 100].map(leverageTier)).toEqual(['safe', 'safe', 'spicy', 'spicy', 'spicy', 'degen', 'degen']);
+    expect(leveragePresets(20)).toEqual([1, 5, 10, 20]);
+    expect(leveragePresets(100)).toEqual([1, 5, 10, 25, 50, 100]);
+  });
+});
+
+describe('rolling number interpolation', () => {
+  it('starts at from, ends exactly at to, and moves monotonically', () => {
+    const from = D('10000');
+    const to = D('7577.02');
+    expect(interpolate(from, to, 0).toFixed()).toBe('10000');
+    expect(interpolate(from, to, 1).toFixed()).toBe('7577.02');
+    let prev = from;
+    for (let i = 1; i <= 20; i++) {
+      const v = interpolate(from, to, i / 20);
+      expect(v.lte(prev)).toBe(true);
+      prev = v;
+    }
+    expect(interpolate(from, to, 0.5).decimalPlaces()).toBeLessThanOrEqual(2);
+  });
+  it('handles crossing zero into debt', () => {
+    expect(interpolate(D('5'), D('-77328.99'), 1).toFixed()).toBe('-77328.99');
+    expect(interpolate(D('5'), D('-77328.99'), 0.5).lt(0)).toBe(true);
   });
 });
 

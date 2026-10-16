@@ -105,19 +105,17 @@ export function registerWsGateway(app: FastifyInstance, core: Core, env: HttpEnv
     }
   }
 
-  /** 订阅时补发当前状态：最新价 / 最近弹幕 */
+  /**
+   * 订阅时补发当前状态：只补最新价。
+   * 弹幕是纯实时流 —— 订阅时**不**回放历史，否则切换股市再切回、或 WS 重连时会把旧弹幕重新刷满屏。
+   */
   async function sendSnapshot(conn: Conn, ch: string) {
     const [kind, code] = ch.split(':');
-    if (!code) return;
+    if (!code || kind !== 'tick') return;
     const market = core.markets.byCode(code);
     if (!market) return;
-    if (kind === 'tick') {
-      const price = core.markets.price(market.id);
-      if (price) send(conn, { ch: `tick:${market.code}`, d: { market: market.code, price: price.toFixed(), volume: '0', ts: Date.now() } });
-    } else if (kind === 'danmaku') {
-      const recent = await core.bus.range(`danmaku:${market.code}`, 20);
-      for (const r of recent.reverse()) send(conn, { ch: `danmaku:${market.code}`, d: JSON.parse(r) });
-    }
+    const price = core.markets.price(market.id);
+    if (price) send(conn, { ch: `tick:${market.code}`, d: { market: market.code, price: price.toFixed(), volume: '0', ts: Date.now() } });
   }
 
   async function handleDanmaku(conn: Conn, marketCode: string, text: string) {

@@ -8,10 +8,11 @@ import { MarketTabs } from './components/layout/MarketTabs';
 import { TopBar } from './components/layout/TopBar';
 import { SettingsModal } from './components/settings/SettingsModal';
 import { BroadcastBanner } from './components/social/BroadcastBanner';
-import { NewsFeed } from './components/social/NewsFeed';
+import { LiveTicker } from './components/social/LiveTicker';
+import { NewsCard } from './components/social/NewsFeed';
 import { Toasts } from './components/social/Toasts';
 import { OrderPanel } from './components/trade/OrderPanel';
-import { OrdersPanel, PositionsPanel } from './components/trade/PositionsPanel';
+import { PositionsCard } from './components/trade/PositionsPanel';
 import { ApiError, type MarketInfo, api, setToken } from './lib/api';
 import { type AuthResult, authenticateWithDiscord, devLogin, isEmbedded } from './lib/discord';
 import { sound } from './lib/sound';
@@ -29,17 +30,12 @@ async function finishLogin(auth: AuthResult) {
   startRealtime(auth.token);
 }
 
-type BottomTab = 'positions' | 'orders' | 'news';
-
 export default function App() {
   const { t } = useTranslation();
   const status = useSession((s) => s.status);
   const setStatus = useSession((s) => s.setStatus);
   const market = useSelectedMarket();
-  const positionCount = useSession((s) => Object.keys(s.positions).length);
-  const orderCount = useSession((s) => s.orders.length);
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [tab, setTab] = useState<BottomTab>('positions');
   const embedded = isEmbedded();
 
   const login = useCallback(
@@ -84,17 +80,6 @@ export default function App() {
     );
   }
 
-  const bottomTab = (key: BottomTab, label: string, count?: number) => (
-    <button
-      key={key}
-      onClick={() => setTab(key)}
-      className={`border-b-2 px-1 pb-1.5 text-sm ${tab === key ? 'border-accent text-ink-100' : 'border-transparent text-ink-400 hover:text-ink-200'}`}
-    >
-      {label}
-      {count ? <span className="ml-1 rounded-full bg-ink-700 px-1.5 text-[10px]">{count}</span> : null}
-    </button>
-  );
-
   return (
     <>
       <BroadcastBanner />
@@ -103,28 +88,36 @@ export default function App() {
       <ResumeModal />
       <SettingsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
-      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1600px] flex-col gap-2 p-2">
+      {/*
+        Bento 双栏：桌面端锁定单屏高度（各卡片内部滚动），不再出现大块空白。
+          ┌──────── TopBar ─────────────────────────────┐
+          │ 市场卡片 × N │ 全服广播 / 快讯 跑马灯（拉伸）  │
+          ├──────────────────────────────┬──────────────┤
+          │ K线 + 弹幕（约 3/5 高）        │              │
+          ├────────────────┬─────────────┤  快捷交易面板  │
+          │ 持仓 / 挂单     │ 金融快讯     │              │
+          └────────────────┴─────────────┴──────────────┘
+        DOM 顺序为 图表 → 下单 → 持仓/快讯，手机端自然堆叠时下单面板紧跟图表。
+      */}
+      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-3 p-3 lg:h-screen lg:min-h-[720px]">
         <TopBar onSettings={() => setSettingsOpen(true)} />
-        <BankruptcyPrompt />
-        <MarketTabs />
+        <div className="flex flex-wrap items-stretch gap-3">
+          <MarketTabs />
+          <LiveTicker />
+        </div>
         {market && (
-          <div className="grid gap-2 lg:grid-cols-[minmax(0,1fr)_330px]">
-            <div className="flex min-h-[440px] flex-col lg:h-[calc(100vh-260px)] lg:min-h-[480px]">
-              <ChartPanel market={market} />
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(0,1fr)_minmax(200px,36%)]">
+            <ChartPanel market={market} className="min-h-[380px] lg:col-start-1 lg:row-start-1 lg:min-h-0" />
+            <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-y-auto lg:pr-0.5">
+              <BankruptcyPrompt />
+              <OrderPanel market={market} />
+            </aside>
+            <div className="grid min-h-0 gap-3 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:col-start-1 lg:row-start-2">
+              <PositionsCard className="min-h-[220px] lg:min-h-0" />
+              <NewsCard market={market.code} className="min-h-[220px] lg:min-h-0" />
             </div>
-            <OrderPanel market={market} />
           </div>
         )}
-        <section className="rounded-xl border border-ink-800 bg-ink-900 p-3">
-          <div className="mb-3 flex gap-4 border-b border-ink-800">
-            {bottomTab('positions', t('position.title'), positionCount)}
-            {bottomTab('orders', t('orders.title'), orderCount)}
-            {bottomTab('news', t('market.news'))}
-          </div>
-          {tab === 'positions' && <PositionsPanel />}
-          {tab === 'orders' && <OrdersPanel />}
-          {tab === 'news' && market && <NewsFeed market={market.code} />}
-        </section>
       </div>
     </>
   );

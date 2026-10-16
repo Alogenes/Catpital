@@ -14,6 +14,10 @@
     "enter": "Enter",
     "authFailed": "Login failed: {{reason}}"
   },
+  "nav": {
+    "leaderboard": "Leaderboard",
+    "history": "Past lives"
+  },
   "wallet": {
     "balance": "Available",
     "locked": "In orders",
@@ -44,43 +48,47 @@
     "tp": "TP",
     "sl": "SL",
     "liq": "LIQ",
-    "limit": "Limit"
+    "limit": "Limit",
+    "previewLiq": "Preview liq."
   },
   "order": {
-    "spot": "Spot",
-    "leverage": "Leverage",
-    "buy": "Buy",
-    "sell": "Sell",
+    "title": "Quick Trade",
     "long": "Long",
     "short": "Short",
-    "market": "Market",
-    "limit": "Limit",
-    "quantity": "Quantity",
-    "price": "Price",
+    "longHint": "Price goes up",
+    "shortHint": "Price goes down",
     "lev": "Leverage",
-    "tp": "Take profit",
-    "sl": "Stop loss",
-    "optional": "optional",
-    "margin": "Margin required",
-    "fee": "Est. fee",
-    "notional": "Notional",
-    "liqPrice": "Est. liquidation",
-    "noLiq": "None (1x never liquidates)",
-    "max": "Max",
-    "available": "Available",
-    "sellHint": "Spot sell only reduces an existing long",
-    "closing": "Will first close {{qty}} of the opposite position",
-    "submit": {
-      "buy": "Buy {{code}}",
-      "sell": "Sell {{code}}",
-      "long": "Long {{code}}",
-      "short": "Short {{code}}"
+    "tier": {
+      "safe": "🌱 Safe",
+      "spicy": "⚡ Spicy",
+      "degen": "🔥 DEGEN"
     },
-    "highLevWarn": "High leverage! A price gap can wipe out more than your margin and eat into your balance"
+    "amount": "Margin to put in",
+    "amountHint": "incl. fees",
+    "available": "Available",
+    "allIn": "🔥 ALL IN",
+    "limit": "Limit order",
+    "limitHint": "fills only at your price, lower fee",
+    "price": "Limit price",
+    "enterPrice": "Enter a limit price",
+    "positionSize": "Position size",
+    "feeHint": "Fee {{fee}} · {{qty}} units",
+    "liqPrice": "Liquidation price",
+    "noLiq": "Safe, no liquidation",
+    "perPct": "Each 1% price move",
+    "perPctHint": "= ±{{pct}}% of your margin",
+    "closing": "Will first close {{qty}} units of the opposite position",
+    "enterAmount": "Enter an amount",
+    "tooSmall": "Too small (position must be at least {{min}})",
+    "submit": {
+      "long": "🚀 Long {{code}} · {{lev}}x",
+      "short": "📉 Short {{code}} · {{lev}}x"
+    },
+    "highLevWarn": "DEGEN mode! A price gap can wipe out more than your margin and eat into your balance"
   },
   "position": {
     "title": "Positions",
-    "empty": "No open positions",
+    "empty": "🐾 No positions yet · pick a side on the right to open one",
     "LONG": "Long",
     "SHORT": "Short",
     "qty": "Qty",
@@ -102,7 +110,7 @@
   },
   "orders": {
     "title": "Open orders",
-    "empty": "No open orders",
+    "empty": "🎯 No open orders",
     "cancel": "Cancel",
     "locked": "{{amount}} locked"
   },
@@ -127,7 +135,15 @@
   "danmaku": {
     "placeholder": "Say something…",
     "send": "Send",
-    "off": "Bullet chat is off"
+    "off": "Bullet chat is off",
+    "quick": {
+      "rocket": "🚀 To the moon!",
+      "diamond": "💎 Diamond paws",
+      "meow": "🐱 Meow meow~",
+      "rekt": "🩸 I got rekt…",
+      "clown": "🤡 The clown was me",
+      "party": "🎉 We are flying!"
+    }
   },
   "bankruptcy": {
     "available": "Your net worth has hit zero",
@@ -280,5 +296,34 @@
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
+  },
+  "ticker": {
+    "title": "Live feed",
+    "empty": "No highlights yet · waiting for the first brave cat 🐾"
+  },
+  "leaderboard": {
+    "title": "Leaderboard",
+    "period": {
+      "DAILY": "Daily",
+      "WEEKLY": "Weekly",
+      "MONTHLY": "Monthly"
+    },
+    "board": {
+      "RETURN_PCT": "📈 Return %",
+      "NET_WORTH": "💰 Richest"
+    },
+    "empty": "Nobody here yet · go be number one 🐾",
+    "me": "You",
+    "unranked": "Not ranked",
+    "ineligible": "Need ≥ {{min}} at period start to rank",
+    "resetsAt": "Period ends {{time}}",
+    "formulaHint": "Deposits & relief funds excluded, min. start {{min}}"
+  },
+  "history": {
+    "title": "Past lives",
+    "current": "Life #{{n}} · in progress",
+    "alive": "Still alive, keep going",
+    "empty": "Never gone bankrupt · make this life count 🐾",
+    "gen": "Life"
   }
 }

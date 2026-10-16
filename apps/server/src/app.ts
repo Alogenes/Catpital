@@ -3,6 +3,7 @@ import { BankruptcyService } from './bankruptcy/bankruptcyService.js';
 import { Notifier } from './broadcast/notifier.js';
 import type { EconomyConfig } from './config/env.js';
 import type { Bus } from './infra/bus.js';
+import { LeaderboardService } from './leaderboard/leaderboardService.js';
 import { KeyedQueue } from './lib/keyedQueue.js';
 import { EventScheduler } from './market/events/eventScheduler.js';
 import { MarketRegistry } from './market/marketRegistry.js';
@@ -43,6 +44,8 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
   const bankruptcy = new BankruptcyService(db, notifier, economy, clock);
   const users = new UserService(db, economy, clock);
   const sweeper = new NetWorthSweeper(db, priceOf, log, clock);
+  const leaderboard = new LeaderboardService(db, priceOf, economy.LEADERBOARD_MIN_CAPITAL, clock);
+  let baselineTimer: NodeJS.Timeout | null = null;
 
   return {
     db,
@@ -58,21 +61,29 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
     bankruptcy,
     users,
     sweeper,
+    leaderboard,
     /** 加载市场与风控索引（不启动定时器） */
     async init() {
       await markets.load();
       await risk.load();
       await events.restoreOverrides();
+      await leaderboard.ensureBaselines();
     },
     /** 启动行情 tick、事件轮询、净值巡检 */
     async startEngines() {
       await markets.startAll();
       events.start();
       sweeper.start();
+      // 每分钟补齐榜单周期基准（跨日/周/月时自动为新周期建基准）
+      baselineTimer = setInterval(
+        () => void leaderboard.ensureBaselines().catch((err) => log.error({ err }, 'leaderboard baseline failed')),
+        60_000,
+      );
     },
     async shutdown() {
       events.stop();
       sweeper.stop();
+      if (baselineTimer) clearInterval(baselineTimer);
       await markets.stopAll();
       await queue.drain();
     },

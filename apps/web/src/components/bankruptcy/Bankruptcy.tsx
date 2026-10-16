@@ -65,22 +65,58 @@ export function BankruptcyPrompt() {
   );
 }
 
-/** 《股市人生履历》卡片 */
-export function ResumeModal() {
+/** 履历卡片主体（破产弹窗与"历世履历"共用） */
+export function ResumeCardBody({ resume, animate = true }: { resume: ResumeView; animate?: boolean }) {
   const { t } = useTranslation();
-  const resume = useSession((s) => s.resume);
-  const fx = useFeed((s) => s.fx);
   const user = useSession((s) => s.user);
-  const [copied, setCopied] = useState(false);
-  const close = () => useSession.getState().showResume(null);
-
-  // 破产特效播放完再弹出履历
-  const open = Boolean(resume) && fx?.kind !== 'bankrupt';
-  if (!resume) return null;
   const name = resume.user?.globalName ?? resume.user?.username ?? user?.globalName ?? user?.username ?? '';
   const avatar = avatarUrl(resume.userId, resume.user?.avatarHash ?? user?.avatarHash);
+  const stats = resumeStats(resume, t);
+  return (
+    <div className="relative overflow-hidden" data-testid="resume-card">
+      <div className="bg-gradient-to-br from-ink-800 via-ink-900 to-ink-950 px-5 pb-4 pt-5">
+        <p className="text-xs uppercase tracking-[0.3em] text-ink-400">📜 {t('bankruptcy.resume')}</p>
+        <div className="mt-3 flex items-center gap-3">
+          <img src={avatar} alt="" className="h-14 w-14 rounded-full border-2 border-ink-600 grayscale" />
+          <div>
+            <h2 className="text-xl font-bold">{name}</h2>
+            <p className="text-sm text-ink-400">
+              {t('bankruptcy.generation', { n: resume.generation })} · {new Date(resume.startedAt).toLocaleDateString()} – {new Date(resume.endedAt).toLocaleDateString()}
+            </p>
+          </div>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {resume.titles.map((k, i) => (
+            <motion.span
+              key={k}
+              initial={animate ? { scale: 0, rotate: -10 } : false}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ delay: 0.2 + i * 0.15, type: 'spring' }}
+              className="rounded-full border border-gold/60 bg-gold/10 px-3 py-1 text-sm font-semibold text-gold"
+              title={t(`${k}.desc`)}
+            >
+              {t(`${k}.name`)}
+            </motion.span>
+          ))}
+        </div>
+        <p className="mt-2 text-xs text-ink-400">{resume.titles.map((k) => t(`${k}.desc`)).join(' · ')}</p>
+      </div>
+      <dl className="grid grid-cols-2 gap-px bg-ink-800">
+        {stats.map(([label, value, cls]) => (
+          <div key={label} className="bg-ink-900 px-4 py-2.5">
+            <dt className="text-xs text-ink-500">{label}</dt>
+            <dd className={`font-mono text-sm font-semibold tabular-nums ${cls ?? 'text-ink-100'}`}>{value}</dd>
+          </div>
+        ))}
+      </dl>
+    </div>
+  );
+}
 
-  const stats: Array<[string, string, string?]> = [
+type T = (k: string, o?: Record<string, unknown>) => string;
+
+export function resumeStats(resume: ResumeView, t: T): Array<[string, string, string?]> {
+  return [
     [t('bankruptcy.survived'), fmtDuration(resume.survivedSeconds, t)],
     [t('bankruptcy.peak'), fmt(resume.peakNetWorth)],
     [t('bankruptcy.bestRoe'), resume.bestTradeRoe ? fmtPct(resume.bestTradeRoe) : '—', 'text-up'],
@@ -92,61 +128,40 @@ export function ResumeModal() {
     [t('bankruptcy.avgLev'), `${fmt(resume.avgLeverage, 1)}x`],
     [t('bankruptcy.debt'), D(resume.debtWrittenOff).gt(0) ? fmt(resume.debtWrittenOff) : '0', 'text-blood'],
   ];
+}
 
+/** 《股市人生履历》破产弹窗：破产特效播完后弹出 */
+export function ResumeModal() {
+  const { t } = useTranslation();
+  const resume = useSession((s) => s.resume);
+  const fx = useFeed((s) => s.fx);
+  const user = useSession((s) => s.user);
+  const [copied, setCopied] = useState(false);
+  const close = () => useSession.getState().showResume(null);
+
+  const open = Boolean(resume) && fx?.kind !== 'bankrupt';
+  if (!resume) return null;
+  const name = resume.user?.globalName ?? resume.user?.username ?? user?.globalName ?? user?.username ?? '';
   const summary = [
     `【${t('bankruptcy.resume')}】${name} · ${t('bankruptcy.generation', { n: resume.generation })}`,
     resume.titles.map((k) => `「${t(`${k}.name`)}」`).join(' '),
-    ...stats.map(([k, v]) => `${k}：${v}`),
+    ...resumeStats(resume, t).map(([k, v]) => `${k}：${v}`),
   ].join('\n');
 
   return (
     <Modal open={open} onClose={close} className="max-w-lg">
-      <div className="relative overflow-hidden" data-testid="resume-modal">
-        <div className="bg-gradient-to-br from-zinc-800 via-ink-900 to-black px-5 pb-4 pt-5">
-          <p className="text-xs uppercase tracking-[0.3em] text-ink-400">{t('bankruptcy.resume')}</p>
-          <div className="mt-3 flex items-center gap-3">
-            <img src={avatar} alt="" className="h-14 w-14 rounded-full border-2 border-ink-600 grayscale" />
-            <div>
-              <h2 className="text-xl font-bold">{name}</h2>
-              <p className="text-sm text-ink-400">
-                {t('bankruptcy.generation', { n: resume.generation })} · {new Date(resume.startedAt).toLocaleDateString()} – {new Date(resume.endedAt).toLocaleDateString()}
-              </p>
-            </div>
-          </div>
-          <div className="mt-4 flex flex-wrap gap-2">
-            {resume.titles.map((k, i) => (
-              <motion.span
-                key={k}
-                initial={{ scale: 0, rotate: -10 }}
-                animate={{ scale: 1, rotate: 0 }}
-                transition={{ delay: 0.2 + i * 0.15, type: 'spring' }}
-                className="rounded-full border border-gold/60 bg-gold/10 px-3 py-1 text-sm font-semibold text-gold"
-                title={t(`${k}.desc`)}
-              >
-                {t(`${k}.name`)}
-              </motion.span>
-            ))}
-          </div>
-          <p className="mt-2 text-xs text-ink-400">{resume.titles.map((k) => t(`${k}.desc`)).join(' · ')}</p>
-        </div>
-        <dl className="grid grid-cols-2 gap-px bg-ink-800">
-          {stats.map(([label, value, cls]) => (
-            <div key={label} className="bg-ink-900 px-4 py-2.5">
-              <dt className="text-xs text-ink-500">{label}</dt>
-              <dd className={`font-mono text-sm font-semibold tabular-nums ${cls ?? 'text-ink-100'}`}>{value}</dd>
-            </div>
-          ))}
-        </dl>
+      <div data-testid="resume-modal">
+        <ResumeCardBody resume={resume} />
         <div className="flex gap-2 p-4">
           <button
-            className="flex-1 rounded-lg bg-ink-700 py-2 text-sm hover:bg-ink-600"
+            className="arcade-btn flex-1 border-ink-950/60 bg-ink-700 py-2 text-sm hover:bg-ink-600"
             onClick={() => {
               void navigator.clipboard?.writeText(summary).then(() => setCopied(true));
             }}
           >
             {copied ? t('bankruptcy.copied') : t('bankruptcy.copyLink')}
           </button>
-          <button className="flex-1 rounded-lg bg-accent py-2 text-sm font-bold text-white hover:bg-accent/85" onClick={close} data-testid="resume-rebirth">
+          <button className="arcade-btn flex-1 border-[#6b4bc4] bg-accent py-2 text-sm text-white" onClick={close} data-testid="resume-rebirth">
             {t('bankruptcy.rebirth')} · +{fmt(resume.reliefGranted, 0)}
           </button>
         </div>

@@ -2,10 +2,14 @@ import { D, netWorth } from '@catpital/shared';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { avatarUrl } from '../../lib/discord';
-import { fmt } from '../../lib/format';
+import { useSettledValue } from '../../lib/rolling';
+import { sound } from '../../lib/sound';
 import { type WsStatus, realtime } from '../../lib/ws';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
+import { ResumeHistoryModal } from '../bankruptcy/ResumeHistoryModal';
+import { LeaderboardModal } from '../leaderboard/LeaderboardModal';
+import { WalletPill } from './WalletPill';
 
 export function TopBar({ onSettings }: { onSettings: () => void }) {
   const { t } = useTranslation();
@@ -16,6 +20,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   const positions = useSession((s) => s.positions);
   const prices = useMarkets((s) => s.prices);
   const [ws, setWs] = useState<WsStatus>('connecting');
+  const [modal, setModal] = useState<null | 'leaderboard' | 'history'>(null);
   useEffect(() => realtime.onStatus(setWs), []);
 
   // 净值实时按最新价计算（同后端公式：B + locked + Σ(M + uPnL)）
@@ -34,51 +39,74 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
       }),
     [balance, locked, positions, prices],
   );
+  // 去抖后的净值：吸收持仓/钱包事件到达先后造成的瞬时偏差
+  const nwSettled = useSettledValue(nw.toDecimalPlaces(2).toFixed());
   const inDebt = D(balance).lt(0);
+  const open = (m: 'leaderboard' | 'history') => {
+    sound.play('click');
+    setModal(m);
+  };
+
+  const navBtn =
+    'arcade-btn flex items-center gap-1.5 border-ink-950/60 bg-ink-800 px-3.5 py-1.5 text-sm text-ink-100 hover:-translate-y-0.5 hover:bg-ink-700';
 
   return (
-    <header className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink-800 bg-ink-900 px-3 py-2">
-      <div className="flex items-center gap-2.5">
-        <span className="text-xl">🐱</span>
-        <span className="font-black tracking-wide">
-          Cat<span className="text-gold">pital</span>
+    <header className="bento flex flex-wrap items-center gap-3 px-4 py-2">
+      <div className="flex items-center gap-2">
+        <span className="animate-bob text-2xl">🐱</span>
+        <span className="text-lg font-black tracking-wide">
+          Cat<span className="bg-gradient-to-r from-candy-sun to-candy-pink bg-clip-text text-transparent">pital</span>
         </span>
         <span
-          className={`ml-1 h-2 w-2 rounded-full ${ws === 'open' ? 'bg-emerald-400' : ws === 'connecting' ? 'animate-pulse bg-amber-400' : 'animate-pulse bg-blood'}`}
+          className={`ml-1 h-2.5 w-2.5 rounded-full ${ws === 'open' ? 'bg-candy-mint' : ws === 'connecting' ? 'animate-pulse bg-candy-sun' : 'animate-pulse bg-blood'}`}
           title={ws === 'open' ? t('app.online') : t('app.offline')}
         />
       </div>
-      <div className="flex flex-wrap items-center gap-x-5 gap-y-1 text-sm">
-        <Stat label={t('wallet.netWorth')} value={fmt(nw)} className={nw.lte(0) ? 'text-blood' : 'text-ink-100'} testId="net-worth" />
-        <Stat label={t('wallet.balance')} value={fmt(balance)} className={inDebt ? 'text-blood' : ''} testId="balance" badge={inDebt ? t('wallet.debt') : undefined} />
-        {D(locked).gt(0) && <Stat label={t('wallet.locked')} value={fmt(locked)} />}
+
+      {/* 中间：排行榜 / 人生履历 */}
+      <nav className="flex flex-1 items-center justify-center gap-2">
+        <button className={navBtn} onClick={() => open('leaderboard')} data-testid="open-leaderboard">
+          🏆 <span>{t('nav.leaderboard')}</span>
+        </button>
+        <button className={navBtn} onClick={() => open('history')} data-testid="open-history">
+          📜 <span>{t('nav.history')}</span>
+        </button>
+      </nav>
+
+      <div className="flex flex-wrap items-center gap-2.5">
+        <WalletPill icon="💰" label={t('wallet.netWorth')} value={nwSettled} mode="netWorth" glow="sun" danger={D(nwSettled).lte(0)} testId="net-worth" />
+        <WalletPill
+          icon="🪙"
+          label={t('wallet.balance')}
+          value={D(balance).toDecimalPlaces(2).toFixed()}
+          mode="balance"
+          glow="grape"
+          danger={inDebt}
+          badge={inDebt ? t('wallet.debt') : undefined}
+          testId="balance"
+        />
+        {D(locked).gt(0) && <span className="chip font-mono">🔒 {D(locked).toFixed(2)}</span>}
         {user && (
-          <div className="flex items-center gap-2">
-            <img src={avatarUrl(user.id, user.avatarHash, 32)} alt="" className="h-7 w-7 rounded-full" />
+          <div className="flex items-center gap-2 rounded-full bg-ink-850 py-1 pl-1 pr-3">
+            <img src={avatarUrl(user.id, user.avatarHash, 32)} alt="" className="h-8 w-8 rounded-full ring-2 ring-candy-grape/60" />
             <div className="leading-tight">
-              <div className="text-sm font-medium">{user.globalName ?? user.username}</div>
-              <div className="text-[11px] text-ink-400">{t('wallet.generation', { n: generation })}</div>
+              <div className="max-w-[110px] truncate text-sm font-bold">{user.globalName ?? user.username}</div>
+              <div className="text-[10px] font-semibold text-candy-grape">{t('wallet.generation', { n: generation })}</div>
             </div>
           </div>
         )}
-        <button onClick={onSettings} className="rounded-md bg-ink-800 px-2.5 py-1.5 text-sm hover:bg-ink-700" aria-label={t('settings.title')} data-testid="open-settings">
-          ⚙
+        <button
+          onClick={onSettings}
+          className="arcade-btn border-ink-950/60 bg-ink-800 px-2.5 py-1 text-base hover:bg-ink-700"
+          aria-label={t('settings.title')}
+          data-testid="open-settings"
+        >
+          ⚙️
         </button>
       </div>
-    </header>
-  );
-}
 
-function Stat({ label, value, className = '', badge, testId }: { label: string; value: string; className?: string; badge?: string; testId?: string }) {
-  return (
-    <div className="leading-tight">
-      <div className="text-[11px] text-ink-400">
-        {label}
-        {badge && <span className="ml-1 rounded bg-blood px-1 text-[10px] text-white">{badge}</span>}
-      </div>
-      <div className={`font-mono font-semibold tabular-nums ${className}`} data-testid={testId}>
-        {value}
-      </div>
-    </div>
+      <LeaderboardModal open={modal === 'leaderboard'} onClose={() => setModal(null)} />
+      <ResumeHistoryModal open={modal === 'history'} onClose={() => setModal(null)} />
+    </header>
   );
 }

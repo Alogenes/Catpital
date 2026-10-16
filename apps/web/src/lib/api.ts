@@ -106,6 +106,17 @@ export interface ResumeView {
   user?: { username: string; globalName: string | null; avatarHash: string | null };
 }
 
+export interface LeaderboardResponse {
+  period: 'DAILY' | 'WEEKLY' | 'MONTHLY';
+  periodKey: string;
+  board: 'RETURN_PCT' | 'NET_WORTH';
+  periodEnd: number;
+  minCapital: string;
+  entries: Array<{ rank: number; userId: string; name: string; avatarHash: string | null; generation: number; value: string }>;
+  me: { rank: number | null; value: string | null; eligible: boolean } | null;
+  updatedAt: number;
+}
+
 export interface CandleRow {
   openTime: number;
   open: string;

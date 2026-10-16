@@ -14,6 +14,10 @@
     "enter": "进入",
     "authFailed": "登录失败：{{reason}}"
   },
+  "nav": {
+    "leaderboard": "排行榜",
+    "history": "人生履历"
+  },
   "wallet": {
     "balance": "可用余额",
     "locked": "挂单冻结",
@@ -44,43 +48,47 @@
     "tp": "止盈",
     "sl": "止损",
     "liq": "斩杀线",
-    "limit": "挂单"
+    "limit": "挂单",
+    "previewLiq": "预览斩杀"
   },
   "order": {
-    "spot": "现货",
-    "leverage": "杠杆",
-    "buy": "买入",
-    "sell": "卖出",
+    "title": "快捷交易",
     "long": "做多",
     "short": "做空",
-    "market": "市价",
-    "limit": "限价",
-    "quantity": "数量",
-    "price": "价格",
+    "longHint": "看涨",
+    "shortHint": "看跌",
     "lev": "杠杆倍数",
-    "tp": "止盈价",
-    "sl": "止损价",
-    "optional": "可选",
-    "margin": "所需保证金",
-    "fee": "预估手续费",
-    "notional": "名义价值",
-    "liqPrice": "预估斩杀线",
-    "noLiq": "无（1x 不会强平）",
-    "max": "最大",
-    "available": "可用",
-    "sellHint": "现货卖出只会减少已有多仓",
-    "closing": "将先平掉 {{qty}} 反向持仓",
-    "submit": {
-      "buy": "买入 {{code}}",
-      "sell": "卖出 {{code}}",
-      "long": "做多 {{code}}",
-      "short": "做空 {{code}}"
+    "tier": {
+      "safe": "🌱 稳健",
+      "spicy": "⚡ 刺激",
+      "degen": "🔥 赌狗模式"
     },
-    "highLevWarn": "高杠杆！跳空行情下亏损可能超过保证金并倒扣本金"
+    "amount": "投入本金",
+    "amountHint": "含手续费",
+    "available": "可用",
+    "allIn": "🔥 梭哈",
+    "limit": "限价挂单",
+    "limitHint": "到价才成交，手续费更低",
+    "price": "挂单价格",
+    "enterPrice": "请输入挂单价格",
+    "positionSize": "仓位总价值",
+    "feeHint": "手续费 {{fee}} · {{qty}} 股",
+    "liqPrice": "强平斩杀线",
+    "noLiq": "安全无斩杀",
+    "perPct": "价格每波动 1%",
+    "perPctHint": "= 本金的 ±{{pct}}%",
+    "closing": "将先平掉 {{qty}} 股反向持仓",
+    "enterAmount": "输入投入本金",
+    "tooSmall": "金额太小（仓位至少 {{min}}）",
+    "submit": {
+      "long": "🚀 做多 {{code}} · {{lev}}x",
+      "short": "📉 做空 {{code}} · {{lev}}x"
+    },
+    "highLevWarn": "赌狗模式！跳空行情下亏损可能超过保证金并倒扣本金"
   },
   "position": {
     "title": "持仓",
-    "empty": "暂无持仓",
+    "empty": "🐾 还没有持仓 · 在右边选个方向开一单吧",
     "LONG": "多",
     "SHORT": "空",
     "qty": "数量",
@@ -102,7 +110,7 @@
   },
   "orders": {
     "title": "挂单",
-    "empty": "暂无挂单",
+    "empty": "🎯 没有挂单",
     "cancel": "撤单",
     "locked": "冻结 {{amount}}"
   },
@@ -127,7 +135,15 @@
   "danmaku": {
     "placeholder": "发条弹幕…",
     "send": "发送",
-    "off": "弹幕已关闭"
+    "off": "弹幕已关闭",
+    "quick": {
+      "rocket": "🚀 冲冲冲！",
+      "diamond": "💎 拿住别慌",
+      "meow": "🐱 喵喵喵~",
+      "rekt": "🩸 我爆了…",
+      "clown": "🤡 小丑竟是我自己",
+      "party": "🎉 起飞啦！"
+    }
   },
   "bankruptcy": {
     "available": "你的总资产已归零",
@@ -280,5 +296,34 @@
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
+  },
+  "ticker": {
+    "title": "全服广播",
+    "empty": "还没有战报 · 等待第一位勇士登场 🐾"
+  },
+  "leaderboard": {
+    "title": "排行榜",
+    "period": {
+      "DAILY": "日榜",
+      "WEEKLY": "周榜",
+      "MONTHLY": "月榜"
+    },
+    "board": {
+      "RETURN_PCT": "📈 收益率榜",
+      "NET_WORTH": "💰 富豪榜"
+    },
+    "empty": "榜单还空着 · 快去当第一 🐾",
+    "me": "我",
+    "unranked": "未上榜",
+    "ineligible": "期初本金需 ≥ {{min}} 才能上榜",
+    "resetsAt": "本期结束于 {{time}}",
+    "formulaHint": "已剔除充值/救济金等外部资金，期初本金 ≥ {{min}}"
+  },
+  "history": {
+    "title": "人生履历",
+    "current": "第 {{n}} 世 · 进行中",
+    "alive": "还活着，继续加油",
+    "empty": "还没有破产过 · 这一世好好活 🐾",
+    "gen": "世"
   }
 }

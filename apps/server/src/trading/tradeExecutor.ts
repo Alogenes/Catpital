@@ -89,7 +89,7 @@ export class TradeExecutor {
         if (pending) {
           wallet = await postLedger(tx, wallet, life.id, [
             { type: 'ORDER_UNLOCK', amount: unlock, marketId: req.market.id, orderId: pending.id },
-          ]);
+          ], req.now);
         }
         const order = pending
           ? await tx.order.update({ where: { id: pending.id }, data: { status: 'REJECTED', rejectReason: reason, lockedAmount: '0' } })
@@ -214,7 +214,7 @@ export class TradeExecutor {
         : await tx.order.create({ data: { ...this.orderBase(req, life.id, 'FILLED'), ...orderData } });
       for (const l of lines) l.orderId = order.id;
 
-      wallet = await postLedger(tx, wallet, life.id, lines.map((l) => ({ ...l, positionId: l.positionId ?? position?.id })));
+      wallet = await postLedger(tx, wallet, life.id, lines.map((l) => ({ ...l, positionId: l.positionId ?? position?.id })), req.now);
 
       // ---- 6. 人生履历统计 + 巅峰净值 ----
       const nw = await computeNetWorth(tx, wallet, this.priceOf);
@@ -296,7 +296,7 @@ export class TradeExecutor {
       } else {
         lines.push({ type: 'REALIZED_PNL', amount: s.realizedPnl, ...ref });
       }
-      wallet = await postLedger(tx, wallet, life.id, lines);
+      wallet = await postLedger(tx, wallet, life.id, lines, now);
       if (!wallet.balance.eq(s.balanceAfter)) throw new Error('invariant violated: liquidation balance mismatch');
 
       const position = await tx.position.update({

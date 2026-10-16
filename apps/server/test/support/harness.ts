@@ -41,6 +41,7 @@ export const TEST_ECONOMY: EconomyConfig = {
   BIG_WIN_ROE_THRESHOLD: D(1),
   BIG_WIN_PNL_THRESHOLD: D(10000),
   DEFICIT_BROADCAST_THRESHOLD: ZERO,
+  LEADERBOARD_MIN_CAPITAL: D(1000),
 };
 
 export const TEST_MARKET = {
@@ -63,6 +64,7 @@ export const TEST_MARKET = {
 };
 
 const TABLES = [
+  'leaderboard_period_stats',
   'ledger_entries',
   'liquidations',
   'orders',

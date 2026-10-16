@@ -59,6 +59,8 @@ export async function postLedger(
   wallet: WalletState,
   lifeId: string,
   lines: LedgerLine[],
+  /** 业务发生时间（与引擎时钟一致）；收益率榜按它筛选外部资金流 */
+  at?: Date,
 ): Promise<WalletState> {
   let balance = wallet.balance;
   let locked = wallet.locked;
@@ -81,6 +83,7 @@ export async function postLedger(
       orderId: line.orderId ?? null,
       memo: line.memo ?? null,
       idempotencyKey: line.idempotencyKey ?? null,
+      ...(at ? { createdAt: at } : {}),
     });
   }
   if (locked.lt(ZERO)) throw new Error('invariant violated: wallet.locked < 0');

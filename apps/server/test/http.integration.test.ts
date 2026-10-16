@@ -74,6 +74,16 @@ describe('REST API', () => {
     expect(res.json().error).toBe('error.tpWrongSide');
   });
 
+  it('serves recent broadcasts newest first', async () => {
+    await h.core.notifier.broadcast('MARKET_EVENT', 'broadcast.marketEvent', { market: 'TEST', headline: 'a', gapPct: '-30' }, { market: 'TEST', marketId: h.core.markets.byCode('TEST')!.id });
+    await h.core.notifier.broadcast('BIG_WIN', 'broadcast.bigWin', { pnl: '1' }, { userId: '300000000000000001' });
+    const res = await app.inject({ method: 'GET', url: `${P}/broadcasts?limit=5` });
+    const list = res.json();
+    expect(list.map((b: { kind: string }) => b.kind)).toEqual(['BIG_WIN', 'MARKET_EVENT']);
+    expect(list[0].vars).toMatchObject({ pnl: '1', user: 'dave' });
+    expect(list[1].market).toBe('TEST');
+  });
+
   it('admin routes require admin', async () => {
     const res = await app.inject({ method: 'GET', url: `${P}/admin/events`, headers: auth() });
     expect(res.statusCode).toBe(403);
@@ -119,6 +129,17 @@ describe('WebSocket gateway', () => {
     expect(dm.d).toMatchObject({ text: '冲冲 冲！', name: 'dave' });
     ws.send(JSON.stringify({ op: 'danmaku', market: 'TEST', text: 'spam' }));
     await waitFor((m) => m.op === 'error' && m.d.code === 'error.danmakuCooldown');
-    ws.close();
+
+    // 回归：后订阅（模拟切换股市再切回 / 重连）的客户端不会收到订阅之前的历史弹幕
+    const late = new WebSocket(`ws://127.0.0.1:${port}/ws`);
+    const lateInbox: any[] = [];
+    late.on('message', (d) => lateInbox.push(JSON.parse(String(d))));
+    await new Promise((r) => late.once('open', r));
+    late.send(JSON.stringify({ op: 'sub', ch: ['tick:TEST', 'danmaku:TEST'] }));
+    for (let i = 0; i < 100 && !lateInbox.some((m) => m.ch === 'tick:TEST'); i++) await new Promise((r) => setTimeout(r, 20));
+    await new Promise((r) => setTimeout(r, 200));
+    expect(lateInbox.filter((m) => m.ch === 'danmaku:TEST')).toEqual([]);
+    // 等两个连接都完成关闭握手，避免测试结束时留下未关闭的句柄
+    await Promise.all([late, ws].map((s) => new Promise((r) => (s.once('close', r), s.close()))));
   });
 });

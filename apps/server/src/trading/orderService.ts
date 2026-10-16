@@ -182,7 +182,7 @@ export class OrderService {
       });
       wallet = await postLedger(tx, wallet, life.id, [
         { type: 'ORDER_LOCK', amount: lock.neg(), marketId: m.id, orderId: created.id },
-      ]);
+      ], now);
       return { created, wallet };
     });
     this.notifier.wallet(userId, result.wallet);
@@ -203,7 +203,7 @@ export class OrderService {
         if (!o || o.status !== 'PENDING') throw new TradeError('error.orderNotPending', 409);
         wallet = await postLedger(tx, wallet, o.lifeId, [
           { type: 'ORDER_UNLOCK', amount: fromDb(o.lockedAmount), marketId: o.marketId, orderId: o.id },
-        ]);
+        ], this.clock());
         const order = await tx.order.update({ where: { id: o.id }, data: { status: 'CANCELLED', lockedAmount: '0' } });
         return { order, wallet };
       });
@@ -268,7 +268,7 @@ export class OrderService {
         );
         wallet = await postLedger(tx, wallet, pos.lifeId, [
           { type: 'MARGIN_ADD', amount: amount.neg(), marketId: m.id, positionId: pos.id },
-        ]);
+        ], this.clock());
         const position = await tx.position.update({
           where: { id: pos.id, version: pos.version },
           data: {

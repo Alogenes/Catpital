@@ -18,6 +18,7 @@ import { type CandleRow, type MarketInfo, api } from '../../lib/api';
 import { decimalsOf } from '../../lib/format';
 import { onCandle } from '../../realtime/bridge';
 import { useSession } from '../../stores/session';
+import { useTradePreview } from '../../stores/tradePreview';
 import { type ChartType, type Interval, useSettings } from '../../stores/settings';
 
 /**
@@ -27,8 +28,8 @@ import { type ChartType, type Interval, useSettings } from '../../stores/setting
 const toChartNum = (s: string) => Number(s);
 const toTime = (ms: number) => Math.floor(ms / 1000) as UTCTimestamp;
 
-export const UP_RED = '#f0444f';
-export const DOWN_GREEN = '#1fbf75';
+export const UP_RED = '#ff5c7a';
+export const DOWN_GREEN = '#3ddc97';
 export const palette = (redUp: boolean) => (redUp ? { up: UP_RED, down: DOWN_GREEN } : { up: DOWN_GREEN, down: UP_RED });
 
 interface Bar {
@@ -44,9 +45,9 @@ function addSeries(chart: IChartApi, type: ChartType, up: string, down: string):
     return chart.addCandlestickSeries({ upColor: up, downColor: down, borderUpColor: up, borderDownColor: down, wickUpColor: up, wickDownColor: down });
   }
   if (type === 'area') {
-    return chart.addAreaSeries({ lineColor: '#7c5cff', topColor: 'rgba(124,92,255,0.35)', bottomColor: 'rgba(124,92,255,0.02)', lineWidth: 2 });
+    return chart.addAreaSeries({ lineColor: '#a77bff', topColor: 'rgba(167,123,255,0.4)', bottomColor: 'rgba(255,111,174,0.02)', lineWidth: 3 });
   }
-  return chart.addLineSeries({ color: '#7c5cff', lineWidth: 2 });
+  return chart.addLineSeries({ color: '#a77bff', lineWidth: 3 });
 }
 
 const toPoint = (type: ChartType, b: Bar) => (type === 'candle' ? b : { time: b.time, value: b.close });
@@ -59,6 +60,9 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
   const barsRef = useRef<Bar[]>([]);
   const linesRef = useRef<IPriceLine[]>([]);
   const lineValuesRef = useRef<number[]>([]);
+  const previewLineRef = useRef<IPriceLine | null>(null);
+  const previewValueRef = useRef<number | null>(null);
+  const previewLiq = useTradePreview((s) => (s.market === market.code ? s.liq : null));
   const redUp = useSettings((s) => s.redUp);
   const position = useSession((s) => s.positions[market.code]);
   const orders = useSession((s) => s.orders);
@@ -71,15 +75,15 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       // 图上的 TradingView 徽标是指向外部域名的链接；关闭后在设置页以文字形式保留署名（Apache-2.0 NOTICE 要求）
       layout: {
         background: { type: ColorType.Solid, color: 'transparent' },
-        textColor: '#7c86a0',
+        textColor: '#9d92cc',
         fontFamily: 'Inter, system-ui, sans-serif',
         attributionLogo: false,
       },
-      grid: { vertLines: { color: 'rgba(54,62,79,0.35)' }, horzLines: { color: 'rgba(54,62,79,0.35)' } },
+      grid: { vertLines: { color: 'rgba(76,62,124,0.25)' }, horzLines: { color: 'rgba(76,62,124,0.25)' } },
       crosshair: { mode: CrosshairMode.Normal },
-      rightPriceScale: { borderColor: '#272d3a' },
+      rightPriceScale: { borderColor: 'rgba(76,62,124,0.5)' },
       timeScale: {
-        borderColor: '#272d3a',
+        borderColor: 'rgba(76,62,124,0.5)',
         timeVisible: true,
         secondsVisible: false,
         // 数据是 UTC 时间戳，刻度按浏览器本地时间显示
@@ -111,7 +115,7 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       // 自动缩放默认只看 K 线；把持仓的斩杀线/止盈止损纳入可视范围，确保"斩杀线"始终看得见
       autoscaleInfoProvider: (original: () => AutoscaleInfo | null) => {
         const res = original();
-        const extra = lineValuesRef.current;
+        const extra = previewValueRef.current !== null ? [...lineValuesRef.current, previewValueRef.current] : lineValuesRef.current;
         if (!res?.priceRange || extra.length === 0) return res;
         return {
           ...res,
@@ -123,6 +127,7 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       },
     });
     seriesRef.current = series;
+    previewLineRef.current = null; // 旧系列上的预览线随系列一起被移除
     barsRef.current = [];
 
     let cancelled = false;
@@ -169,17 +174,46 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       );
     };
     if (position) {
-      add(position.entryPrice, '#a6aec2', `${t('chart.entry')} ${t(`position.${position.side}`)}`, LineStyle.Dashed);
+      add(position.entryPrice, '#c3b9e8', `${t('chart.entry')} ${t(`position.${position.side}`)}`, LineStyle.Dashed);
       add(position.takeProfitPrice, up, t('chart.tp'), LineStyle.Dotted, 2, true);
-      add(position.stopLossPrice, '#f59e0b', t('chart.sl'), LineStyle.Dotted, 2, true);
-      add(position.liquidationPrice, '#d7263d', `☠ ${t('chart.liq')}`, LineStyle.Solid, 3, true);
+      add(position.stopLossPrice, '#ff9f6e', t('chart.sl'), LineStyle.Dotted, 2, true);
+      add(position.liquidationPrice, '#ff3b5c', `☠ ${t('chart.liq')}`, LineStyle.Solid, 3, true);
     }
     // 价格线变化后触发一次重新缩放
     chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
     for (const o of orders) {
-      if (o.market === market.code && o.limitPrice) add(o.limitPrice, '#7c5cff', `${t('chart.limit')} ${o.side}`, LineStyle.SparseDotted);
+      if (o.market === market.code && o.limitPrice) add(o.limitPrice, '#6ec8ff', `${t('chart.limit')} ${o.side}`, LineStyle.SparseDotted);
     }
   }, [position, orders, market.code, up, t, interval, chartType, down]);
+
+  // ---- 💀 预览斩杀线：下单前随本金/杠杆实时移动，半透明闪烁；纳入自动缩放确保看得见 ----
+  useEffect(() => {
+    const series = seriesRef.current;
+    if (!series) return;
+    if (!previewLiq) {
+      if (previewLineRef.current) series.removePriceLine(previewLineRef.current);
+      previewLineRef.current = null;
+      previewValueRef.current = null;
+      chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
+      return;
+    }
+    const price = toChartNum(previewLiq);
+    previewValueRef.current = price;
+    const opts = { price, title: `💀 ${t('chart.previewLiq')}`, lineStyle: LineStyle.LargeDashed, lineWidth: 2 as const, axisLabelVisible: true };
+    if (previewLineRef.current) previewLineRef.current.applyOptions(opts);
+    else previewLineRef.current = series.createPriceLine({ ...opts, color: 'rgba(255,59,92,0.85)' });
+    chartRef.current?.priceScale('right').applyOptions({ autoScale: true });
+  }, [previewLiq, t, interval, chartType, up, down]);
+
+  useEffect(() => {
+    if (!previewLiq) return;
+    let bright = true;
+    const timer = setInterval(() => {
+      bright = !bright;
+      previewLineRef.current?.applyOptions({ color: bright ? 'rgba(255,59,92,0.85)' : 'rgba(255,59,92,0.25)' });
+    }, 550);
+    return () => clearInterval(timer);
+  }, [previewLiq]);
 
   return <div ref={containerRef} className="absolute inset-0" data-testid="price-chart" />;
 }

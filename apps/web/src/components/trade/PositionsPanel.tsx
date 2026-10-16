@@ -7,6 +7,7 @@ import { decimalsOf, fmt, fmtPct, fmtSigned, parseDec, sanitizeDecimalInput } fr
 import { useFeed } from '../../stores/feed';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
+import { mascotOf } from '../layout/MarketTabs';
 
 async function act(fn: () => Promise<unknown>, okText?: string) {
   try {
@@ -37,23 +38,29 @@ function PositionRow({ p }: { p: PositionView }) {
   const half = market ? roundToStep(D(p.quantity).div(2), D(market.lotSize), 'down') : D(0);
 
   return (
-    <div className={`rounded-lg border p-3 ${danger ? 'border-blood/60 bg-blood/5' : 'border-ink-800 bg-ink-850'}`} data-testid={`position-${p.market}`}>
+    <div
+      className={`rounded-2xl border-2 p-3 ${danger ? 'border-blood/70 bg-blood/[0.08] shadow-[0_0_18px_-4px_#ff3b5c]' : 'border-ink-700/70 bg-ink-850/80'}`}
+      data-testid={`position-${p.market}`}
+    >
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className={`rounded px-1.5 py-0.5 text-xs font-bold text-white ${p.side === 'LONG' ? 'bg-up' : 'bg-down'}`}>{t(`position.${p.side}`)}</span>
-          <span className="font-semibold">{p.market}</span>
-          <span className="rounded bg-ink-700 px-1.5 text-xs font-mono">{fmt(p.leverage, 2)}x</span>
+          <span className="text-xl">{mascotOf(p.market, market?.kind)}</span>
+          <span className="font-extrabold">{p.market}</span>
+          <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white ${p.side === 'LONG' ? 'bg-up' : 'bg-down'}`}>
+            {p.side === 'LONG' ? '📈' : '📉'} {t(`position.${p.side}`)}
+          </span>
+          <span className="rounded-full bg-ink-700 px-2 py-0.5 font-mono text-[11px] font-bold">{fmt(p.leverage, 1)}x</span>
         </div>
         <div className={`text-right font-mono tabular-nums ${upnl.gte(0) ? 'text-up' : 'text-down'}`}>
-          <div className="text-base font-semibold">{fmtSigned(upnl)}</div>
-          <div className="text-xs">{fmtPct(roe)}</div>
+          <div className="text-lg font-black leading-tight">{fmtSigned(upnl)}</div>
+          <div className="text-xs font-bold">{fmtPct(roe)}</div>
         </div>
       </div>
       <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-xs sm:grid-cols-6">
         <Cell label={t('position.qty')} value={fmt(p.quantity, market ? decimalsOf(market.lotSize) : 2)} />
         <Cell label={t('position.entry')} value={fmt(p.entryPrice, dp)} />
         <Cell label={t('position.mark')} value={fmt(last, dp)} />
-        <Cell label={t('position.liq')} value={liq.gt(0) ? fmt(liq, dp) : '—'} className="text-blood" />
+        <Cell label={`💀 ${t('position.liq')}`} value={liq.gt(0) ? fmt(liq, dp) : '🛡️'} className="text-blood" />
         <Cell label={t('position.margin')} value={fmt(p.margin)} />
         <Cell label={`${t('chart.tp')}/${t('chart.sl')}`} value={`${p.takeProfitPrice ? fmt(p.takeProfitPrice, dp) : '—'} / ${p.stopLossPrice ? fmt(p.stopLossPrice, dp) : '—'}`} />
       </dl>
@@ -94,8 +101,8 @@ function PositionRow({ p }: { p: PositionView }) {
             void act(() => api.patch(`/positions/${p.market}/tpsl`, { takeProfitPrice: tp || null, stopLossPrice: sl || null }), t('toast.saved')).then(() => setPanel(null));
           }}
         >
-          <Input value={tp} onChange={setTp} placeholder={t('order.tp')} />
-          <Input value={sl} onChange={setSl} placeholder={t('order.sl')} />
+          <Input value={tp} onChange={setTp} placeholder={t('chart.tp')} />
+          <Input value={sl} onChange={setSl} placeholder={t('chart.sl')} />
           <Btn type="submit" tone="primary">{t('position.save')}</Btn>
           <Btn
             onClick={() => {
@@ -123,7 +130,7 @@ const Btn = ({ children, onClick, tone, type = 'button', testId }: { children: R
     type={type}
     onClick={onClick}
     data-testid={testId}
-    className={`rounded-md px-2.5 py-1 ${tone === 'primary' ? 'bg-ink-600 text-ink-100 hover:bg-ink-500' : 'bg-ink-800 text-ink-300 hover:bg-ink-700'}`}
+    className={`rounded-full px-3 py-1 font-bold transition-colors ${tone === 'primary' ? 'bg-candy-grape text-white shadow-[0_2px_0_0_#6b4bc4] hover:brightness-110' : 'bg-ink-800 text-ink-300 hover:bg-ink-700 hover:text-ink-100'}`}
   >
     {children}
   </button>
@@ -135,7 +142,7 @@ const Input = ({ value, onChange, placeholder }: { value: string; onChange: (v: 
     value={value}
     placeholder={placeholder}
     onChange={(e) => onChange(sanitizeDecimalInput(e.target.value))}
-    className="w-28 rounded-md border border-ink-700 bg-ink-900 px-2 py-1 font-mono text-xs outline-none focus:border-accent"
+    className="w-28 rounded-full border border-ink-700 bg-ink-900 px-3 py-1 font-mono text-xs outline-none focus:border-candy-grape"
   />
 );
 
@@ -145,7 +152,7 @@ export function PositionsPanel() {
   const positions = Object.values(byMarket);
   if (!positions.length) return <p className="py-6 text-center text-sm text-ink-500">{t('position.empty')}</p>;
   return (
-    <div className="grid gap-2 xl:grid-cols-2">
+    <div className="grid gap-2 2xl:grid-cols-2">
       {positions.map((p) => (
         <PositionRow key={p.id} p={p} />
       ))}
@@ -177,5 +184,30 @@ export function OrdersPanel() {
         </li>
       ))}
     </ul>
+  );
+}
+
+/** 左下 Bento 卡片：持仓 / 挂单 两个页签，内容区独立滚动 */
+export function PositionsCard({ className = '' }: { className?: string }) {
+  const { t } = useTranslation();
+  const [tab, setTab] = useState<'positions' | 'orders'>('positions');
+  const positionCount = Object.keys(useSession((s) => s.positions)).length;
+  const orderCount = useSession((s) => s.orders.length);
+  const tabCls = (active: boolean) =>
+    `flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold transition-colors ${active ? 'bg-ink-700 text-ink-100' : 'text-ink-400 hover:text-ink-200'}`;
+  return (
+    <section className={`bento flex min-h-0 flex-col p-3 ${className}`} data-testid="positions-card">
+      <div className="mb-2 flex items-center gap-1">
+        <button className={tabCls(tab === 'positions')} onClick={() => setTab('positions')}>
+          💼 {t('position.title')}
+          {positionCount > 0 && <span className="rounded-full bg-candy-grape px-1.5 text-[10px] text-white">{positionCount}</span>}
+        </button>
+        <button className={tabCls(tab === 'orders')} onClick={() => setTab('orders')}>
+          🎯 {t('orders.title')}
+          {orderCount > 0 && <span className="rounded-full bg-candy-sky px-1.5 text-[10px] text-ink-950">{orderCount}</span>}
+        </button>
+      </div>
+      <div className="min-h-0 flex-1 overflow-y-auto pr-1">{tab === 'positions' ? <PositionsPanel /> : <OrdersPanel />}</div>
+    </section>
   );
 }

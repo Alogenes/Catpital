@@ -1,4 +1,4 @@
-import { type CandlePayload, D, type ServerMessage, type UserEvent } from '@catpital/shared';
+import { type BroadcastPayload, type CandlePayload, D, type ServerMessage, type UserEvent } from '@catpital/shared';
 import i18n, { errorText } from '../i18n';
 import { type OrderView, type ResumeView, api } from '../lib/api';
 import { fmt, fmtSigned } from '../lib/format';
@@ -27,6 +27,14 @@ const t = (k: string, o?: Record<string, unknown>) => i18n.t(k, o);
 
 let focused: string[] = [];
 
+/**
+ * 弹幕闸门（纯实时流）：只接受"当前看盘市场"且"在切换到该市场之后才产生"的弹幕。
+ * 服务端时间 = 本地时间 + serverOffset（hello 消息里校准），避免本地时钟偏差误杀。
+ */
+let serverOffset = 0;
+const danmakuGate = { market: '', since: 0 };
+const GATE_TOLERANCE_MS = 250;
+
 /** 切换当前看盘市场/周期：订阅 K 线、弹幕、快讯频道 */
 export function focusMarket(code: string, interval: string) {
   const next = [`kline:${code}:${interval}`, `danmaku:${code}`, `event:${code}`];
@@ -34,6 +42,11 @@ export function focusMarket(code: string, interval: string) {
   if (drop.length) realtime.unsubscribe(drop);
   realtime.subscribe(next);
   focused = next;
+  if (danmakuGate.market !== code) {
+    danmakuGate.market = code;
+    danmakuGate.since = Date.now() + serverOffset;
+    useFeed.getState().clearDanmaku();
+  }
 }
 
 export function startRealtime(token: string) {
@@ -41,6 +54,11 @@ export function startRealtime(token: string) {
   realtime.connect(token);
   const codes = useMarkets.getState().list.map((m) => m.code);
   realtime.subscribe(['broadcast', ...codes.map((c) => `tick:${c}`)]);
+  // 跑马灯首屏：最近的全服战报
+  void api
+    .get<BroadcastPayload[]>('/broadcasts?limit=20')
+    .then((list) => useFeed.getState().setHistory(list))
+    .catch(() => {});
 }
 
 async function refreshPendingOrders() {
@@ -50,6 +68,7 @@ async function refreshPendingOrders() {
 
 function handle(msg: ServerMessage) {
   if ('op' in msg) {
+    if (msg.op === 'hello') serverOffset = msg.d.serverTime - Date.now();
     if (msg.op === 'error' && msg.d.code.startsWith('error.danmaku')) useFeed.getState().toast('error', errorText(msg.d.code));
     return;
   }
@@ -61,7 +80,9 @@ function handle(msg: ServerMessage) {
     const d = (msg as { d: CandlePayload }).d;
     candleListeners.get(`${d.market}:${d.interval}`)?.forEach((l) => l(d));
   } else if (ch.startsWith('danmaku:')) {
-    if (useSettings.getState().danmaku) useFeed.getState().pushDanmaku((msg as Extract<ServerMessage, { ch: `danmaku:${string}` }>).d);
+    const d = (msg as Extract<ServerMessage, { ch: `danmaku:${string}` }>).d;
+    const fresh = d.market === danmakuGate.market && d.ts >= danmakuGate.since - GATE_TOLERANCE_MS;
+    if (fresh && useSettings.getState().danmaku) useFeed.getState().pushDanmaku(d);
   } else if (ch.startsWith('event:')) {
     useMarkets.getState().pushNews((msg as Extract<ServerMessage, { ch: `event:${string}` }>).d);
   } else if (ch === 'broadcast') {
@@ -105,6 +126,8 @@ async function handleUser(e: UserEvent) {
       } else if (e.status === 'CANCELLED') {
         feed.toast('info', t('toast.cancelled'));
       } else if (e.status === 'FILLED' && e.source !== 'LIQUIDATION') {
+        // 平仓净盈亏：先记下，紧随其后的 wallet 事件据此决定钱包动效（▲ 盈利 / ▼ 亏损）
+        if (e.realizedPnl) session.noteSettlement(e.realizedPnl, 'close');
         const vars = { code: e.market, price: fmt(e.fillPrice), pnl: fmtSigned(e.realizedPnl) };
         if (e.source === 'TAKE_PROFIT') {
           feed.toast('success', t('toast.tpHit', vars));
@@ -120,6 +143,7 @@ async function handleUser(e: UserEvent) {
       return;
     }
     case 'liquidated': {
+      session.noteSettlement(D(e.totalLoss).neg().toFixed(), 'liquidation');
       const isDeficit = D(e.deficit).gt(0);
       feed.toast('danger', t('toast.liquidated', { code: e.market, price: fmt(e.executionPrice), loss: fmt(e.totalLoss) }));
       if (isDeficit) feed.toast('danger', t('toast.deficit', { deficit: fmt(e.deficit), balance: fmt(e.balanceAfter) }));
