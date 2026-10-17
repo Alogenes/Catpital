@@ -8,6 +8,8 @@ export interface MeUser {
   globalName: string | null;
   avatarHash: string | null;
   isAdmin: boolean;
+  /** 临时管理面板：只有白名单用户的 /me 才带这个字段 */
+  panel?: boolean;
   generation: number;
   settings: Record<string, unknown>;
 }

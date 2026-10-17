@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import { BankruptcyService } from './bankruptcy/bankruptcyService.js';
+import { AdminService } from './admin/adminService.js';
 import { Notifier } from './broadcast/notifier.js';
 import type { EconomyConfig } from './config/env.js';
 import type { Bus } from './infra/bus.js';
@@ -61,6 +62,8 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
     log,
     clock,
   );
+  /** 临时管理面板：用户管理 */
+  const admin = new AdminService(db, users, markets, risk, notifier, clock);
   let baselineTimer: NodeJS.Timeout | null = null;
 
   return {
@@ -80,6 +83,7 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
     leaderboard,
     bank,
     settlement,
+    admin,
     /** 加载市场与风控索引（不启动定时器） */
     async init() {
       await markets.load();

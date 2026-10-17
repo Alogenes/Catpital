@@ -91,7 +91,7 @@ export const marketRoutes =
       const m = core.markets.byCode(req.params.code);
       if (!m) throw new TradeError('error.marketNotFound', 404);
       const rows = await core.db.scheduledEvent.findMany({
-        where: { marketId: m.id, status: { in: ['ACTIVE', 'COMPLETED'] } },
+        where: { marketId: m.id, status: { in: ['ACTIVE', 'COMPLETED'] }, headline: { not: '' } },
         orderBy: { triggeredAt: 'desc' },
         take: 20,
       });

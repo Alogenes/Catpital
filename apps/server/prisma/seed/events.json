@@ -8,6 +8,10 @@
       "en-US": {
         "headline": "Meow Technologies accused of accounting fraud, CEO flees overnight",
         "content": "Sources say three years of cat-food revenue were fabricated. Regulators have opened an investigation."
+      },
+      "es-ES": {
+        "headline": "Acusan a Miau Tecnologías de fraude contable y su CEO huye de madrugada",
+        "content": "Según varias fuentes, se inventaron tres años de ingresos por pienso para gatos. Los reguladores han abierto una investigación."
       }
     },
     "gapPercent": "-0.30",
@@ -24,6 +28,10 @@
       "en-US": {
         "headline": "Famous dog influencer tweets: WoofCoin is the currency of the future",
         "content": "A single tweet sparks a retail frenzy overnight."
+      },
+      "es-ES": {
+        "headline": "Un famoso influencer perruno tuitea: GuauCoin es la moneda del futuro",
+        "content": "Un solo tuit desata de la noche a la mañana un frenesí entre los pequeños inversores."
       }
     },
     "gapPercent": "0.25",

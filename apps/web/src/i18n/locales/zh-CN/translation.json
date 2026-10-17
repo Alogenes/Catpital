@@ -17,7 +17,8 @@
   "nav": {
     "leaderboard": "排行榜",
     "history": "人生履历",
-    "menu": "菜单"
+    "menu": "菜单",
+    "admin": "管理"
   },
   "wallet": {
     "balance": "可用余额",
@@ -320,7 +321,8 @@
     "badSignature": "签名不正确",
     "replayedNonce": "重复的请求（nonce 已使用）",
     "badJson": "请求体不是合法 JSON",
-    "unknown": "未知错误（{{code}}）"
+    "unknown": "未知错误（{{code}}）",
+    "userExists": "该玩家已存在"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -359,6 +361,72 @@
       "chart": "看盘",
       "trade": "交易",
       "positions": "持仓"
+    }
+  },
+  "panel": {
+    "title": "临时管理面板",
+    "empty": "暂无",
+    "tabs": {
+      "events": "事件",
+      "users": "用户"
+    },
+    "status": {
+      "PENDING": "待触发",
+      "ACTIVE": "进行中",
+      "COMPLETED": "已结束",
+      "CANCELLED": "已取消"
+    },
+    "event": {
+      "market": "市场",
+      "direction": "方向",
+      "up": "暴涨",
+      "down": "暴跌",
+      "gap": "瞬间跳空",
+      "gapInvalid": "下跌幅度必须小于 100%",
+      "vol": "波动放大",
+      "trend": "后续趋势",
+      "trendLevel": {
+        "none": "无",
+        "weak": "弱",
+        "medium": "中",
+        "strong": "强"
+      },
+      "delay": "触发时间",
+      "now": "立即",
+      "duration": "持续时间",
+      "headline": "新闻标题（可选）",
+      "headlinePlaceholder": "留空 = 静默事件",
+      "silent": "🤫 静默事件：价格照常跳空，但不会出现在快讯和频道播报里",
+      "loud": "📢 会推送快讯并在 Discord 频道播报",
+      "content": "新闻内容",
+      "submit": "⚡ {{market}} {{gap}} · {{when}}",
+      "created": "事件已排期",
+      "recent": "最近事件",
+      "silentTag": "（静默）",
+      "cancel": "取消"
+    },
+    "user": {
+      "search": "搜索 UID / 用户名",
+      "create": "新建",
+      "uid": "Discord UID",
+      "username": "用户名",
+      "initialBalance": "初始余额",
+      "createSubmit": "创建",
+      "back": "返回列表",
+      "funds": "资金",
+      "add": "增减",
+      "set": "设为",
+      "memo": "备注（可选）",
+      "apply": "执行",
+      "fundsDone": "余额已更新",
+      "fundsHint": "记为管理员调整（外部资金流），不影响收益率榜，只影响富豪榜",
+      "ledger": "最近流水",
+      "grantAdmin": "设为管理员",
+      "revokeAdmin": "取消管理员",
+      "adminHint": "管理员可使用 /admin_* 斜杠命令",
+      "delete": "删除玩家",
+      "deleteConfirm": "再点一次确认删除（不可恢复）",
+      "deleted": "玩家已删除"
     }
   }
 }

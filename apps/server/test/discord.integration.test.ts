@@ -35,13 +35,13 @@ afterAll(async () => {
 });
 
 describe('斜杠命令', () => {
-  it('registers 5 commands with Chinese localizations and admin-only defaults', () => {
+  it('registers 5 commands with Chinese / Spanish localizations and admin-only defaults', () => {
     const defs = commandDefinitions();
     expect(defs.map((d) => d.name)).toEqual(['launch', 'wallet', 'leaderboard', 'admin_schedule_event', 'admin_set_channel']);
     const admin = defs.find((d) => d.name === 'admin_schedule_event')!;
     expect(admin.default_member_permissions).toBe('32'); // ManageGuild
     expect(admin.options!.map((o) => o.name)).toEqual(['market', 'time_delay', 'price_jump', 'news_title', 'news_content', 'duration']);
-    expect(defs[0]!.description_localizations).toEqual({ 'zh-CN': '打开 Catpital 猫咪资本交易大厅' });
+    expect(defs[0]!.description_localizations).toEqual({ 'zh-CN': '打开 Catpital 猫咪资本交易大厅', 'es-ES': 'Abre el parqué de Catpital' });
   });
 
   it('/wallet before playing, then with real data', async () => {

@@ -39,10 +39,14 @@ const schema = z.object({
   /** 全局默认播报频道；各服务器也可用 /admin_set_channel 单独设置 */
   DISCORD_BROADCAST_CHANNEL_ID: z.string().default(''),
   /** 播报语言（服务器未单独设置时） */
-  DISCORD_LOCALE: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
+  DISCORD_LOCALE: z.enum(['zh-CN', 'en-US', 'es-ES']).default('zh-CN'),
   /** 外部接口 HMAC 密钥的加密主密钥（32 字节，hex 或 base64） */
   API_SECRET_KEY: z.string().default(''),
   HMAC_MAX_SKEW_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+  /**
+   * 临时管理面板白名单："<Discord UID>:<用户名>,..."；留空 = 面板完全不存在
+   */
+  ADMIN_PANEL_USERS: z.string().default(''),
   /** 榜单结算开关（多实例部署时只在一个实例开启） */
   LEADERBOARD_SETTLEMENT: z.enum(['0', '1']).default('1'),
   LEADERBOARD_REWARD_DAILY: decimalString.default('1000'),

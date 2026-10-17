@@ -1,12 +1,13 @@
 import { canDeclareBankruptcy, netWorth } from '@catpital/shared';
 import type { FastifyPluginAsync } from 'fastify';
+import type { PanelAccess } from '../../admin/panelAccess.js';
 import type { Core } from '../../app.js';
 import { fromDb, wire } from '../../lib/dec.js';
 import { toPositionView } from '../../trading/types.js';
 import { userSettingsSchema } from '../../users/userService.js';
 
 export const meRoutes =
-  (core: Core): FastifyPluginAsync =>
+  (core: Core, panel?: PanelAccess): FastifyPluginAsync =>
   async (app) => {
     app.addHook('onRequest', app.authenticate);
 
@@ -43,6 +44,8 @@ export const meRoutes =
           isAdmin: user.isAdmin,
           generation: user.generation,
           settings: user.settings,
+          // 只对白名单里的人出现；其他人的响应里没有这个字段
+          ...(panel?.allows(user) ? { panel: true } : {}),
         },
         wallet: { balance: wire(balance), locked: wire(locked), netWorth: wire(nw) },
         life: life && {

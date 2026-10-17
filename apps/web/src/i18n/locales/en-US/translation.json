@@ -17,7 +17,8 @@
   "nav": {
     "leaderboard": "Leaderboard",
     "history": "Past lives",
-    "menu": "Menu"
+    "menu": "Menu",
+    "admin": "Panel"
   },
   "wallet": {
     "balance": "Available",
@@ -320,7 +321,8 @@
     "badSignature": "Invalid signature",
     "replayedNonce": "Replayed request (nonce already used)",
     "badJson": "Request body is not valid JSON",
-    "unknown": "Unknown error ({{code}})"
+    "unknown": "Unknown error ({{code}})",
+    "userExists": "That player already exists"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -359,6 +361,72 @@
       "chart": "Chart",
       "trade": "Trade",
       "positions": "Positions"
+    }
+  },
+  "panel": {
+    "title": "Temporary admin panel",
+    "empty": "Nothing here",
+    "tabs": {
+      "events": "Events",
+      "users": "Users"
+    },
+    "status": {
+      "PENDING": "Pending",
+      "ACTIVE": "Active",
+      "COMPLETED": "Done",
+      "CANCELLED": "Cancelled"
+    },
+    "event": {
+      "market": "Market",
+      "direction": "Direction",
+      "up": "Pump",
+      "down": "Crash",
+      "gap": "Instant gap",
+      "gapInvalid": "A drop must be under 100%",
+      "vol": "Volatility boost",
+      "trend": "Follow-through trend",
+      "trendLevel": {
+        "none": "None",
+        "weak": "Weak",
+        "medium": "Medium",
+        "strong": "Strong"
+      },
+      "delay": "Trigger",
+      "now": "Now",
+      "duration": "Duration",
+      "headline": "Headline (optional)",
+      "headlinePlaceholder": "Leave empty for a silent event",
+      "silent": "🤫 Silent event: the price still gaps, but nothing shows in the news feed or Discord",
+      "loud": "📢 Posts breaking news and a Discord broadcast",
+      "content": "Story",
+      "submit": "⚡ {{market}} {{gap}} · {{when}}",
+      "created": "Event scheduled",
+      "recent": "Recent events",
+      "silentTag": "(silent)",
+      "cancel": "Cancel"
+    },
+    "user": {
+      "search": "Search UID / username",
+      "create": "New",
+      "uid": "Discord UID",
+      "username": "Username",
+      "initialBalance": "Starting balance",
+      "createSubmit": "Create",
+      "back": "Back to list",
+      "funds": "Funds",
+      "add": "Add / remove",
+      "set": "Set to",
+      "memo": "Note (optional)",
+      "apply": "Apply",
+      "fundsDone": "Balance updated",
+      "fundsHint": "Booked as an admin adjustment (external flow): affects the Richest board, not Return %",
+      "ledger": "Recent ledger",
+      "grantAdmin": "Make admin",
+      "revokeAdmin": "Remove admin",
+      "adminHint": "Admins can use the /admin_* slash commands",
+      "delete": "Delete player",
+      "deleteConfirm": "Click again to delete (irreversible)",
+      "deleted": "Player deleted"
     }
   }
 }

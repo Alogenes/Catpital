@@ -4,7 +4,8 @@
     "name": "喵喵科技",
     "nameI18n": {
       "zh-CN": "喵喵科技",
-      "en-US": "Meow Technologies"
+      "en-US": "Meow Technologies",
+      "es-ES": "Miau Tecnologías"
     },
     "kind": "STOCK",
     "dataSource": "PROCEDURAL",
@@ -46,7 +47,8 @@
     "name": "汪汪币",
     "nameI18n": {
       "zh-CN": "汪汪币",
-      "en-US": "WoofCoin"
+      "en-US": "WoofCoin",
+      "es-ES": "GuauCoin"
     },
     "kind": "CRYPTO",
     "dataSource": "PROCEDURAL",
@@ -84,40 +86,18 @@
     }
   },
   {
-    "code": "FISH",
+    "code": "FIH",
     "name": "小鱼干集团",
     "nameI18n": {
       "zh-CN": "小鱼干集团",
-      "en-US": "Dried Fish Holdings"
+      "en-US": "Dried Fish Holdings",
+      "es-ES": "Pescaditos Secos Holding"
     },
     "kind": "STOCK",
     "dataSource": "PROCEDURAL",
     "tradingHours": {
-      "timezone": "Asia/Shanghai",
-      "sessions": [
-        {
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "open": "09:30",
-          "close": "11:30"
-        },
-        {
-          "days": [
-            1,
-            2,
-            3,
-            4,
-            5
-          ],
-          "open": "13:00",
-          "close": "15:00"
-        }
-      ]
+      "timezone": "UTC",
+      "sessions": []
     },
     "tickIntervalMs": 1000,
     "tickSize": "0.01",
@@ -131,29 +111,31 @@
     "initialPrice": "42",
     "sortOrder": 3,
     "engine": {
-      "drift": "0.1",
-      "volatility": "0.35",
-      "meanReversionSpeed": "0.5",
-      "jumpIntensity": "4",
+      "drift": "0",
+      "volatility": "8",
+      "meanReversionSpeed": "100",
+      "jumpIntensity": "3000",
       "jumpMean": "0",
-      "jumpStdDev": "0.03",
-      "baseVolume": "300",
-      "volumeVolCoupling": "1",
-      "timeScale": "10",
+      "jumpStdDev": "0.12",
+      "baseVolume": "600",
+      "volumeVolCoupling": "2.5",
+      "timeScale": "60",
       "priceFloor": "0.01",
       "impactLiquidity": "250000000",
       "impactCap": "0.02",
-      "impactVolBoost": "1.8",
+      "impactVolBoost": "3",
       "impactDecaySec": 30,
       "impactExponent": "0.8"
-    }
+    },
+    "status": "ACTIVE"
   },
   {
     "code": "BTC",
     "name": "比特币（实时）",
     "nameI18n": {
       "zh-CN": "比特币（实时）",
-      "en-US": "Bitcoin (Live)"
+      "en-US": "Bitcoin (Live)",
+      "es-ES": "Bitcoin (en vivo)"
     },
     "kind": "CRYPTO",
     "dataSource": "LIVE_API",

@@ -54,7 +54,7 @@ export class UserService {
         data: {
           id: profile.id,
           ...identity,
-          locale: profile.locale?.startsWith('zh') ? 'zh-CN' : profile.locale ? 'en-US' : 'zh-CN',
+          locale: profile.locale?.startsWith('zh') ? 'zh-CN' : profile.locale?.startsWith('es') ? 'es-ES' : profile.locale ? 'en-US' : 'zh-CN',
           createdAt: now,
           wallet: { create: {} },
         },

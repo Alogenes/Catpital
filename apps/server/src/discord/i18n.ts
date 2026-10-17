@@ -2,7 +2,13 @@
  * Bot 文案（频道播报 + 斜杠命令回复）。与前端语言包分开维护：
  * 频道里的卡片要更有"节目效果"，破产称号用更毒舌的版本。
  */
-export type BotLocale = 'zh-CN' | 'en-US';
+export type BotLocale = 'zh-CN' | 'en-US' | 'es-ES';
+
+export const BOT_LOCALES: readonly BotLocale[] = ['zh-CN', 'en-US', 'es-ES'];
+
+/** Discord 的 locale（zh-CN / zh-TW / es-ES / es-419 / en-US …）→ Bot 语言 */
+export const botLocaleOf = (l: string | null | undefined): BotLocale =>
+  l?.startsWith('zh') ? 'zh-CN' : l?.startsWith('es') ? 'es-ES' : 'en-US';
 
 const zh = {
   launch: {
@@ -209,7 +215,109 @@ const en: typeof zh = {
   },
 };
 
-const PACKS: Record<BotLocale, typeof zh> = { 'zh-CN': zh, 'en-US': en };
+const es: typeof zh = {
+  launch: {
+    title: '🐱 Bienvenido a Catpital',
+    desc: 'Opera sin salir de Discord: **bolsa simulada · apalancamiento de hasta 100x · comentarios flotantes · sin protección contra saldo negativo**.\n¿Te has quedado a cero? Declárate en quiebra y reencarna con tu Currículum Bursátil.',
+    markets: 'Mercados abiertos',
+    button: '🚀 Entrar en el parqué',
+    footer: 'Juego de simulación: no se usa dinero real',
+    failed: '😿 No se ha podido abrir la Activity. Úsala en un canal del servidor y comprueba que la aplicación tiene las Activities activadas.',
+    notEnabled: '🔧 Esta aplicación aún no tiene las Activities activadas (Developer Portal → Activities → Settings → Enable Activities). El botón funcionará en cuanto un administrador las active.',
+  },
+  wallet: {
+    title: '💼 Cartera de {{name}}',
+    netWorth: '💰 Patrimonio',
+    balance: '🪙 Disponible',
+    locked: '🔒 En órdenes',
+    generation: '🌱 Vida',
+    generationValue: 'Vida n.º {{n}}',
+    positions: '📈 Posiciones',
+    positionsValue: '{{n}} abiertas',
+    talents: '🧬 Talentos de reencarnación',
+    noTalents: 'Todavía ninguno: los títulos se heredan de vidas anteriores y quedar primero da insignias exclusivas',
+    debt: '⚠️ Endeudado: puedes cerrar posiciones, pero no abrir nuevas',
+    notFound: 'Todavía no has entrado en el parqué: ¡prueba con `/launch`!',
+  },
+  leaderboard: {
+    title: '🏆 {{period}} · {{board}}',
+    period: { DAILY: 'Diaria', WEEKLY: 'Semanal', MONTHLY: 'Mensual' },
+    board: { RETURN_PCT: 'Rentabilidad', NET_WORTH: 'Los más ricos' },
+    empty: 'Aquí no hay nadie todavía: ¡ve a por el número uno!',
+    me: 'Tu puesto',
+    unranked: 'Sin clasificar',
+    ineligible: 'Capital inicial del periodo inferior a {{min}}: no clasificas por rentabilidad',
+    footer: '{{key}} · termina {{end}} · la rentabilidad no cuenta ingresos ni ayudas',
+  },
+  admin: {
+    noPermission: '🚫 Solo para administradores.',
+    badMarket: 'Mercado desconocido: `{{market}}`.',
+    badDelay: '`time_delay` no válido; p. ej. `30s`, `5m`, `1h30m`.',
+    badJump: '`price_jump` no válido; p. ej. `-30%`, `+50%`, `0.25` (debe ser mayor que -100 %).',
+    scheduled: '📅 Programado: **{{market}}** dará un salto de **{{jump}}** a las {{when}} ({{rel}})',
+    channelSet: '📣 Canal de avisos de este servidor: {{channel}}',
+  },
+  bc: {
+    bigWinTitle: '🚀 ¡Ballena a la vista!',
+    bigWin: '¡{{user}} acaba de ganar **{{pnl}}** en **{{market}}**! ROE **{{roe}}**',
+    whaleTitle: '🐋 ¡La ballena {{dir}}!',
+    whalePump: 'dispara',
+    whaleDump: 'hunde',
+    whale: '{{user}} ha movido **{{market}}** {{verb}} **{{pct}}** de una sola orden ({{before}} → {{after}})',
+    rektTitle: '⚡ ¡REVENTADO!',
+    rekt: 'El {{side}} {{lev}}x de {{user}} en **{{market}}** ha sido liquidado: ¡**{{loss}}** evaporados en un suspiro!',
+    deficitTitle: '🩸 ¡Ha reventado el margen!',
+    deficit: 'El {{side}} {{lev}}x de {{user}} en **{{market}}** ha sido liquidado y aún debe **{{deficit}}**: ¡saldo en **{{balance}}**!',
+    long: 'largo',
+    short: 'corto',
+    execAt: 'Ejecutado a {{exec}} (liq. {{liq}})',
+    obitTitle: '⚰️ Esquela · {{name}}, vida n.º {{gen}}',
+    obitDesc: 'Nació el {{born}} y murió el {{died}}.\nVivió **{{survived}}**.',
+    obitTitleLabel: 'Será recordado como',
+    peak: '🏔 Patrimonio máximo',
+    worst: '💀 Peor liquidación',
+    fees: '🧾 Comisiones donadas',
+    winRate: '🎯 Tasa de acierto',
+    trades: '🔁 Cerradas / liquidadas',
+    debt: '🩸 Deuda condonada',
+    obitFooter: 'Que en el cielo no haya liquidaciones 🕯️ · ayuda de {{relief}} concedida, empieza la vida n.º {{next}}',
+    newsTitle: '📰 Última hora | {{market}}',
+    newsGap: 'Salto **{{gap}}**: {{before}} → {{after}}',
+    champTitle: '👑 Campeón · {{board}} {{period}}',
+    champReturn: '¡{{user}} se corona con una rentabilidad de **{{value}}**!',
+    champWorth: '¡{{user}} se corona con un patrimonio de **{{value}}**!',
+    champReward: 'Premio de **{{reward}}** abonado; insignia exclusiva «{{badge}}» desbloqueada',
+  },
+  title: {
+    didNothing: 'Se arruinó sin mover un dedo',
+    speedrun: 'Speedrun de quiebra en diez minutos',
+    deficitKing: 'Debe más de lo que tuvo nunca',
+    eventVictim: 'Sacrificado por un solo titular',
+    leverageManiac: 'Haciendo caridad a 100x',
+    oneHitWonder: 'Un pelotazo y luego nada',
+    peakThenAbyss: 'De triplicar a cero',
+    feeDonor: 'El filántropo favorito del bróker',
+    scalper: 'Guerrero de dos minutos',
+    diamondHands: 'Manos de diamante, cartera vacía',
+    winningLoser: 'Ganó mucho y aun así se arruinó',
+    coinFlipper: 'Una moneda al aire lo habría hecho mejor',
+    permaBull: 'Alcista hasta el final',
+    permaBear: 'Agorero perpetuo',
+    immortal: 'Aguantó un mes, y ya',
+    keyboardWarrior: 'Más comentarios que operaciones',
+    leek: 'Un pringado más',
+  },
+  badge: {
+    'badge.DAILY.RETURN_PCT': 'Dios bursátil del día',
+    'badge.WEEKLY.RETURN_PCT': 'Dios bursátil de la semana',
+    'badge.MONTHLY.RETURN_PCT': 'Dios bursátil del mes',
+    'badge.DAILY.NET_WORTH': 'El más rico del día',
+    'badge.WEEKLY.NET_WORTH': 'El más rico de la semana',
+    'badge.MONTHLY.NET_WORTH': 'El más rico del mes',
+  },
+};
+
+const PACKS: Record<BotLocale, typeof zh> = { 'zh-CN': zh, 'en-US': en, 'es-ES': es };
 
 export const pack = (locale: BotLocale) => PACKS[locale] ?? zh;
 

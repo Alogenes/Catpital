@@ -20,13 +20,13 @@ import { parseDelay, parseJump } from './parse.js';
 // -----------------------------------------------------------------------------
 
 const PERIOD_CHOICES = [
-  { name: '日榜 Daily', value: 'DAILY' },
-  { name: '周榜 Weekly', value: 'WEEKLY' },
-  { name: '月榜 Monthly', value: 'MONTHLY' },
+  { name: '日榜 Daily', value: 'DAILY', name_localizations: { 'es-ES': 'Diaria' } },
+  { name: '周榜 Weekly', value: 'WEEKLY', name_localizations: { 'es-ES': 'Semanal' } },
+  { name: '月榜 Monthly', value: 'MONTHLY', name_localizations: { 'es-ES': 'Mensual' } },
 ];
 const BOARD_CHOICES = [
-  { name: '收益率榜 Return %', value: 'RETURN_PCT' },
-  { name: '富豪榜 Richest', value: 'NET_WORTH' },
+  { name: '收益率榜 Return %', value: 'RETURN_PCT', name_localizations: { 'es-ES': 'Rentabilidad %' } },
+  { name: '富豪榜 Richest', value: 'NET_WORTH', name_localizations: { 'es-ES': 'Los más ricos' } },
 ];
 
 export function commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSONBody[] {
@@ -34,64 +34,64 @@ export function commandDefinitions(): RESTPostAPIChatInputApplicationCommandsJSO
     new SlashCommandBuilder()
       .setName('launch')
       .setDescription('Open the Catpital trading floor')
-      .setDescriptionLocalizations({ 'zh-CN': '打开 Catpital 猫咪资本交易大厅' }),
+      .setDescriptionLocalizations({ 'zh-CN': '打开 Catpital 猫咪资本交易大厅', 'es-ES': 'Abre el parqué de Catpital' }),
     new SlashCommandBuilder()
       .setName('wallet')
       .setDescription('Check your balance, net worth and reincarnation talents')
-      .setDescriptionLocalizations({ 'zh-CN': '查看余额、总净值、第几世与轮回天赋' })
+      .setDescriptionLocalizations({ 'zh-CN': '查看余额、总净值、第几世与轮回天赋', 'es-ES': 'Consulta saldo, patrimonio, vida actual y talentos' })
       .addBooleanOption((o) =>
-        o.setName('public').setDescription('Show the card to the whole channel').setDescriptionLocalizations({ 'zh-CN': '在频道里公开展示' }),
+        o.setName('public').setDescription('Show the card to the whole channel').setDescriptionLocalizations({ 'zh-CN': '在频道里公开展示', 'es-ES': 'Mostrar la tarjeta a todo el canal' }),
       ),
     new SlashCommandBuilder()
       .setName('leaderboard')
       .setDescription('Show the leaderboard')
-      .setDescriptionLocalizations({ 'zh-CN': '查看排行榜' })
+      .setDescriptionLocalizations({ 'zh-CN': '查看排行榜', 'es-ES': 'Ver la clasificación' })
       .addStringOption((o) =>
-        o.setName('period').setDescription('Period').setDescriptionLocalizations({ 'zh-CN': '周期' }).addChoices(...PERIOD_CHOICES),
+        o.setName('period').setDescription('Period').setDescriptionLocalizations({ 'zh-CN': '周期', 'es-ES': 'Periodo' }).addChoices(...PERIOD_CHOICES),
       )
       .addStringOption((o) =>
-        o.setName('board').setDescription('Board').setDescriptionLocalizations({ 'zh-CN': '榜单' }).addChoices(...BOARD_CHOICES),
+        o.setName('board').setDescription('Board').setDescriptionLocalizations({ 'zh-CN': '榜单', 'es-ES': 'Tabla' }).addChoices(...BOARD_CHOICES),
       ),
     new SlashCommandBuilder()
       .setName('admin_schedule_event')
       .setDescription('[Admin] Schedule a black-swan / moonshot market event')
-      .setDescriptionLocalizations({ 'zh-CN': '【管理员】制造黑天鹅 / 暴涨事件' })
+      .setDescriptionLocalizations({ 'zh-CN': '【管理员】制造黑天鹅 / 暴涨事件', 'es-ES': '[Admin] Programar un cisne negro o un subidón' })
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
       .setDMPermission(false)
       .addStringOption((o) =>
-        o.setName('market').setDescription('Market code, e.g. MEOW').setDescriptionLocalizations({ 'zh-CN': '股市代码，如 MEOW' }).setRequired(true).setAutocomplete(true),
+        o.setName('market').setDescription('Market code, e.g. MEOW').setDescriptionLocalizations({ 'zh-CN': '股市代码，如 MEOW', 'es-ES': 'Código del mercado, p. ej. MEOW' }).setRequired(true).setAutocomplete(true),
       )
       .addStringOption((o) =>
-        o.setName('time_delay').setDescription('Delay: 30s / 5m / 1h30m').setDescriptionLocalizations({ 'zh-CN': '多久后触发：30s / 5m / 1h30m' }).setRequired(true),
+        o.setName('time_delay').setDescription('Delay: 30s / 5m / 1h30m').setDescriptionLocalizations({ 'zh-CN': '多久后触发：30s / 5m / 1h30m', 'es-ES': 'Retraso: 30s / 5m / 1h30m' }).setRequired(true),
       )
       .addStringOption((o) =>
-        o.setName('price_jump').setDescription('Instant gap: -30% / +50%').setDescriptionLocalizations({ 'zh-CN': '瞬间跳空：-30% / +50%' }).setRequired(true),
+        o.setName('price_jump').setDescription('Instant gap: -30% / +50%').setDescriptionLocalizations({ 'zh-CN': '瞬间跳空：-30% / +50%', 'es-ES': 'Salto instantáneo: -30% / +50%' }).setRequired(true),
       )
       .addStringOption((o) =>
-        o.setName('news_title').setDescription('Headline').setDescriptionLocalizations({ 'zh-CN': '新闻标题' }).setRequired(true).setMaxLength(200),
+        o.setName('news_title').setDescription('Headline').setDescriptionLocalizations({ 'zh-CN': '新闻标题', 'es-ES': 'Titular' }).setRequired(true).setMaxLength(200),
       )
       .addStringOption((o) =>
-        o.setName('news_content').setDescription('Details').setDescriptionLocalizations({ 'zh-CN': '新闻详情' }).setRequired(true).setMaxLength(1500),
+        o.setName('news_content').setDescription('Details').setDescriptionLocalizations({ 'zh-CN': '新闻详情', 'es-ES': 'Detalles de la noticia' }).setRequired(true).setMaxLength(1500),
       )
       .addIntegerOption((o) =>
         o
           .setName('duration')
           .setDescription('Seconds the trend/volatility effect lasts (default 300)')
-          .setDescriptionLocalizations({ 'zh-CN': '后续趋势与波动放大持续秒数（默认 300）' })
+          .setDescriptionLocalizations({ 'zh-CN': '后续趋势与波动放大持续秒数（默认 300）', 'es-ES': 'Segundos que duran la tendencia y la volatilidad extra (300 por defecto)' })
           .setMinValue(0)
           .setMaxValue(86_400),
       ),
     new SlashCommandBuilder()
       .setName('admin_set_channel')
       .setDescription('[Admin] Set the channel for Catpital broadcasts')
-      .setDescriptionLocalizations({ 'zh-CN': '【管理员】设置本服务器的播报频道' })
+      .setDescriptionLocalizations({ 'zh-CN': '【管理员】设置本服务器的播报频道', 'es-ES': '[Admin] Elegir el canal de avisos de Catpital' })
       .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild)
       .setDMPermission(false)
       .addChannelOption((o) =>
         o
           .setName('channel')
           .setDescription('Text channel (default: this one)')
-          .setDescriptionLocalizations({ 'zh-CN': '文字频道（默认当前频道）' })
+          .setDescriptionLocalizations({ 'zh-CN': '文字频道（默认当前频道）', 'es-ES': 'Canal de texto (por defecto, este)' })
           .addChannelTypes(ChannelType.GuildText, ChannelType.GuildAnnouncement),
       ),
   ].map((c) => c.toJSON());

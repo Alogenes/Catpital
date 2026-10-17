@@ -1,6 +1,6 @@
 import { D, netWorth } from '@catpital/shared';
 import { AnimatePresence, motion } from 'framer-motion';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { avatarUrl } from '../../lib/discord';
 import { useSettledValue } from '../../lib/rolling';
@@ -12,6 +12,9 @@ import { ResumeHistoryModal } from '../bankruptcy/ResumeHistoryModal';
 import { LeaderboardModal } from '../leaderboard/LeaderboardModal';
 import { WalletPill } from './WalletPill';
 
+// 管理面板单独打包，只有白名单用户点开时才下载
+const AdminPanel = lazy(() => import('../admin/AdminPanel'));
+
 export function TopBar({ onSettings }: { onSettings: () => void }) {
   const { t } = useTranslation();
   const user = useSession((s) => s.user);
@@ -21,7 +24,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   const positions = useSession((s) => s.positions);
   const prices = useMarkets((s) => s.prices);
   const [ws, setWs] = useState<WsStatus>('connecting');
-  const [modal, setModal] = useState<null | 'leaderboard' | 'history'>(null);
+  const [modal, setModal] = useState<null | 'leaderboard' | 'history' | 'panel'>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   // 点菜单外任意处关闭（header 有 backdrop-filter，内部 fixed 遮罩只能盖住 header，所以用文档级监听）
@@ -54,7 +57,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   // 去抖后的净值：吸收持仓/钱包事件到达先后造成的瞬时偏差
   const nwSettled = useSettledValue(nw.toDecimalPlaces(2).toFixed());
   const inDebt = D(balance).lt(0);
-  const open = (m: 'leaderboard' | 'history') => {
+  const open = (m: 'leaderboard' | 'history' | 'panel') => {
     sound.play('click');
     setModal(m);
   };
@@ -83,6 +86,11 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
         <button className={navBtn} onClick={() => open('history')} data-testid="open-history">
           📜 <span>{t('nav.history')}</span>
         </button>
+        {user?.panel && (
+          <button className={navBtn} onClick={() => open('panel')} data-testid="open-panel">
+            🛠 <span>{t('nav.admin')}</span>
+          </button>
+        )}
       </nav>
 
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 md:flex-none md:flex-wrap md:gap-2.5">
@@ -154,6 +162,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
                 ['🏆', t('nav.leaderboard'), () => open('leaderboard')],
                 ['📜', t('nav.history'), () => open('history')],
                 ['⚙️', t('settings.title'), onSettings],
+                ...(user?.panel ? [['🛠', t('nav.admin'), () => open('panel')]] : []),
               ].map(([icon, label, action]) => (
                 <button
                   key={label as string}
@@ -173,6 +182,11 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
 
       <LeaderboardModal open={modal === 'leaderboard'} onClose={() => setModal(null)} />
       <ResumeHistoryModal open={modal === 'history'} onClose={() => setModal(null)} />
+      {user?.panel && modal === 'panel' && (
+        <Suspense fallback={null}>
+          <AdminPanel open onClose={() => setModal(null)} />
+        </Suspense>
+      )}
     </header>
   );
 }

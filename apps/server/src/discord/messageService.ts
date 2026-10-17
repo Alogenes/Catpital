@@ -4,7 +4,7 @@ import type { Core } from '../app.js';
 import type { BotEnvelope } from '../infra/bus.js';
 import { fromDb, wire } from '../lib/dec.js';
 import { type BroadcastExtras, broadcastEmbed } from './embeds.js';
-import type { BotLocale } from './i18n.js';
+import { type BotLocale, botLocaleOf } from './i18n.js';
 
 /** 发消息的抽象：生产环境由 discord.js Client 实现，测试里注入假的 */
 export type ChannelSender = (channelId: string, payload: MessageCreateOptions) => Promise<void>;
@@ -51,7 +51,7 @@ export class BroadcastMessenger {
     for (const g of guilds) {
       const toggles = (g.broadcastToggles ?? {}) as Partial<Record<BroadcastKind, boolean>>;
       if (toggles[kind] === false) continue;
-      out.set(g.broadcastChannelId!, g.locale === 'en-US' ? 'en-US' : 'zh-CN');
+      out.set(g.broadcastChannelId!, botLocaleOf(g.locale));
     }
     if (this.opts.defaultChannelId && !out.has(this.opts.defaultChannelId)) out.set(this.opts.defaultChannelId, this.opts.defaultLocale);
     return [...out].map(([channelId, locale]) => ({ channelId, locale }));

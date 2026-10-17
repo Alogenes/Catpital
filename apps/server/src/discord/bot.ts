@@ -11,7 +11,7 @@ import {
 import type { Core } from '../app.js';
 import { type CommandContext, autocompleteMarkets, handleCommand } from './commands.js';
 import { LAUNCH_BUTTON_ID } from './embeds.js';
-import { type BotLocale, pack } from './i18n.js';
+import { type BotLocale, botLocaleOf as localeOf, pack } from './i18n.js';
 import { BroadcastMessenger } from './messageService.js';
 
 type Logger = { info: (o: unknown, m?: string) => void; warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: string) => void };
@@ -22,7 +22,6 @@ export interface BotOptions {
   defaultLocale: BotLocale;
 }
 
-const localeOf = (l: string | null | undefined): BotLocale => (l?.startsWith('zh') ? 'zh-CN' : 'en-US');
 
 function toContext(i: ChatInputCommandInteraction): CommandContext {
   const roles = i.member?.roles;

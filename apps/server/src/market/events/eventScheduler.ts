@@ -11,7 +11,8 @@ const decimalString = z.string().regex(/^-?\d+(\.\d+)?$/);
 export const scheduledEventInput = z.object({
   market: z.string().min(1),
   triggerAt: z.coerce.date(),
-  headline: z.string().min(1).max(200),
+  /** 空标题 = 静默事件：照常跳空，但不发快讯、不进频道播报 */
+  headline: z.string().max(200).default(''),
   content: z.string().max(2000).default(''),
   i18n: z.record(z.object({ headline: z.string().optional(), content: z.string().optional() })).default({}),
   /** "-0.30" = −30%；必须 > −1（价格不能归零） */
@@ -157,6 +158,9 @@ export class EventScheduler {
       data: { priceBefore: toDb(before), priceAfter: toDb(after) },
     });
 
+    this.log.info({ eventId: ev.id, market: market.code, before: before.toFixed(), after: after.toFixed(), silent: !ev.headline.trim() }, 'scheduled event fired');
+    if (!ev.headline.trim()) return;
+
     const i18n = (ev.i18n ?? {}) as Record<string, { headline?: string; content?: string }>;
     this.notifier.marketEvent({
       eventId: ev.id,
@@ -184,7 +188,6 @@ export class EventScheduler {
       },
       { marketId: market.id, market: market.code },
     );
-    this.log.info({ eventId: ev.id, market: market.code, before: before.toFixed(), after: after.toFixed() }, 'scheduled event fired');
   }
 
   /** 合成某市场全部 ACTIVE 事件：漂移相加、波动率乘数相乘 */

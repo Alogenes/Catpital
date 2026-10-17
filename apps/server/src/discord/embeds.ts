@@ -39,7 +39,7 @@ export interface MarketLine {
   open: boolean;
 }
 
-const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FISH: '🐟', BTC: '🪙' };
+const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙' };
 
 export function launchCard(locale: BotLocale, markets: MarketLine[]) {
   const t = pack(locale).launch;

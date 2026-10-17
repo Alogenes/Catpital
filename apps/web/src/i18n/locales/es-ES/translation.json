@@ -1,0 +1,432 @@
+{
+  "_meta": {
+    "name": "Español (España)"
+  },
+  "app": {
+    "loading": "Entrando en el parqué…",
+    "connecting": "Conectando",
+    "online": "En directo",
+    "offline": "Desconectado, reconectando…",
+    "devLogin": "Acceso local de desarrollo",
+    "devLoginHint": "No se está ejecutando dentro de Discord: se usa el acceso de desarrollo (el servidor necesita DEV_LOGIN=1)",
+    "userId": "ID de usuario de Discord",
+    "username": "Apodo",
+    "enter": "Entrar",
+    "authFailed": "Error al iniciar sesión: {{reason}}"
+  },
+  "nav": {
+    "leaderboard": "Clasificación",
+    "history": "Vidas pasadas",
+    "menu": "Menú",
+    "admin": "Panel"
+  },
+  "wallet": {
+    "balance": "Disponible",
+    "locked": "En órdenes",
+    "netWorth": "Patrimonio",
+    "generation": "Vida n.º {{n}}",
+    "debt": "Endeudado"
+  },
+  "market": {
+    "open": "Abierto",
+    "closed": "Cerrado",
+    "halted": "Suspendido",
+    "live": "Datos en directo",
+    "sim": "Simulado",
+    "vsOpen": "vs. inicial",
+    "news": "Última hora",
+    "noNews": "Todavía no hay noticias"
+  },
+  "chart": {
+    "candle": "Velas",
+    "line": "Línea",
+    "area": "Área",
+    "M1": "1 min",
+    "M5": "5 min",
+    "M15": "15 min",
+    "H1": "1 h",
+    "D1": "1 d",
+    "entry": "Entrada",
+    "tp": "TP",
+    "sl": "SL",
+    "liq": "LIQ",
+    "limit": "Límite",
+    "previewLiq": "Liq. prevista",
+    "reset": "Centrar",
+    "resetHint": "Ajusta el eje de precios a las velas visibles y salta al momento actual. Arrastra el eje de precios para estirar el eje Y, usa la rueda sobre él (o Mayús + rueda) para hacer zoom y haz doble clic en un eje para restablecerlo"
+  },
+  "order": {
+    "title": "Operación rápida",
+    "long": "Largo",
+    "short": "Corto",
+    "longHint": "El precio sube",
+    "shortHint": "El precio baja",
+    "lev": "Apalancamiento",
+    "tier": {
+      "safe": "🌱 Tranqui",
+      "spicy": "⚡ Picante",
+      "degen": "🔥 DEGEN"
+    },
+    "amount": "Margen a invertir",
+    "amountHint": "comisiones incluidas",
+    "available": "Disponible",
+    "allIn": "🔥 TODO AL ROJO",
+    "limit": "Orden limitada",
+    "limitHint": "solo se ejecuta a tu precio, comisión más baja",
+    "price": "Precio límite",
+    "enterPrice": "Introduce un precio límite",
+    "positionSize": "Tamaño de la posición",
+    "feeHint": "Comisión {{fee}} · {{qty}} unidades",
+    "liqPrice": "Precio de liquidación",
+    "noLiq": "Seguro, sin liquidación",
+    "perPct": "Cada 1 % que se mueva el precio",
+    "perPctHint": "= ±{{pct}} % de tu margen",
+    "closing": "Primero se cerrarán {{qty}} unidades de la posición contraria",
+    "enterAmount": "Introduce un importe",
+    "tooSmall": "Demasiado pequeño (la posición debe ser de al menos {{min}})",
+    "submit": {
+      "long": "🚀 Largo en {{code}} · {{lev}}x",
+      "short": "📉 Corto en {{code}} · {{lev}}x"
+    },
+    "highLevWarn": "¡Modo DEGEN! Un hueco de precio puede llevarse más que tu margen y comerse tu saldo",
+    "impactPump": "Ballena dispara +{{pct}} %",
+    "impactDump": "Ballena hunde -{{pct}} %"
+  },
+  "position": {
+    "title": "Posiciones",
+    "empty": "🐾 Aún no tienes posiciones · elige un lado a la derecha para abrir una",
+    "LONG": "Largo",
+    "SHORT": "Corto",
+    "qty": "Cant.",
+    "entry": "Entrada",
+    "mark": "Último",
+    "liq": "Liq.",
+    "margin": "Margen",
+    "upnl": "PyG no realizado",
+    "roe": "ROE",
+    "distance": "{{pct}} hasta la liquidación",
+    "close": "Cerrar",
+    "closeHalf": "Cerrar 50 %",
+    "addMargin": "Añadir margen",
+    "add": "Añadir",
+    "tpsl": "TP / SL",
+    "save": "Guardar",
+    "clear": "Borrar",
+    "amount": "Importe"
+  },
+  "orders": {
+    "title": "Órdenes abiertas",
+    "empty": "🎯 No hay órdenes abiertas",
+    "cancel": "Cancelar",
+    "locked": "{{amount}} bloqueado"
+  },
+  "toast": {
+    "filled": "{{code}} ejecutada a {{price}}",
+    "resting": "Orden limitada colocada",
+    "cancelled": "Orden cancelada",
+    "tpHit": "{{code}} toma de beneficios a {{price}}, PyG {{pnl}}",
+    "slHit": "{{code}} stop loss a {{price}}, PyG {{pnl}}",
+    "liquidated": "{{code}} liquidada a {{price}}, has perdido {{loss}}",
+    "deficit": "¡Patrimonio negativo! Se han descontado de tu saldo {{deficit}} por encima de tu margen. Saldo: {{balance}}",
+    "saved": "Guardado",
+    "marginAdded": "Margen añadido"
+  },
+  "broadcast": {
+    "bigWin": "🎉 {{user}} ha recogido beneficios de +{{pnl}} en {{market}} ({{roe}} % de ROE)",
+    "liquidation": "🗡️ La posición {{leverage}}x de {{user}} en {{market}} ha sido liquidada, ha perdido {{totalLoss}}",
+    "deficit": "🩸 ¡{{user}} ha reventado el margen en {{market}}! Debe {{deficit}}, saldo {{balanceAfter}}",
+    "bankruptcy": "⚰️ {{user}} se ha declarado en quiebra y pone fin a su vida n.º {{generation}} · «{{titleText}}»",
+    "marketEvent": "📰 {{market}}: {{headline}} ({{gapPct}} %)",
+    "whalePump": "🐋 {{user}} ha disparado {{market}} un +{{pct}} % de una sola orden ({{priceBefore}} → {{priceAfter}})",
+    "whaleDump": "🐋 {{user}} ha hundido {{market}} un {{pct}} % de una sola orden ({{priceBefore}} → {{priceAfter}})",
+    "champion": "👑 ¡{{user}} es el campeón de este periodo ({{periodKey}})! Premio de {{reward}} abonado"
+  },
+  "danmaku": {
+    "placeholder": "Di algo…",
+    "send": "Enviar",
+    "off": "Los comentarios flotantes están desactivados",
+    "quick": {
+      "rocket": "🚀 ¡A la luna!",
+      "diamond": "💎 Patitas de diamante",
+      "meow": "🐱 ¡Miau miau!",
+      "rekt": "🩸 Me han reventado…",
+      "clown": "🤡 El payaso era yo",
+      "party": "🎉 ¡Estamos volando!"
+    }
+  },
+  "bankruptcy": {
+    "available": "Tu patrimonio ha llegado a cero",
+    "desc": "Declararte en quiebra borra tu deuda, te da una ayuda y empieza una vida nueva. Las operaciones de esta vida se convierten en tu Currículum Bursátil.",
+    "apply": "Declararse en quiebra",
+    "confirm": "Confirmar (irreversible)",
+    "resume": "Currículum Bursátil",
+    "generation": "Vida n.º {{n}}",
+    "survived": "Sobrevivió",
+    "peak": "Patrimonio máximo",
+    "bestRoe": "Mejor operación",
+    "worstLoss": "Peor liquidación",
+    "fees": "Comisiones donadas",
+    "winRate": "Tasa de acierto",
+    "trades": "Operaciones cerradas",
+    "liquidations": "Liquidaciones",
+    "avgLev": "Apalancamiento medio",
+    "debt": "Deuda condonada",
+    "relief": "Ayuda recibida",
+    "rebirth": "Volver a empezar",
+    "copyLink": "Copiar resumen",
+    "copied": "Copiado"
+  },
+  "title": {
+    "didNothing": {
+      "name": "Ni fu ni fa",
+      "desc": "Se arruinó sin cerrar ni una operación"
+    },
+    "speedrun": {
+      "name": "Speedrunner",
+      "desc": "En quiebra en menos de diez minutos"
+    },
+    "deficitKing": {
+      "name": "Rey de los números rojos",
+      "desc": "Llegó a deber más que el saldo inicial"
+    },
+    "eventVictim": {
+      "name": "Víctima del cisne negro",
+      "desc": "Liquidado por una noticia de última hora"
+    },
+    "leverageManiac": {
+      "name": "Maníaco del apalancamiento",
+      "desc": "Media de 50x o más"
+    },
+    "oneHitWonder": {
+      "name": "Flor de un día",
+      "desc": "Una vez clavó una operación del 500 %"
+    },
+    "peakThenAbyss": {
+      "name": "De la cima al abismo",
+      "desc": "Triplicó la cuenta y luego lo perdió todo"
+    },
+    "feeDonor": {
+      "name": "Mejor amigo del bróker",
+      "desc": "Pagó en comisiones más del 30 % del saldo inicial"
+    },
+    "scalper": {
+      "name": "Scalper",
+      "desc": "Mantenía las posiciones menos de dos minutos de media"
+    },
+    "diamondHands": {
+      "name": "Manos de diamante",
+      "desc": "Mantenía las posiciones más de un día de media"
+    },
+    "winningLoser": {
+      "name": "Perdedor ganador",
+      "desc": "70 % de aciertos y aun así arruinado"
+    },
+    "coinFlipper": {
+      "name": "Cara o cruz",
+      "desc": "Un cincuenta por ciento perfecto"
+    },
+    "permaBull": {
+      "name": "Alcista perpetuo",
+      "desc": "Más del 80 % del volumen en largo"
+    },
+    "permaBear": {
+      "name": "Bajista perpetuo",
+      "desc": "Más del 80 % del volumen en corto"
+    },
+    "immortal": {
+      "name": "Fénix",
+      "desc": "Sobrevivió más de un mes"
+    },
+    "keyboardWarrior": {
+      "name": "Guerrero del teclado",
+      "desc": "Envió más de 100 comentarios"
+    },
+    "leek": {
+      "name": "Pringado",
+      "desc": "Le esquilaron, nada especial"
+    }
+  },
+  "settings": {
+    "title": "Ajustes",
+    "language": "Idioma",
+    "vfx": "Efectos visuales",
+    "bgm": "Música de fondo",
+    "sfx": "Sonidos de operaciones",
+    "danmaku": "Comentarios flotantes",
+    "redUp": "Rojo = sube",
+    "volume": "Volumen",
+    "close": "Hecho",
+    "degen": {
+      "title": "Desbloquear apalancamiento (hasta 200x)",
+      "hint": "Toca 3 veces para desbloquear · bajo tu responsabilidad",
+      "warn1": "¿Seguro? A 200x un movimiento del 0,5 % te liquida",
+      "warn2": "¡Última oportunidad! Un hueco de precio dejará tu saldo en negativo",
+      "unlocked": "Límite de apalancamiento desbloqueado",
+      "unlockedHint": "Cada mercado llega al máximo apalancamiento que no te liquide al entrar (≤ 200x)",
+      "relock": "Volver a bloquear",
+      "unlockedToast": "🔓 ¡Sello del apalancamiento roto! Suerte"
+    }
+  },
+  "fx": {
+    "liquidated": "LIQUIDADO",
+    "deficit": "EN DEUDA",
+    "bankrupt": "EN QUIEBRA",
+    "bigWin": "¡PREMIO GORDO!"
+  },
+  "duration": {
+    "dh": "{{d}} d {{h}} h",
+    "hm": "{{h}} h {{m}} min",
+    "ms": "{{m}} min {{s}} s",
+    "s": "{{s}} s"
+  },
+  "error": {
+    "insufficientFunds": "Saldo insuficiente",
+    "marketClosed": "El mercado está cerrado",
+    "marketHalted": "La cotización está suspendida",
+    "marketNotFound": "Mercado no encontrado",
+    "noPrice": "Todavía no hay precio",
+    "invalidQuantity": "Cantidad no válida (debe ser múltiplo del lote)",
+    "invalidLeverage": "Apalancamiento fuera de rango",
+    "invalidPrice": "Precio no válido (debe ser múltiplo del tick)",
+    "invalidAmount": "Importe no válido",
+    "belowMinNotional": "El valor de la orden está por debajo del mínimo",
+    "nothingToReduce": "No hay posición que reducir",
+    "noPosition": "No hay posición",
+    "orderNotFound": "Orden no encontrada",
+    "orderNotPending": "La orden ya no está abierta",
+    "tpWrongSide": "La toma de beneficios está en el lado equivocado",
+    "slWrongSide": "El stop loss está en el lado equivocado",
+    "bankruptcyNotEligible": "Ahora mismo no puedes declararte en quiebra",
+    "danmakuTooLong": "Mensaje demasiado largo",
+    "danmakuCooldown": "Frena un poco",
+    "unauthorized": "La sesión ha caducado",
+    "forbidden": "No permitido",
+    "validation": "Datos no válidos",
+    "conflict": "Conflicto, vuelve a intentarlo",
+    "notFound": "No encontrado",
+    "internal": "Error del servidor",
+    "network": "Error de red",
+    "eventNotPending": "El evento ya no está pendiente",
+    "oauthNotConfigured": "El OAuth de Discord no está configurado en el servidor",
+    "oauthExchangeFailed": "Ha fallado la autorización de Discord",
+    "oauthProfileFailed": "No se ha podido cargar tu perfil de Discord",
+    "badMessage": "Mensaje mal formado",
+    "userNotFound": "Jugador no encontrado",
+    "externalRefConflict": "El externalRef ya se ha usado en la dirección contraria",
+    "economyDisabled": "La API de economía externa está desactivada",
+    "missingSignature": "Falta la firma",
+    "staleTimestamp": "La marca de tiempo de la petición ha caducado",
+    "badNonce": "Nonce mal formado",
+    "unknownClient": "Cliente desconocido",
+    "badSignature": "Firma no válida",
+    "replayedNonce": "Petición repetida (el nonce ya se ha usado)",
+    "badJson": "El cuerpo de la petición no es JSON válido",
+    "userExists": "Ese jugador ya existe",
+    "unknown": "Error desconocido ({{code}})"
+  },
+  "warn": {
+    "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
+  },
+  "ticker": {
+    "title": "En directo",
+    "empty": "Aún no hay momentos destacados · esperando al primer gato valiente 🐾"
+  },
+  "leaderboard": {
+    "title": "Clasificación",
+    "period": {
+      "DAILY": "Diaria",
+      "WEEKLY": "Semanal",
+      "MONTHLY": "Mensual"
+    },
+    "board": {
+      "RETURN_PCT": "📈 Rentabilidad %",
+      "NET_WORTH": "💰 Los más ricos"
+    },
+    "empty": "Aquí no hay nadie todavía · ve a por el número uno 🐾",
+    "me": "Tú",
+    "unranked": "Sin clasificar",
+    "ineligible": "Necesitas ≥ {{min}} al inicio del periodo para clasificar",
+    "resetsAt": "El periodo termina {{time}}",
+    "formulaHint": "Sin contar ingresos ni ayudas, mínimo inicial {{min}}"
+  },
+  "history": {
+    "title": "Vidas pasadas",
+    "current": "Vida n.º {{n}} · en curso",
+    "alive": "Sigues vivo, a por todas",
+    "empty": "Nunca te has arruinado · que esta vida cuente 🐾",
+    "gen": "Vida"
+  },
+  "mobile": {
+    "tabs": {
+      "chart": "Gráfico",
+      "trade": "Operar",
+      "positions": "Posiciones"
+    }
+  },
+  "panel": {
+    "title": "Panel de administración temporal",
+    "empty": "No hay nada",
+    "tabs": {
+      "events": "Eventos",
+      "users": "Usuarios"
+    },
+    "status": {
+      "PENDING": "Pendiente",
+      "ACTIVE": "En curso",
+      "COMPLETED": "Terminado",
+      "CANCELLED": "Cancelado"
+    },
+    "event": {
+      "market": "Mercado",
+      "direction": "Dirección",
+      "up": "Subidón",
+      "down": "Desplome",
+      "gap": "Salto instantáneo",
+      "gapInvalid": "Una caída debe ser inferior al 100 %",
+      "vol": "Volatilidad extra",
+      "trend": "Tendencia posterior",
+      "trendLevel": {
+        "none": "Ninguna",
+        "weak": "Débil",
+        "medium": "Media",
+        "strong": "Fuerte"
+      },
+      "delay": "Cuándo",
+      "now": "Ya",
+      "duration": "Duración",
+      "headline": "Titular (opcional)",
+      "headlinePlaceholder": "Déjalo vacío para un evento silencioso",
+      "silent": "🤫 Evento silencioso: el precio salta igual, pero no aparece en las noticias ni en Discord",
+      "loud": "📢 Publica una noticia de última hora y un aviso en Discord",
+      "content": "Noticia",
+      "submit": "⚡ {{market}} {{gap}} · {{when}}",
+      "created": "Evento programado",
+      "recent": "Eventos recientes",
+      "silentTag": "(silencioso)",
+      "cancel": "Cancelar"
+    },
+    "user": {
+      "search": "Buscar UID / usuario",
+      "create": "Nuevo",
+      "uid": "UID de Discord",
+      "username": "Usuario",
+      "initialBalance": "Saldo inicial",
+      "createSubmit": "Crear",
+      "back": "Volver a la lista",
+      "funds": "Fondos",
+      "add": "Sumar / restar",
+      "set": "Fijar en",
+      "memo": "Nota (opcional)",
+      "apply": "Aplicar",
+      "fundsDone": "Saldo actualizado",
+      "fundsHint": "Se registra como ajuste de administrador (flujo externo): cuenta para Los más ricos, no para la rentabilidad",
+      "ledger": "Movimientos recientes",
+      "grantAdmin": "Hacer administrador",
+      "revokeAdmin": "Quitar administrador",
+      "adminHint": "Los administradores pueden usar los comandos /admin_*",
+      "delete": "Eliminar jugador",
+      "deleteConfirm": "Vuelve a pulsar para eliminar (irreversible)",
+      "deleted": "Jugador eliminado"
+    }
+  }
+}

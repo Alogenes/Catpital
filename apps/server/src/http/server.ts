@@ -8,11 +8,13 @@ import type { Core } from '../app.js';
 import type { Env } from '../config/env.js';
 import { TradeError } from '../trading/types.js';
 import { registerWsGateway } from '../ws/gateway.js';
+import { PanelAccess } from '../admin/panelAccess.js';
 import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
 import { economyRoutes } from './routes/economy.js';
 import { marketRoutes } from './routes/market.js';
 import { meRoutes } from './routes/me.js';
+import { panelRoutes } from './routes/panel.js';
 import { tradeRoutes } from './routes/trade.js';
 
 declare module '@fastify/jwt' {
@@ -33,7 +35,7 @@ export type HttpEnv = Pick<
   Env,
   'API_BASE_PATH' | 'WS_PATH' | 'JWT_SECRET' | 'DISCORD_CLIENT_ID' | 'DISCORD_CLIENT_SECRET' | 'DEV_LOGIN' | 'NODE_ENV' | 'DANMAKU_COOLDOWN_MS'
 > &
-  Partial<Pick<Env, 'API_SECRET_KEY' | 'HMAC_MAX_SKEW_SECONDS'>>;
+  Partial<Pick<Env, 'API_SECRET_KEY' | 'HMAC_MAX_SKEW_SECONDS' | 'ADMIN_PANEL_USERS'>>;
 
 export async function buildServer(core: Core, env: HttpEnv) {
   const app = Fastify({
@@ -70,15 +72,19 @@ export async function buildServer(core: Core, env: HttpEnv) {
     return reply.code(500).send({ error: 'error.internal' });
   });
 
+  const panel = new PanelAccess(env.ADMIN_PANEL_USERS ?? '');
+
   app.get('/health', async () => ({ ok: true, ...core.risk.stats() }));
 
   await app.register(
     async (api) => {
       await api.register(authRoutes(core, env), { prefix: '/auth' });
       await api.register(marketRoutes(core), { prefix: '/markets' });
-      await api.register(meRoutes(core), { prefix: '/me' });
+      await api.register(meRoutes(core, panel), { prefix: '/me' });
       await api.register(tradeRoutes(core));
       await api.register(adminRoutes(core), { prefix: '/admin' });
+      // 临时管理面板：白名单为空时根本不注册，与不存在的路由无法区分
+      if (panel.enabled) await api.register(panelRoutes(core, panel), { prefix: '/panel' });
       // 外部货币接口：HMAC 签名鉴权（未配置 API_SECRET_KEY 时返回 503）
       await api.register(economyRoutes(core, { masterKey: env.API_SECRET_KEY ?? '', maxSkewSeconds: env.HMAC_MAX_SKEW_SECONDS ?? 300 }), {
         prefix: '/economy',

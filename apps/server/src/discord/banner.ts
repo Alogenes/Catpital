@@ -73,7 +73,7 @@ const SVG = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" 
   <g font-family="Segoe UI, Arial, sans-serif" font-weight="800" font-size="20">
     <rect x="244" y="222" width="104" height="38" rx="19" fill="#3ddc97" fill-opacity="0.18"/><text x="262" y="248" fill="#3ddc97">MEOW</text>
     <rect x="358" y="222" width="104" height="38" rx="19" fill="#ff6fae" fill-opacity="0.18"/><text x="376" y="248" fill="#ff6fae">WOOF</text>
-    <rect x="472" y="222" width="92" height="38" rx="19" fill="#6ec8ff" fill-opacity="0.18"/><text x="492" y="248" fill="#6ec8ff">FISH</text>
+    <rect x="472" y="222" width="92" height="38" rx="19" fill="#6ec8ff" fill-opacity="0.18"/><text x="492" y="248" fill="#6ec8ff">FIH</text>
   </g>
   ${candles()}
 </svg>`;

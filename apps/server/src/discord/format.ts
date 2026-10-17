@@ -17,12 +17,13 @@ export const signed = (v: Decimal | string, dp = 2) => {
 /** 百分数值（如 "12.5" 表示 12.5%）→ "+12.50%" */
 export const pct = (v: Decimal | string, dp = 2) => `${signed(v, dp)}%`;
 
-export function duration(seconds: number, locale: 'zh-CN' | 'en-US'): string {
+export function duration(seconds: number, locale: 'zh-CN' | 'en-US' | 'es-ES'): string {
   const d = Math.floor(seconds / 86400);
   const h = Math.floor((seconds % 86400) / 3600);
   const m = Math.floor((seconds % 3600) / 60);
   const s = seconds % 60;
   if (locale === 'zh-CN') return d ? `${d} 天 ${h} 小时` : h ? `${h} 小时 ${m} 分` : m ? `${m} 分 ${s} 秒` : `${s} 秒`;
+  if (locale === 'es-ES') return d ? `${d} d ${h} h` : h ? `${h} h ${m} min` : m ? `${m} min ${s} s` : `${s} s`;
   return d ? `${d}d ${h}h` : h ? `${h}h ${m}m` : m ? `${m}m ${s}s` : `${s}s`;
 }
 
