@@ -15,6 +15,7 @@ const LAST_PRICE_FLUSH_MS = 5_000;
 export interface ImpactConfig {
   liquidity: Decimal;
   cap: Decimal;
+  exponent: Decimal;
   volBoost: Decimal;
   decaySec: number;
 }
@@ -59,12 +60,13 @@ export class MarketEngine {
   }
 
   /**
-   * 落实冲击：价格跳到冲击后价格、短暂放大波动率，并立刻按新价格跑一遍 K 线与风控
+   * 落实冲击：价格跳到冲击后价格（随后 decaySec 秒内线性回落到趋势线）、短暂放大波动率，并立刻按新价格跑一遍 K 线与风控
    * （大户砸盘可以把别人的多单打爆）。必须在本市场串行队列内调用（成交之后）。
    */
   async commitImpact(q: ImpactQuote, volume: Decimal): Promise<Decimal> {
     const now = this.now();
-    const after = this.source.applyGap(q.pct, now, 0);
+    const decayMs = (this.impact?.decaySec ?? 25) * 1000;
+    const after = this.source.applyImpact ? this.source.applyImpact(q.pct, decayMs, now) : this.source.applyGap(q.pct, now, 0);
     if (this.impact && this.impact.volBoost.gt(1)) this.source.boostVolatility?.(this.impact.volBoost, this.impact.decaySec * 1000, now);
     await this.processPrice(after, volume, now, {});
     return after;

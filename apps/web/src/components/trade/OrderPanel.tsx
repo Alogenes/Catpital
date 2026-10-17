@@ -61,7 +61,9 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
   const feeRate = D(limitOn ? market.makerFeeRate : market.takerFeeRate);
   const risk = { maintenanceMarginRate: D(market.maintenanceMarginRate), tickSize: D(market.tickSize) };
   // 大单冲击只作用于市价单（限价单按挂单价成交，不推动价格）
-  const impact = !limitOn && market.impact ? { liquidity: D(market.impact.liquidity), cap: D(market.impact.cap) } : null;
+  const impact = !limitOn && market.impact
+    ? { liquidity: D(market.impact.liquidity), cap: D(market.impact.cap), exponent: D(market.impact.exponent ?? '1') }
+    : null;
 
   const sizing = useMemo(() => {
     if (!budget || budget.lte(0)) return null;

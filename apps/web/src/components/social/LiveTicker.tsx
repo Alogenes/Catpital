@@ -10,6 +10,7 @@ const KIND_STYLE: Record<BroadcastPayload['kind'], string> = {
   BANKRUPTCY: 'text-ink-300',
   MARKET_EVENT: 'text-candy-sky',
   WHALE: 'text-candy-sky font-black',
+  CHAMPION: 'text-gold font-black',
 };
 
 /** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停 */
@@ -24,23 +25,23 @@ export function LiveTicker() {
   const duration = Math.max(25, chars * 0.32);
 
   return (
-    <section className="bento flex min-w-0 flex-1 items-center gap-3 overflow-hidden px-3 py-2" data-testid="live-ticker">
-      <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-candy-pink/15 px-2.5 py-1 text-xs font-extrabold text-candy-pink">
+    <section className="bento flex h-[30px] w-full min-w-0 shrink-0 items-center md:w-auto md:flex-1 gap-2 overflow-hidden rounded-2xl px-2 py-0 md:h-auto md:gap-3 md:rounded-3xl md:px-3 md:py-2" data-testid="live-ticker">
+      <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-candy-pink/15 px-1.5 py-0.5 text-[10px] font-extrabold text-candy-pink md:px-2.5 md:py-1 md:text-xs">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-candy-pink opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-candy-pink" />
         </span>
-        {t('ticker.title')}
+        <span className="hidden md:inline">{t('ticker.title')}</span>
       </span>
       <div className="relative min-w-0 flex-1 overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_4%,black_96%,transparent)]">
         {items.length === 0 ? (
-          <p className="truncate text-sm text-ink-500">{t('ticker.empty')}</p>
+          <p className="truncate text-xs text-ink-500 md:text-sm">{t('ticker.empty')}</p>
         ) : (
           <div className="marquee-track flex w-max animate-marquee gap-10" style={{ ['--marquee-duration' as string]: `${duration}s` }}>
             {[0, 1].map((copy) => (
               <div key={copy} className="flex shrink-0 gap-10" aria-hidden={copy === 1}>
                 {items.map((i) => (
-                  <span key={`${copy}-${i.id}`} className={`whitespace-nowrap text-sm font-semibold ${KIND_STYLE[i.kind]}`}>
+                  <span key={`${copy}-${i.id}`} className={`whitespace-nowrap text-xs font-semibold md:text-sm ${KIND_STYLE[i.kind]}`}>
                     {i.text}
                     <span className="ml-2 text-[10px] font-normal text-ink-500">
                       {new Date(i.ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}

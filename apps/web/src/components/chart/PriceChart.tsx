@@ -12,7 +12,7 @@ import {
   LineStyle,
   createChart,
 } from 'lightweight-charts';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type CandleRow, type MarketInfo, api } from '../../lib/api';
 import { decimalsOf } from '../../lib/format';
@@ -61,6 +61,12 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
   const linesRef = useRef<IPriceLine[]>([]);
   const lineValuesRef = useRef<number[]>([]);
   const previewLineRef = useRef<IPriceLine | null>(null);
+  /** "回正"后只按 K 线自适应，持仓线变化时恢复 */
+  const fitOnlyRef = useRef(false);
+  /** 价格轴滚轮缩放倍数（1 = 自适应原始范围；>1 拉远，<1 放大） */
+  const yZoomRef = useRef(1);
+  /** 视口外的斩杀线提示 */
+  const [offscreen, setOffscreen] = useState<{ price: string; dir: 'up' | 'down'; preview: boolean } | null>(null);
   const previewValueRef = useRef<number | null>(null);
   const previewLiq = useTradePreview((s) => (s.market === market.code ? s.liq : null));
   const redUp = useSettings((s) => s.redUp);
@@ -81,6 +87,9 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       },
       grid: { vertLines: { color: 'rgba(76,62,124,0.25)' }, horzLines: { color: 'rgba(76,62,124,0.25)' } },
       crosshair: { mode: CrosshairMode.Normal },
+      // 缩放：滚轮/双指缩放时间轴；按住并拖动价格轴或时间轴可分别拉伸 Y / X；双击坐标轴复位
+      handleScale: { mouseWheel: true, pinch: true, axisPressedMouseMove: { time: true, price: true }, axisDoubleClickReset: { time: true, price: true } },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
       rightPriceScale: { borderColor: 'rgba(76,62,124,0.5)' },
       timeScale: {
         borderColor: 'rgba(76,62,124,0.5)',
@@ -112,18 +121,36 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
     const precision = decimalsOf(market.tickSize);
     series.applyOptions({
       priceFormat: { type: 'price', precision, minMove: toChartNum(market.tickSize) },
-      // 自动缩放默认只看 K 线；把持仓的斩杀线/止盈止损纳入可视范围，确保"斩杀线"始终看得见
+      /**
+       * 自动缩放：以可见 K 线为基准；
+       *   - 只把"附近"的持仓线（斩杀/止盈/止损/预览斩杀）纳入视野：距 K 线区间不超过其高度 1.5 倍，
+       *     远端的线不再把整张图压扁（可拖动 Y 轴或看右上角提示去找）
+       *   - 点"回正"后（fitOnly）完全只看 K 线
+       *   - 滚轮在价格轴上 → 围绕中点按 yZoom 比例缩放
+       */
       autoscaleInfoProvider: (original: () => AutoscaleInfo | null) => {
         const res = original();
-        const extra = previewValueRef.current !== null ? [...lineValuesRef.current, previewValueRef.current] : lineValuesRef.current;
-        if (!res?.priceRange || extra.length === 0) return res;
-        return {
-          ...res,
-          priceRange: {
-            minValue: Math.min(res.priceRange.minValue, ...extra),
-            maxValue: Math.max(res.priceRange.maxValue, ...extra),
-          },
-        };
+        if (!res?.priceRange) return res;
+        let { minValue, maxValue } = res.priceRange;
+        if (!fitOnlyRef.current) {
+          const extra = previewValueRef.current !== null ? [...lineValuesRef.current, previewValueRef.current] : lineValuesRef.current;
+          const reach = Math.max(maxValue - minValue, maxValue * 0.002) * 1.5;
+          for (const v of extra) {
+            if (v < minValue - reach || v > maxValue + reach) continue;
+            minValue = Math.min(minValue, v);
+            maxValue = Math.max(maxValue, v);
+          }
+        }
+        const z = yZoomRef.current;
+        if (z !== 1) {
+          // 以最新价为中心缩放（历史里有远端尖刺时，以区间中点缩放会把现价挤出视野）
+          const last = barsRef.current[barsRef.current.length - 1]?.close;
+          const mid = last ?? (minValue + maxValue) / 2;
+          const half = ((maxValue - minValue) / 2) * z;
+          minValue = mid - half;
+          maxValue = mid + half;
+        }
+        return { ...res, priceRange: { minValue, maxValue } };
       },
     });
     seriesRef.current = series;
@@ -166,6 +193,7 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
     for (const l of linesRef.current) series.removePriceLine(l);
     linesRef.current = [];
     lineValuesRef.current = [];
+    fitOnlyRef.current = false; // 持仓线变化：恢复"附近的线纳入视野"
     const add = (price: string | null | undefined, color: string, title: string, style: LineStyle, width: 1 | 2 | 3 = 1, scale = false) => {
       if (!price || D(price).lte(0)) return;
       if (scale) lineValuesRef.current.push(toChartNum(price));
@@ -199,6 +227,7 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
     }
     const price = toChartNum(previewLiq);
     previewValueRef.current = price;
+    fitOnlyRef.current = false;
     const opts = { price, title: `💀 ${t('chart.previewLiq')}`, lineStyle: LineStyle.LargeDashed, lineWidth: 2 as const, axisLabelVisible: true };
     if (previewLineRef.current) previewLineRef.current.applyOptions(opts);
     else previewLineRef.current = series.createPriceLine({ ...opts, color: 'rgba(255,59,92,0.85)' });
@@ -215,5 +244,70 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
     return () => clearInterval(timer);
   }, [previewLiq]);
 
-  return <div ref={containerRef} className="absolute inset-0" data-testid="price-chart" />;
+  // ---- 价格轴上的滚轮 → Y 轴按比例缩放（图表区域内的滚轮仍是时间轴缩放）----
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      const chart = chartRef.current;
+      if (!chart) return;
+      const rect = el.getBoundingClientRect();
+      const axisWidth = chart.priceScale('right').width();
+      const overPriceAxis = e.clientX >= rect.right - axisWidth;
+      if (!overPriceAxis && !e.shiftKey) return; // Shift + 滚轮在图表任意位置也缩放 Y
+      e.preventDefault();
+      e.stopPropagation();
+      yZoomRef.current = Math.min(20, Math.max(0.05, yZoomRef.current * (e.deltaY > 0 ? 1.12 : 1 / 1.12)));
+      chart.priceScale('right').applyOptions({ autoScale: true });
+    };
+    el.addEventListener('wheel', onWheel, { passive: false, capture: true });
+    return () => el.removeEventListener('wheel', onWheel, { capture: true });
+  }, []);
+
+  // ---- 斩杀线（或预览斩杀线）在视口外时，在右上角给出方向提示 ----
+  useEffect(() => {
+    const timer = setInterval(() => {
+      const series = seriesRef.current;
+      const el = containerRef.current;
+      const target = previewLiq ?? (position && D(position.liquidationPrice).gt(0) ? position.liquidationPrice : null);
+      if (!series || !el || !target) return setOffscreen(null);
+      const y = series.priceToCoordinate(toChartNum(target));
+      const height = el.clientHeight - 30; // 去掉时间轴高度
+      if (y === null || (y >= 0 && y <= height)) return setOffscreen(null);
+      setOffscreen({ price: target, dir: y < 0 ? 'up' : 'down', preview: Boolean(previewLiq) });
+    }, 400);
+    return () => clearInterval(timer);
+  }, [previewLiq, position]);
+
+  const reset = () => {
+    const chart = chartRef.current;
+    if (!chart) return;
+    fitOnlyRef.current = true;
+    yZoomRef.current = 1;
+    chart.priceScale('right').applyOptions({ autoScale: true });
+    chart.timeScale().resetTimeScale();
+    chart.timeScale().scrollToRealTime();
+  };
+
+  return (
+    <>
+      <div ref={containerRef} className="absolute inset-0" data-testid="price-chart" />
+      <div className="pointer-events-none absolute right-16 top-2 z-20 flex flex-col items-end gap-1">
+        <button
+          type="button"
+          onClick={reset}
+          title={t('chart.resetHint')}
+          className="pointer-events-auto flex items-center gap-1 rounded-full border border-ink-700 bg-ink-900/85 px-2.5 py-1 text-xs font-bold text-ink-200 shadow-[0_2px_0_0_rgba(10,6,22,0.6)] backdrop-blur hover:border-candy-grape hover:text-white"
+          data-testid="chart-reset"
+        >
+          ⟲ {t('chart.reset')}
+        </button>
+        {offscreen && (
+          <span className="rounded-full bg-blood/20 px-2 py-0.5 font-mono text-[11px] font-bold text-blood" data-testid="liq-offscreen">
+            💀 {offscreen.preview ? t('chart.previewLiq') : t('chart.liq')} {offscreen.price} {offscreen.dir === 'up' ? '↑' : '↓'}
+          </span>
+        )}
+      </div>
+    </>
+  );
 }

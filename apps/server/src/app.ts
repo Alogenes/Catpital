@@ -3,7 +3,9 @@ import { BankruptcyService } from './bankruptcy/bankruptcyService.js';
 import { Notifier } from './broadcast/notifier.js';
 import type { EconomyConfig } from './config/env.js';
 import type { Bus } from './infra/bus.js';
+import { EconomyService } from './economy/economyService.js';
 import { LeaderboardService } from './leaderboard/leaderboardService.js';
+import { LeaderboardSettlement } from './leaderboard/settlement.js';
 import { KeyedQueue } from './lib/keyedQueue.js';
 import { EventScheduler } from './market/events/eventScheduler.js';
 import { MarketRegistry } from './market/marketRegistry.js';
@@ -45,6 +47,20 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
   const users = new UserService(db, economy, clock);
   const sweeper = new NetWorthSweeper(db, priceOf, log, clock);
   const leaderboard = new LeaderboardService(db, priceOf, economy.LEADERBOARD_MIN_CAPITAL, clock);
+  /** 外部货币划转（跨 Bot 充值 / 提现） */
+  const bank = new EconomyService(db, users, notifier, clock);
+  /** 榜单周期结算（cron；由 main.ts 按 LEADERBOARD_SETTLEMENT 决定是否启动） */
+  const settlement = new LeaderboardSettlement(
+    db,
+    leaderboard,
+    notifier,
+    {
+      minCapital: economy.LEADERBOARD_MIN_CAPITAL,
+      rewards: { DAILY: economy.LEADERBOARD_REWARD_DAILY, WEEKLY: economy.LEADERBOARD_REWARD_WEEKLY, MONTHLY: economy.LEADERBOARD_REWARD_MONTHLY },
+    },
+    log,
+    clock,
+  );
   let baselineTimer: NodeJS.Timeout | null = null;
 
   return {
@@ -62,6 +78,8 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
     users,
     sweeper,
     leaderboard,
+    bank,
+    settlement,
     /** 加载市场与风控索引（不启动定时器） */
     async init() {
       await markets.load();
@@ -84,6 +102,7 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
       events.stop();
       sweeper.stop();
       if (baselineTimer) clearInterval(baselineTimer);
+      settlement.stop();
       await markets.stopAll();
       await queue.drain();
     },

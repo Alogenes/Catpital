@@ -10,6 +10,7 @@ import { TradeError } from '../trading/types.js';
 import { registerWsGateway } from '../ws/gateway.js';
 import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
+import { economyRoutes } from './routes/economy.js';
 import { marketRoutes } from './routes/market.js';
 import { meRoutes } from './routes/me.js';
 import { tradeRoutes } from './routes/trade.js';
@@ -31,7 +32,8 @@ declare module 'fastify' {
 export type HttpEnv = Pick<
   Env,
   'API_BASE_PATH' | 'WS_PATH' | 'JWT_SECRET' | 'DISCORD_CLIENT_ID' | 'DISCORD_CLIENT_SECRET' | 'DEV_LOGIN' | 'NODE_ENV' | 'DANMAKU_COOLDOWN_MS'
->;
+> &
+  Partial<Pick<Env, 'API_SECRET_KEY' | 'HMAC_MAX_SKEW_SECONDS'>>;
 
 export async function buildServer(core: Core, env: HttpEnv) {
   const app = Fastify({
@@ -77,6 +79,10 @@ export async function buildServer(core: Core, env: HttpEnv) {
       await api.register(meRoutes(core), { prefix: '/me' });
       await api.register(tradeRoutes(core));
       await api.register(adminRoutes(core), { prefix: '/admin' });
+      // 外部货币接口：HMAC 签名鉴权（未配置 API_SECRET_KEY 时返回 503）
+      await api.register(economyRoutes(core, { masterKey: env.API_SECRET_KEY ?? '', maxSkewSeconds: env.HMAC_MAX_SKEW_SECONDS ?? 300 }), {
+        prefix: '/economy',
+      });
     },
     { prefix: `${env.API_BASE_PATH}/v1` },
   );

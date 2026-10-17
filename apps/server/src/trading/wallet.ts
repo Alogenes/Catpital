@@ -12,6 +12,7 @@ export const EXTERNAL_LEDGER_TYPES: ReadonlySet<LedgerType> = new Set<LedgerType
   'BANKRUPTCY_WRITE_OFF',
   'BANKRUPTCY_RELIEF',
   'ADMIN_ADJUST',
+  'LEADERBOARD_REWARD',
 ]);
 
 /** 在可用余额与冻结余额之间搬运的流水类型（不改变净值） */

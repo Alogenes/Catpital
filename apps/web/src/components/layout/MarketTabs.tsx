@@ -19,7 +19,34 @@ export function MarketTabs() {
   const positions = useSession((s) => s.positions);
 
   return (
-    <nav className="flex max-w-full shrink-0 gap-2 overflow-x-auto px-0.5 pb-1.5 pt-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" data-testid="market-tabs">
+    <>
+    {/* 手机端：横向滑动的小胶囊 */}
+    <nav className="flex gap-1.5 overflow-x-auto px-0.5 py-0.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden" data-testid="market-pills">
+      {list.map((m) => {
+        const price = prices[m.code]?.price ?? m.price;
+        const change = D(price).minus(m.initialPrice).div(m.initialPrice);
+        const active = m.code === selected;
+        const closed = !m.open || m.status !== 'ACTIVE';
+        return (
+          <button
+            key={m.code}
+            onClick={() => {
+              sound.play('click');
+              select(m.code);
+            }}
+            className={`flex shrink-0 items-center gap-1 rounded-full border-2 px-2.5 py-1 text-xs font-extrabold ${
+              active ? 'border-candy-grape bg-candy-grape/20 text-ink-100' : 'border-ink-700/70 bg-ink-900/85 text-ink-300'
+            } ${closed ? 'opacity-60' : ''}`}
+          >
+            <span>{mascotOf(m.code, m.kind)}</span>
+            {m.code}
+            {positions[m.code] && <span className={`h-1.5 w-1.5 rounded-full ${positions[m.code]!.side === 'LONG' ? 'bg-up' : 'bg-down'}`} />}
+            <span className={`font-mono text-[10px] ${change.gte(0) ? 'text-up' : 'text-down'}`}>{fmtPct(change, 1)}</span>
+          </button>
+        );
+      })}
+    </nav>
+    <nav className="hidden max-w-full shrink-0 gap-2 overflow-x-auto px-0.5 pb-1.5 pt-1 [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden" data-testid="market-tabs">
       {list.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);
@@ -56,5 +83,6 @@ export function MarketTabs() {
         );
       })}
     </nav>
+    </>
   );
 }

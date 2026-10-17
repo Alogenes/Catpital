@@ -40,6 +40,7 @@ export const marketSeedSchema = z.object({
       priceFloor: dec,
       impactLiquidity: dec.optional(),
       impactCap: dec.optional(),
+      impactExponent: dec.optional(),
       impactVolBoost: dec.optional(),
       impactDecaySec: z.number().int().min(0).optional(),
     })

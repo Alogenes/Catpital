@@ -90,6 +90,18 @@ describe('ProceduralSource', () => {
     expect(src.applyGap(D('0.25')).toFixed()).toBe('87.5');
   });
 
+  it('whale impact jumps the price then decays linearly back to the trend', () => {
+    const calm = { ...params, volatility: D('0.0000001') };
+    const src = new ProceduralSource(spec, calm, new DecimalRng(5));
+    const t0 = 1_000_000;
+    expect(src.applyImpact(D('0.02'), 10_000, new Date(t0)).toFixed()).toBe('102');
+    expect(src.sample(new Date(t0 + 5_000)).price.toFixed()).toBe('101');
+    expect(src.sample(new Date(t0 + 10_000)).price.toFixed()).toBe('100');
+    // 事件跳空是永久的，不随时间回落
+    src.applyGap(D('-0.1'), new Date(t0 + 10_000));
+    expect(src.sample(new Date(t0 + 60_000)).price.toFixed()).toBe('90');
+  });
+
   it('drift override shifts the trend', () => {
     const up = new ProceduralSource(spec, { ...params, volatility: D('0.0001') }, new DecimalRng(9));
     up.setOverrides({ driftOverride: D(50), volMultiplier: ONE });

@@ -137,6 +137,7 @@ export class MarketRegistry {
       ? {
           liquidity: fromDb(cfg.impactLiquidity),
           cap: fromDb(cfg.impactCap),
+          exponent: fromDb(cfg.impactExponent),
           volBoost: fromDb(cfg.impactVolBoost),
           decaySec: cfg.impactDecaySec,
         }

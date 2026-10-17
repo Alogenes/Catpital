@@ -32,6 +32,22 @@ const schema = z.object({
   /** 穿仓额 ≥ 该值才全服播报（0 = 全部播报） */
   DEFICIT_BROADCAST_THRESHOLD: decimalString.default('0'),
   DANMAKU_COOLDOWN_MS: z.coerce.number().int().default(1500),
+
+  // ---------- 阶段四：Discord Bot / 榜单结算 / 外部货币接口 ----------
+  /** 留空 = 不启动 Bot（API 与引擎照常运行） */
+  DISCORD_BOT_TOKEN: z.string().default(''),
+  /** 全局默认播报频道；各服务器也可用 /admin_set_channel 单独设置 */
+  DISCORD_BROADCAST_CHANNEL_ID: z.string().default(''),
+  /** 播报语言（服务器未单独设置时） */
+  DISCORD_LOCALE: z.enum(['zh-CN', 'en-US']).default('zh-CN'),
+  /** 外部接口 HMAC 密钥的加密主密钥（32 字节，hex 或 base64） */
+  API_SECRET_KEY: z.string().default(''),
+  HMAC_MAX_SKEW_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
+  /** 榜单结算开关（多实例部署时只在一个实例开启） */
+  LEADERBOARD_SETTLEMENT: z.enum(['0', '1']).default('1'),
+  LEADERBOARD_REWARD_DAILY: decimalString.default('1000'),
+  LEADERBOARD_REWARD_WEEKLY: decimalString.default('5000'),
+  LEADERBOARD_REWARD_MONTHLY: decimalString.default('20000'),
 });
 
 export type Env = Omit<
@@ -43,6 +59,9 @@ export type Env = Omit<
   | 'BIG_WIN_ROE_THRESHOLD'
   | 'BIG_WIN_PNL_THRESHOLD'
   | 'DEFICIT_BROADCAST_THRESHOLD'
+  | 'LEADERBOARD_REWARD_DAILY'
+  | 'LEADERBOARD_REWARD_WEEKLY'
+  | 'LEADERBOARD_REWARD_MONTHLY'
 > & {
   INITIAL_GRANT: Decimal;
   BANKRUPTCY_RELIEF: Decimal;
@@ -51,6 +70,9 @@ export type Env = Omit<
   BIG_WIN_ROE_THRESHOLD: Decimal;
   BIG_WIN_PNL_THRESHOLD: Decimal;
   DEFICIT_BROADCAST_THRESHOLD: Decimal;
+  LEADERBOARD_REWARD_DAILY: Decimal;
+  LEADERBOARD_REWARD_WEEKLY: Decimal;
+  LEADERBOARD_REWARD_MONTHLY: Decimal;
 };
 
 export function loadEnv(source: NodeJS.ProcessEnv = process.env): Env {
@@ -72,4 +94,7 @@ export type EconomyConfig = Pick<
   | 'BIG_WIN_PNL_THRESHOLD'
   | 'DEFICIT_BROADCAST_THRESHOLD'
   | 'LEADERBOARD_MIN_CAPITAL'
+  | 'LEADERBOARD_REWARD_DAILY'
+  | 'LEADERBOARD_REWARD_WEEKLY'
+  | 'LEADERBOARD_REWARD_MONTHLY'
 >;

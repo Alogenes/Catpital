@@ -7,5 +7,7 @@ export default defineConfig({
     fileParallelism: false,
     testTimeout: 30_000,
     hookTimeout: 120_000,
+    // Windows 上停止 embedded-postgres 偶尔超过默认 10 秒，超时会导致临时库残留、下次启动端口冲突
+    teardownTimeout: 60_000,
   },
 });

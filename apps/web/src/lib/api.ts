@@ -62,7 +62,7 @@ export interface MarketInfo {
   /** 设置里解锁后的杠杆上限 */
   unlockMaxLeverage: number;
   /** 大单冲击参数（外部行情市场为 null） */
-  impact: { liquidity: string; cap: string } | null;
+  impact: { liquidity: string; cap: string; exponent: string } | null;
 }
 
 export interface OrderView {

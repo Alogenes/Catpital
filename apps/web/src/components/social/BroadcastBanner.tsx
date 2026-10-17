@@ -12,10 +12,11 @@ const STYLE: Record<BroadcastPayload['kind'], string> = {
   BANKRUPTCY: 'from-zinc-900 via-zinc-700 to-zinc-900 text-zinc-100 shadow-black/60 grayscale',
   MARKET_EVENT: 'from-indigo-900/95 via-accent/90 to-indigo-900/95 text-white shadow-accent/40',
   WHALE: 'from-sky-900/95 via-candy-sky/90 to-sky-900/95 text-ink-950 shadow-candy-sky/40',
+  CHAMPION: 'from-amber-600/95 via-gold to-amber-600/95 text-ink-950 shadow-gold/50 ring-1 ring-gold',
 };
 
 // 金额类变量统一两位小数；价格保持服务端原样（已按 tickSize 取整，WOOF 等低价币需要 4 位）
-const NUMERIC = new Set(['pnl', 'totalLoss', 'deficit', 'balanceAfter', 'peakNetWorth', 'debtWrittenOff']);
+const NUMERIC = new Set(['pnl', 'roe', 'totalLoss', 'deficit', 'balanceAfter', 'peakNetWorth', 'debtWrittenOff']);
 
 /** 渲染播报文案：金额变量格式化；破产称号 key 翻译成名称 */
 export function useBroadcastText() {

@@ -34,10 +34,11 @@
       "volumeVolCoupling": "1.5",
       "timeScale": "60",
       "priceFloor": "0.01",
-      "impactLiquidity": "40000000",
-      "impactCap": "0.01",
+      "impactLiquidity": "200000000",
+      "impactCap": "0.03",
       "impactVolBoost": "2",
-      "impactDecaySec": 20
+      "impactDecaySec": 25,
+      "impactExponent": "0.8"
     }
   },
   {
@@ -75,10 +76,11 @@
       "volumeVolCoupling": "2",
       "timeScale": "60",
       "priceFloor": "0.0001",
-      "impactLiquidity": "25000000",
-      "impactCap": "0.015",
+      "impactLiquidity": "150000000",
+      "impactCap": "0.03",
       "impactVolBoost": "2.5",
-      "impactDecaySec": 20
+      "impactDecaySec": 20,
+      "impactExponent": "0.8"
     }
   },
   {
@@ -139,10 +141,11 @@
       "volumeVolCoupling": "1",
       "timeScale": "10",
       "priceFloor": "0.01",
-      "impactLiquidity": "20000000",
-      "impactCap": "0.008",
+      "impactLiquidity": "250000000",
+      "impactCap": "0.02",
       "impactVolBoost": "1.8",
-      "impactDecaySec": 30
+      "impactDecaySec": 30,
+      "impactExponent": "0.8"
     }
   },
   {

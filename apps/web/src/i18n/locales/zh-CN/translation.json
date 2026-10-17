@@ -16,7 +16,8 @@
   },
   "nav": {
     "leaderboard": "排行榜",
-    "history": "人生履历"
+    "history": "人生履历",
+    "menu": "菜单"
   },
   "wallet": {
     "balance": "可用余额",
@@ -49,7 +50,9 @@
     "sl": "止损",
     "liq": "斩杀线",
     "limit": "挂单",
-    "previewLiq": "预览斩杀"
+    "previewLiq": "预览斩杀",
+    "reset": "回正",
+    "resetHint": "一键回正：只按当前 K 线自适应价格轴、回到最新时间。拖动价格轴可拉伸 Y 轴，在价格轴上滚动滚轮（或 Shift + 滚轮）可缩放 Y 轴，双击坐标轴复位"
   },
   "order": {
     "title": "快捷交易",
@@ -134,7 +137,8 @@
     "bankruptcy": "⚰️ {{user}} 宣告破产，结束第 {{generation}} 世 ·「{{titleText}}」",
     "marketEvent": "📰 {{market}}：{{headline}}（{{gapPct}}%）",
     "whalePump": "🐋 {{user}} 大单拉盘！{{market}} 瞬间 +{{pct}}%（{{priceBefore}} → {{priceAfter}}）",
-    "whaleDump": "🐋 {{user}} 大单砸盘！{{market}} 瞬间 {{pct}}%（{{priceBefore}} → {{priceAfter}}）"
+    "whaleDump": "🐋 {{user}} 大单砸盘！{{market}} 瞬间 {{pct}}%（{{priceBefore}} → {{priceAfter}}）",
+    "champion": "👑 本期股神 {{user}}（{{periodKey}}）登顶！奖金 {{reward}} 已到账"
   },
   "danmaku": {
     "placeholder": "发条弹幕…",
@@ -259,7 +263,7 @@
       "unlocked": "杠杆上限已解锁",
       "unlockedHint": "各市场最高可开到入场不即爆的上限（≤ 200x）",
       "relock": "重新上锁",
-      "unlockedToast": "🔓 杠杆封印已解除！祝你好运，赌狗"
+      "unlockedToast": "🔓 杠杆封印已解除！祝你好运"
     }
   },
   "fx": {
@@ -306,6 +310,16 @@
     "oauthExchangeFailed": "Discord 授权失败",
     "oauthProfileFailed": "获取 Discord 资料失败",
     "badMessage": "消息格式错误",
+    "userNotFound": "玩家不存在",
+    "externalRefConflict": "外部流水号已被另一种操作使用",
+    "economyDisabled": "外部货币接口未启用",
+    "missingSignature": "缺少签名",
+    "staleTimestamp": "请求时间戳过期",
+    "badNonce": "nonce 格式不正确",
+    "unknownClient": "未知的接入方",
+    "badSignature": "签名不正确",
+    "replayedNonce": "重复的请求（nonce 已使用）",
+    "badJson": "请求体不是合法 JSON",
     "unknown": "未知错误（{{code}}）"
   },
   "warn": {
@@ -339,5 +353,12 @@
     "alive": "还活着，继续加油",
     "empty": "还没有破产过 · 这一世好好活 🐾",
     "gen": "世"
+  },
+  "mobile": {
+    "tabs": {
+      "chart": "看盘",
+      "trade": "交易",
+      "positions": "持仓"
+    }
   }
 }

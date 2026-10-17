@@ -95,6 +95,7 @@ enum LedgerType {
   BANKRUPTCY_WRITE_OFF // 破产抹平负债（计入外部资金流）
   BANKRUPTCY_RELIEF // 东山再起救济金（计入外部资金流）
   ADMIN_ADJUST // 管理员调整（计入外部资金流）
+  LEADERBOARD_REWARD // 榜单奖金（计入外部资金流：不算交易收益）
 }
 
 enum LifeStatus {
@@ -141,6 +142,7 @@ enum BroadcastKind {
   BANKRUPTCY
   MARKET_EVENT
   WHALE // 大单拉盘/砸盘
+  CHAMPION // 本期股神
 }
 
 enum TransferDirection {
@@ -168,6 +170,8 @@ model User {
   generation Int      @default(1) // 破产世代数（第 N 世）
   /// 偏好设置：{ lang, vfx, bgm, sfx, danmaku, volume }，由 zod 校验
   settings   Json     @default("{}")
+  /// 限定称号 / 徽章：[{ key, period, periodKey, board, at }]
+  badges     Json     @default("[]")
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   lastSeenAt DateTime @default(now())
@@ -366,6 +370,8 @@ model MarketEngineConfig {
   impactLiquidity     Decimal   @default(0) @db.Decimal(36, 8)
   /// 单笔冲击上限（0.01 = ±1%）
   impactCap           Decimal   @default(0) @db.Decimal(36, 8)
+  /// 非线性指数：冲击 = (名义价值 / 流动性池) ^ impactExponent；1 = 线性
+  impactExponent      Decimal   @default(1) @db.Decimal(36, 8)
   /// 冲击后短暂的波动率放大倍数，线性衰减
   impactVolBoost      Decimal   @default(1) @db.Decimal(36, 8)
   impactDecaySec      Int       @default(20)

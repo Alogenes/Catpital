@@ -29,17 +29,17 @@ export function PriceTicker({ market }: { market: MarketInfo }) {
         : ['bg-ink-700 text-ink-400', `💤 ${t('market.closed')}`];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 md:gap-x-3">
       <span className="flex items-center gap-1.5">
-        <span className="text-2xl">{mascotOf(market.code, market.kind)}</span>
+        <span className="text-xl md:text-2xl">{mascotOf(market.code, market.kind)}</span>
         <span className="leading-tight">
           <span className="block text-base font-black tracking-wide">{market.code}</span>
-          <span className="block text-[11px] text-ink-400">{name}</span>
+          <span className="hidden text-[11px] text-ink-400 md:block">{name}</span>
         </span>
       </span>
       <span
         key={p?.ts}
-        className={`rounded-xl px-1.5 font-mono text-2xl font-black tabular-nums ${dir === 'up' ? 'animate-flashUp text-up' : dir === 'down' ? 'animate-flashDown text-down' : ''}`}
+        className={`rounded-xl px-1 font-mono text-xl font-black tabular-nums md:px-1.5 md:text-2xl ${dir === 'up' ? 'animate-flashUp text-up' : dir === 'down' ? 'animate-flashDown text-down' : ''}`}
         data-testid="last-price"
       >
         {fmt(price, decimalsOf(market.tickSize))}
@@ -64,21 +64,21 @@ export function ChartPanel({ market, className = '' }: { market: MarketInfo; cla
   }, [market.code, interval]);
 
   const tab = (active: boolean) =>
-    `rounded-full px-2.5 py-1 text-xs font-bold transition-colors ${active ? 'bg-candy-grape text-white shadow-[0_2px_0_0_#6b4bc4]' : 'text-ink-400 hover:text-ink-100'}`;
+    `whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold transition-colors md:px-2.5 md:py-1 md:text-xs ${active ? 'bg-candy-grape text-white shadow-[0_2px_0_0_#6b4bc4]' : 'text-ink-400 hover:text-ink-100'}`;
 
   return (
     <section className={`bento flex min-h-0 flex-col overflow-hidden ${className}`}>
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-1 pt-3">
+      <div className="flex flex-wrap items-center justify-between gap-1.5 px-2.5 pb-1 pt-2 md:gap-2 md:px-4 md:pt-3">
         <PriceTicker market={market} />
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex gap-0.5 rounded-full bg-ink-850 p-0.5">
+        <div className="flex w-full items-center gap-1.5 overflow-x-auto [scrollbar-width:none] md:w-auto md:flex-wrap md:gap-2 md:overflow-visible [&::-webkit-scrollbar]:hidden">
+          <div className="flex shrink-0 gap-0.5 rounded-full bg-ink-850 p-0.5">
             {TYPES.map((ct) => (
               <button key={ct} className={tab(ct === chartType)} onClick={() => update({ chartType: ct })}>
                 {t(`chart.${ct}`)}
               </button>
             ))}
           </div>
-          <div className="flex gap-0.5 rounded-full bg-ink-850 p-0.5">
+          <div className="flex shrink-0 gap-0.5 rounded-full bg-ink-850 p-0.5">
             {INTERVALS.map((iv) => (
               <button key={iv} className={tab(iv === interval)} onClick={() => update({ interval: iv })}>
                 {t(`chart.${iv}`)}

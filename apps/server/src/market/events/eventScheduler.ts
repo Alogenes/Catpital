@@ -176,6 +176,8 @@ export class EventScheduler {
       {
         market: market.code,
         headline: ev.headline,
+        content: ev.content,
+        eventId: ev.id,
         gapPct: wire(fromDb(ev.gapPercent).mul(100)),
         priceBefore: wire(before),
         priceAfter: wire(after),

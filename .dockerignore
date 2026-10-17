@@ -1,0 +1,12 @@
+# 构建上下文只需要源码和锁文件
+**/node_modules
+**/dist
+**/.pgdata
+**/coverage
+**/*.log
+.git
+.env
+.env.*
+!.env.example
+deploy/.env
+docs

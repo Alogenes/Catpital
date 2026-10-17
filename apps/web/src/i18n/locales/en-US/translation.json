@@ -16,7 +16,8 @@
   },
   "nav": {
     "leaderboard": "Leaderboard",
-    "history": "Past lives"
+    "history": "Past lives",
+    "menu": "Menu"
   },
   "wallet": {
     "balance": "Available",
@@ -49,7 +50,9 @@
     "sl": "SL",
     "liq": "LIQ",
     "limit": "Limit",
-    "previewLiq": "Preview liq."
+    "previewLiq": "Preview liq.",
+    "reset": "Reset",
+    "resetHint": "Fit the price axis to visible candles and jump to now. Drag the price axis to stretch Y, scroll on the price axis (or Shift + wheel) to zoom Y, double-click an axis to reset it"
   },
   "order": {
     "title": "Quick Trade",
@@ -134,7 +137,8 @@
     "bankruptcy": "⚰️ {{user}} declared bankruptcy, ending life #{{generation}} · \"{{titleText}}\"",
     "marketEvent": "📰 {{market}}: {{headline}} ({{gapPct}}%)",
     "whalePump": "🐋 {{user}} pumped {{market}} by +{{pct}}% in one order ({{priceBefore}} → {{priceAfter}})",
-    "whaleDump": "🐋 {{user}} dumped {{market}} by {{pct}}% in one order ({{priceBefore}} → {{priceAfter}})"
+    "whaleDump": "🐋 {{user}} dumped {{market}} by {{pct}}% in one order ({{priceBefore}} → {{priceAfter}})",
+    "champion": "👑 {{user}} is this period’s champion ({{periodKey}})! {{reward}} prize paid"
   },
   "danmaku": {
     "placeholder": "Say something…",
@@ -259,7 +263,7 @@
       "unlocked": "Leverage limit unlocked",
       "unlockedHint": "Each market goes up to the highest leverage that is not liquidated on entry (≤ 200x)",
       "relock": "Re-lock",
-      "unlockedToast": "🔓 Leverage seal broken! Good luck, degen"
+      "unlockedToast": "🔓 Leverage seal broken! Good luck"
     }
   },
   "fx": {
@@ -306,6 +310,16 @@
     "oauthExchangeFailed": "Discord authorization failed",
     "oauthProfileFailed": "Could not load your Discord profile",
     "badMessage": "Malformed message",
+    "userNotFound": "Player not found",
+    "externalRefConflict": "externalRef already used for the other direction",
+    "economyDisabled": "External economy API is disabled",
+    "missingSignature": "Missing signature",
+    "staleTimestamp": "Request timestamp expired",
+    "badNonce": "Malformed nonce",
+    "unknownClient": "Unknown client",
+    "badSignature": "Invalid signature",
+    "replayedNonce": "Replayed request (nonce already used)",
+    "badJson": "Request body is not valid JSON",
     "unknown": "Unknown error ({{code}})"
   },
   "warn": {
@@ -339,5 +353,12 @@
     "alive": "Still alive, keep going",
     "empty": "Never gone bankrupt · make this life count 🐾",
     "gen": "Life"
+  },
+  "mobile": {
+    "tabs": {
+      "chart": "Chart",
+      "trade": "Trade",
+      "positions": "Positions"
+    }
   }
 }

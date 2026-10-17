@@ -110,15 +110,15 @@ export function WalletPill({
           : 'text-ink-100';
 
   return (
-    <div className={`relative flex items-center gap-2.5 rounded-2xl border-2 bg-ink-950/75 py-1.5 pl-1.5 pr-3.5 transition-[border-color,box-shadow] duration-300 ${glowCls}`}>
-      <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-800 text-2xl">{icon}</span>
+    <div className={`relative flex min-w-0 items-center gap-1.5 rounded-xl border-2 bg-ink-950/75 py-1 pl-1 pr-2 md:gap-2.5 md:rounded-2xl md:py-1.5 md:pl-1.5 md:pr-3.5 transition-[border-color,box-shadow] duration-300 ${glowCls}`}>
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-ink-800 text-sm md:h-10 md:w-10 md:rounded-xl md:text-2xl">{icon}</span>
       <div className="leading-none">
-        <div className="mb-1 flex items-center gap-1 text-[11px] font-bold text-ink-400">
+        <div className="mb-0.5 flex items-center gap-1 whitespace-nowrap text-[9px] font-bold text-ink-400 md:mb-1 md:text-[11px]">
           {label}
           {badge && <span className="rounded-full bg-blood px-1.5 py-px text-[9px] text-white">{badge}</span>}
         </div>
         <div className="flex items-center gap-1">
-          <span className={`min-w-[7.5ch] text-right font-mono text-2xl font-extrabold tabular-nums transition-colors duration-300 ${numberCls}`} data-testid={testId}>
+          <span className={`whitespace-nowrap text-right font-mono text-sm font-extrabold md:min-w-[7.5ch] md:text-2xl tabular-nums transition-colors duration-300 ${numberCls}`} data-testid={testId}>
             {fmt(display)}
           </span>
           <AnimatePresence>

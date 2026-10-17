@@ -193,6 +193,12 @@ describe('大单冲击 & 解锁杠杆', () => {
     expect(impactPct(D(50_000), 'BUY', p).toFixed()).toBe('0.01');
     expect(impactPct(D(50_000), 'BUY', { liquidity: D(0), cap: D('0.01') }).toFixed()).toBe('0');
   });
+  it('sub-linear impact (^0.8, pool 2e8): 10k ≤ 0.05%, 1M ≥ 1%', () => {
+    const q = { liquidity: D(200_000_000), cap: D('0.03'), exponent: D('0.8') };
+    expect(impactPct(D(10_000), 'BUY', q).lte('0.0005')).toBe(true);
+    expect(impactPct(D(1_000_000), 'SELL', q).lte('-0.01')).toBe(true);
+    expect(impactPct(D(100_000_000), 'BUY', q).toFixed()).toBe('0.03');
+  });
   it('fills at the midpoint, price moves the full impact', () => {
     const q = impactQuote(D(100), D(10_000), 'BUY', p, D('0.01'));
     expect([q.fillPrice.toFixed(), q.newPrice.toFixed()]).toEqual(['100.5', '101']);

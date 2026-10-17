@@ -40,7 +40,11 @@ export const marketRoutes =
         /** 大单冲击参数（外部行情市场为 null） */
         impact:
           m.dataSource === 'PROCEDURAL' && m.engineConfig && fromDb(m.engineConfig.impactCap).gt(0)
-            ? { liquidity: wire(fromDb(m.engineConfig.impactLiquidity)), cap: wire(fromDb(m.engineConfig.impactCap)) }
+            ? {
+                liquidity: wire(fromDb(m.engineConfig.impactLiquidity)),
+                cap: wire(fromDb(m.engineConfig.impactCap)),
+                exponent: wire(fromDb(m.engineConfig.impactExponent)),
+              }
             : null,
       }));
     });

@@ -4,7 +4,8 @@ import type { OrderSide } from './position.js';
 // -----------------------------------------------------------------------------
 // 大单冲击（Price Impact）—— 仅程序随机市场
 //
-//   冲击比例    p = clamp(名义价值 / 流动性池, 0, cap) × s        s：买 +1 / 卖 −1
+//   冲击比例    p = min((名义价值 / 流动性池) ^ k, cap) × s     s：买 +1 / 卖 −1
+//              k < 1（默认 0.8）时冲击随单量次线性增长：小单几乎无感，巨鲸才明显撼动价格
 //   本单成交价  P_fill = P × (1 + p/2)       ← 大单"吃"掉一路挂单，均价落在冲击中点
 //   成交后价格  P'     = P × (1 + p)
 //
@@ -17,6 +18,8 @@ export interface ImpactParams {
   liquidity: Decimal;
   /** 单笔冲击上限，如 0.01 = ±1% */
   cap: Decimal;
+  /** 非线性指数 k（缺省 1 = 线性） */
+  exponent?: Decimal;
 }
 
 export interface ImpactQuote {
@@ -28,7 +31,9 @@ export interface ImpactQuote {
 
 export function impactPct(notional: Decimal, side: OrderSide, p: ImpactParams): Decimal {
   if (p.liquidity.lte(0) || p.cap.lte(0) || notional.lte(0)) return ZERO;
-  const raw = dmin(notional.div(p.liquidity), p.cap);
+  const ratio = notional.div(p.liquidity);
+  const k = p.exponent && p.exponent.gt(0) ? p.exponent : ONE;
+  const raw = dmin(k.eq(ONE) ? ratio : ratio.pow(k), p.cap);
   return side === 'BUY' ? raw : raw.neg();
 }
 

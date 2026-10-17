@@ -65,7 +65,7 @@ export interface MarketEventPayload {
   ts: number;
 }
 
-export type BroadcastKind = 'BIG_WIN' | 'LIQUIDATION' | 'DEFICIT' | 'BANKRUPTCY' | 'MARKET_EVENT' | 'WHALE';
+export type BroadcastKind = 'BIG_WIN' | 'LIQUIDATION' | 'DEFICIT' | 'BANKRUPTCY' | 'MARKET_EVENT' | 'WHALE' | 'CHAMPION';
 
 export interface BroadcastPayload {
   id: string;

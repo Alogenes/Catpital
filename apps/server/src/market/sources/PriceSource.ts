@@ -32,4 +32,6 @@ export interface PriceSource {
   setOverrides(overrides: SourceOverrides): void;
   /** 大单冲击后短暂放大波动率（multiplier 在 durationMs 内线性衰减回 1）；外部行情源不实现 */
   boostVolatility?(multiplier: Decimal, durationMs: number, now: Date): void;
+  /** 大单冲击：临时推动价格并在 durationMs 内线性回落（不实现时引擎退化为永久跳空） */
+  applyImpact?(pct: Decimal, durationMs: number, now: Date): Decimal;
 }

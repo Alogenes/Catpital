@@ -55,6 +55,8 @@ export class ProceduralSource implements PriceSource {
   private price: Decimal;
   private overrides: SourceOverrides = { driftOverride: ZERO, volMultiplier: ONE };
   private boost = { multiplier: ONE, startMs: 0, durationMs: 0 };
+  /** 大单冲击叠加层：输出价 = exp(x) × Π(1 + p_i × 剩余比例_i)，随时间线性回落到 0 */
+  private impacts: Array<{ pct: Decimal; startMs: number; durationMs: number }> = [];
 
   constructor(
     private readonly spec: ProceduralSpec,
@@ -122,7 +124,7 @@ export class ProceduralSource implements PriceSource {
     this.x = this.x.plus(dx);
     const floorLn = this.floor().ln();
     if (this.x.lt(floorLn)) this.x = floorLn;
-    this.price = this.quantize(this.x.exp());
+    this.price = this.quantize(this.x.exp().mul(this.impactFactor(now.getTime())));
 
     const noise = VOLUME_NOISE_SIGMA.mul(this.rng.normal()).plus(VOLUME_NOISE_DRIFT).exp();
     const rawVolume = p.baseVolume.mul(ONE.plus(p.volumeVolCoupling.mul(z.abs()))).mul(noise);
@@ -130,9 +132,33 @@ export class ProceduralSource implements PriceSource {
     return { price: this.price, volume };
   }
 
-  applyGap(gapPercent: Decimal): Decimal {
-    this.price = this.quantize(this.price.mul(ONE.plus(gapPercent)));
-    this.x = this.price.ln();
+  /**
+   * 定时事件跳空：永久平移底层随机过程（x += ln(1 + gap)），冲击叠加层保持不变。
+   */
+  applyGap(gapPercent: Decimal, now: Date = new Date()): Decimal {
+    this.x = this.x.plus(ONE.plus(gapPercent).ln());
+    const floorLn = this.floor().ln();
+    if (this.x.lt(floorLn)) this.x = floorLn;
+    this.price = this.quantize(this.x.exp().mul(this.impactFactor(now.getTime())));
     return this.price;
+  }
+
+  /**
+   * 大单冲击：瞬间推动输出价，但不改变底层趋势；冲击在 durationMs 内线性衰减为 0，
+   * 价格随之"消化"回趋势线（期间配合 boostVolatility 放大波动）。
+   */
+  applyImpact(pct: Decimal, durationMs: number, now: Date): Decimal {
+    const nowMs = now.getTime();
+    this.impacts.push({ pct, startMs: nowMs, durationMs: Math.max(1, durationMs) });
+    this.price = this.quantize(this.x.exp().mul(this.impactFactor(nowMs)));
+    return this.price;
+  }
+
+  private impactFactor(nowMs: number): Decimal {
+    this.impacts = this.impacts.filter((i) => nowMs < i.startMs + i.durationMs);
+    return this.impacts.reduce((acc, i) => {
+      const remaining = D(i.startMs + i.durationMs - nowMs).div(D(i.durationMs));
+      return acc.mul(ONE.plus(i.pct.mul(remaining)));
+    }, ONE);
   }
 }

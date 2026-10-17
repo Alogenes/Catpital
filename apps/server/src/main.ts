@@ -2,12 +2,15 @@ import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { PrismaClient } from '@prisma/client';
 import { createCore } from './app.js';
+import { loadDotenv } from './config/dotenv.js';
 import { loadEnv } from './config/env.js';
 import { buildServer } from './http/server.js';
+import { startDiscordBot } from './discord/bot.js';
 import { createBus } from './infra/bus.js';
 
 /** afterShutdown：宿主脚本（如 dev:embedded）在进程退出前的清理钩子 */
 export async function main(opts: { afterShutdown?: () => Promise<void> } = {}) {
+  loadDotenv();
   const env = loadEnv();
   const db = new PrismaClient();
   const bus = createBus(env.REDIS_URL);
@@ -28,11 +31,24 @@ export async function main(opts: { afterShutdown?: () => Promise<void> } = {}) {
     if (n) app.log.info({ n }, 'seeded scheduled events from JSON');
   }
   if (env.ENGINE_ENABLED === '1') await core.startEngines();
+  if (env.LEADERBOARD_SETTLEMENT === '1') core.settlement.start();
+  // Discord Bot：配置了 Token 才启动；斜杠命令需先运行 discord:register 注册
+  const bot = env.DISCORD_BOT_TOKEN
+    ? await startDiscordBot(
+        core,
+        { token: env.DISCORD_BOT_TOKEN, defaultChannelId: env.DISCORD_BROADCAST_CHANNEL_ID || undefined, defaultLocale: env.DISCORD_LOCALE },
+        log,
+      ).catch((err) => {
+        log.error({ err }, 'discord bot failed to start; API keeps running');
+        return null;
+      })
+    : null;
 
   await app.listen({ host: '0.0.0.0', port: env.API_PORT });
 
   const shutdown = async (signal: string) => {
     app.log.info({ signal }, 'shutting down');
+    await bot?.stop();
     await app.close();
     await core.shutdown();
     await bus.close();
