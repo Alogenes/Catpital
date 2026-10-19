@@ -117,7 +117,8 @@
     "tpsl": "TP / SL",
     "save": "Guardar",
     "clear": "Borrar",
-    "amount": "Importe"
+    "amount": "Importe",
+    "frozen": "Mercado en pausa: la posición está congelada; no se liquidará y por ahora no se puede cerrar ni modificar"
   },
   "orders": {
     "title": "Órdenes abiertas",

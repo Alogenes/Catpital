@@ -1,4 +1,4 @@
-import type { MarketEventPayload } from '@catpital/shared';
+import type { MarketEventPayload, MarketStatusCode } from '@catpital/shared';
 import { create } from 'zustand';
 import type { MarketInfo } from '../lib/api';
 
@@ -17,6 +17,7 @@ interface MarketsStore {
   setList(list: MarketInfo[]): void;
   select(code: string): void;
   setPrice(code: string, price: string, ts: number): void;
+  setStatus(code: string, status: MarketStatusCode): void;
   pushNews(e: MarketEventPayload): void;
   setNews(code: string, items: MarketEventPayload[]): void;
 }
@@ -42,6 +43,9 @@ export const useMarkets = create<MarketsStore>()((set) => ({
       if (cur && cur.ts > ts) return s;
       return { prices: { ...s.prices, [code]: { price, prev: cur?.price ?? price, ts } } };
     });
+  },
+  setStatus(code, status) {
+    set((s) => ({ list: s.list.map((m) => (m.code === code ? { ...m, status } : m)) }));
   },
   pushNews(e) {
     set((s) => ({ news: [e, ...s.news.filter((n) => n.eventId !== e.eventId)].slice(0, 50) }));

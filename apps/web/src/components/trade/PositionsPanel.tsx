@@ -36,6 +36,8 @@ function PositionRow({ p }: { p: PositionView }) {
   const distance = liq.gt(0) ? D(last).minus(liq).abs().div(last) : null;
   const danger = distance !== null && distance.lt('0.03');
   const half = market ? roundToStep(D(p.quantity).div(2), D(market.lotSize), 'down') : D(0);
+  /** 市场暂停交易：持仓冻结，平仓 / 追加保证金 / 改止盈止损都不可用 */
+  const frozen = market?.status === 'HALTED';
 
   return (
     <div
@@ -69,15 +71,21 @@ function PositionRow({ p }: { p: PositionView }) {
           <div className={`h-full ${danger ? 'bg-blood' : 'bg-amber-400/70'}`} style={{ width: `${Math.max(2, 100 - Math.min(100, distance.mul(1000).toNumber()))}%` }} />
         </div>
       )}
-      <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
-        <Btn onClick={() => void act(() => api.post(`/positions/${p.market}/close`))} tone="primary" testId={`close-${p.market}`}>
-          {t('position.close')}
-        </Btn>
-        {half.gt(0) && <Btn onClick={() => void act(() => api.post(`/positions/${p.market}/close`, { quantity: half.toFixed() }))}>{t('position.closeHalf')}</Btn>}
-        <Btn onClick={() => setPanel(panel === 'margin' ? null : 'margin')}>{t('position.addMargin')}</Btn>
-        <Btn onClick={() => setPanel(panel === 'tpsl' ? null : 'tpsl')}>{t('position.tpsl')}</Btn>
-      </div>
-      {panel === 'margin' && (
+      {frozen ? (
+        <p className="mt-2 rounded-xl bg-candy-sun/10 px-3 py-1.5 text-xs font-bold text-candy-sun" data-testid={`frozen-${p.market}`}>
+          ⏸ {t('position.frozen')}
+        </p>
+      ) : (
+        <div className="mt-2 flex flex-wrap gap-1.5 text-xs">
+          <Btn onClick={() => void act(() => api.post(`/positions/${p.market}/close`))} tone="primary" testId={`close-${p.market}`}>
+            {t('position.close')}
+          </Btn>
+          {half.gt(0) && <Btn onClick={() => void act(() => api.post(`/positions/${p.market}/close`, { quantity: half.toFixed() }))}>{t('position.closeHalf')}</Btn>}
+          <Btn onClick={() => setPanel(panel === 'margin' ? null : 'margin')}>{t('position.addMargin')}</Btn>
+          <Btn onClick={() => setPanel(panel === 'tpsl' ? null : 'tpsl')}>{t('position.tpsl')}</Btn>
+        </div>
+      )}
+      {!frozen && panel === 'margin' && (
         <form
           className="mt-2 flex gap-2"
           onSubmit={(e) => {
@@ -93,7 +101,7 @@ function PositionRow({ p }: { p: PositionView }) {
           <Btn type="submit" tone="primary">{t('position.add')}</Btn>
         </form>
       )}
-      {panel === 'tpsl' && (
+      {!frozen && panel === 'tpsl' && (
         <form
           className="mt-2 flex flex-wrap gap-2"
           onSubmit={(e) => {

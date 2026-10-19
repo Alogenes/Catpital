@@ -63,7 +63,7 @@ export function startRealtime(token: string) {
   realtime.on(handle);
   realtime.connect(token);
   const codes = useMarkets.getState().list.map((m) => m.code);
-  realtime.subscribe(['broadcast', ...codes.map((c) => `tick:${c}`)]);
+  realtime.subscribe(['broadcast', 'markets', ...codes.map((c) => `tick:${c}`)]);
   // 跑马灯首屏：最近的全服战报
   void api
     .get<BroadcastPayload[]>('/broadcasts?limit=20')
@@ -99,6 +99,9 @@ function handle(msg: ServerMessage) {
     const d = (msg as Extract<ServerMessage, { ch: `history:${string}` }>).d;
     if (d.candles) historyResetListeners.get(d.market)?.forEach((l) => l());
     if (d.news) useMarkets.getState().setNews(d.market, []);
+  } else if (ch === 'markets') {
+    const d = (msg as Extract<ServerMessage, { ch: 'markets' }>).d;
+    useMarkets.getState().setStatus(d.market, d.status);
   } else if (ch === 'broadcast') {
     const b = (msg as Extract<ServerMessage, { ch: 'broadcast' }>).d;
     useFeed.getState().pushBanner(b);

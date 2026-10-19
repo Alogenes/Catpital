@@ -78,6 +78,12 @@ export class OrderService {
     return m;
   }
 
+  /** 暂停交易时持仓冻结：不能改止盈止损、不能追加保证金（开平仓在 validate 里拦截） */
+  private assertTradable(m: MarketSnapshot) {
+    // 取最新快照：排在暂停操作之后执行的请求也要被拦住
+    if ((this.markets.get(m.id) ?? m).status !== 'ACTIVE') throw new TradeError('error.marketHalted');
+  }
+
   private lastPrice(m: MarketSnapshot) {
     const p = this.markets.price(m.id);
     if (!p) throw new TradeError('error.noPrice', 409);
@@ -126,6 +132,7 @@ export class OrderService {
     this.validate(m, input, input.type === 'LIMIT' ? input.limitPrice! : last, await this.leverageCap(userId, m, input.leverage));
 
     return this.queue.run(m.id, async () => {
+      this.assertTradable(m);
       const now = this.clock();
       const open = isMarketOpen(m.tradingHours, now);
       const price = this.lastPrice(m);
@@ -287,6 +294,7 @@ export class OrderService {
   async setTpSl(userId: string, marketCode: string, tp: Decimal | null | undefined, sl: Decimal | null | undefined) {
     const m = this.market(marketCode);
     return this.queue.run(m.id, async () => {
+      this.assertTradable(m);
       const pos = await this.db.position.findUnique({ where: { openKey: `${userId}:${m.id}` } });
       if (!pos) throw new TradeError('error.noPosition', 404);
       const effTp = tp === undefined ? fromDbOpt(pos.takeProfitPrice) : tp;
@@ -309,6 +317,7 @@ export class OrderService {
     const m = this.market(marketCode);
     if (amount.lte(0) || amount.decimalPlaces() > 8) throw new TradeError('error.invalidAmount');
     return this.queue.run(m.id, async () => {
+      this.assertTradable(m);
       const result = await this.db.$transaction(async (tx) => {
         let wallet = await lockWallet(tx, userId);
         const pos = await tx.position.findUnique({ where: { openKey: `${userId}:${m.id}` } });

@@ -112,7 +112,8 @@ export class MarketEngine {
 
   /** 推进一步行情（测试中可直接调用；生产由定时器在队列中调用） */
   async tick(now: Date) {
-    if (this.market.status === 'DELISTED') return;
+    // 暂停：价格冻结，不跑风控（持仓不会被强平 / 触发止盈止损，限价单也不成交）
+    if (this.market.status !== 'ACTIVE') return;
     if (!isMarketOpen(this.market.tradingHours, now)) return;
     const q = this.source.sample(now);
     if (!q) return;

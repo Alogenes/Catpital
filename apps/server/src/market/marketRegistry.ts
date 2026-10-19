@@ -228,6 +228,22 @@ export class MarketRegistry {
     if (engine) engine.market = snap;
   }
 
+  /**
+   * 暂停 / 恢复交易。在该市场串行队列里切换，保证与正在进行的 tick、下单、强平严格先后。
+   * 暂停期间引擎不推进价格、风控不触发，用户侧的开平仓 / 改止盈止损 / 追加保证金一律被拒（见 OrderService）。
+   */
+  async setStatus(marketId: string, status: 'ACTIVE' | 'HALTED') {
+    const snap = this.snapshots.get(marketId);
+    if (!snap) return null;
+    await this.queue.run(marketId, async () => {
+      await this.db.market.update({ where: { id: marketId }, data: { status } });
+      await this.refresh(marketId);
+    });
+    this.notifier.marketUpdate({ market: snap.code, status });
+    this.log.info({ market: snap.code, status }, 'market status changed');
+    return this.snapshots.get(marketId)!;
+  }
+
   async startAll() {
     for (const [id, e] of this.engines) {
       try {

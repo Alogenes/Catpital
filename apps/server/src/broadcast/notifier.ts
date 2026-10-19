@@ -5,6 +5,7 @@ import type {
   DanmakuPayload,
   HistoryResetPayload,
   MarketEventPayload,
+  MarketUpdatePayload,
   TickPayload,
   UserEvent,
 } from '@catpital/shared';
@@ -40,6 +41,10 @@ export class Notifier {
 
   marketEvent(d: MarketEventPayload) {
     this.bus.publish('ws', { msg: { ch: `event:${d.market}`, d } });
+  }
+
+  marketUpdate(d: MarketUpdatePayload) {
+    this.bus.publish('ws', { msg: { ch: 'markets', d } });
   }
 
   danmaku(d: DanmakuPayload) {

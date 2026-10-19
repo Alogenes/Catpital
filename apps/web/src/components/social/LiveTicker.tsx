@@ -1,4 +1,5 @@
 import type { BroadcastPayload } from '@catpital/shared';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useFeed } from '../../stores/feed';
 import { useBroadcastText } from './BroadcastBanner';
@@ -13,13 +14,29 @@ const KIND_STYLE: Record<BroadcastPayload['kind'], string> = {
   CHAMPION: 'text-gold font-black',
 };
 
-/** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停 */
+/** 超过这个时间的战报不再上跑马灯 */
+const MAX_AGE_MS = 60 * 60 * 1000;
+/** 同时滚动的条数上限（只保留最新的几条，避免一圈太长、新消息要等很久才出现） */
+const MAX_ITEMS = 8;
+
+/** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停。新的在最前，出现新战报时从头滚动 */
 export function LiveTicker() {
   const { t } = useTranslation();
   const history = useFeed((s) => s.history);
   const text = useBroadcastText();
 
-  const items = history.map((b) => ({ id: b.id, kind: b.kind, text: text(b), ts: b.ts }));
+  // 定时刷新"现在"，让过期的战报自己退场
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
+
+  const items = history
+    .filter((b) => now - b.ts <= MAX_AGE_MS)
+    .sort((a, b) => b.ts - a.ts)
+    .slice(0, MAX_ITEMS)
+    .map((b) => ({ id: b.id, kind: b.kind, text: text(b), ts: b.ts }));
   // 速度恒定：总字数越多，一圈越久
   const chars = items.reduce((n, i) => n + i.text.length, 0);
   const duration = Math.max(25, chars * 0.32);
@@ -37,7 +54,8 @@ export function LiveTicker() {
         {items.length === 0 ? (
           <p className="truncate text-xs text-ink-500 md:text-sm">{t('ticker.empty')}</p>
         ) : (
-          <div className="marquee-track flex w-max animate-marquee gap-10" style={{ ['--marquee-duration' as string]: `${duration}s` }}>
+          // key 跟随最新一条：新战报到达时动画重新开始，最新消息立刻从头出现
+          <div key={items[0]?.id} className="marquee-track flex w-max animate-marquee gap-10" style={{ ['--marquee-duration' as string]: `${duration}s` }}>
             {[0, 1].map((copy) => (
               <div key={copy} className="flex shrink-0 gap-10" aria-hidden={copy === 1}>
                 {items.map((i) => (
