@@ -35,7 +35,9 @@
     "sim": "Simulado",
     "vsOpen": "vs. inicial",
     "news": "Última hora",
-    "noNews": "Todavía no hay noticias"
+    "noNews": "Todavía no hay noticias",
+    "fallback": "Simulado",
+    "fallbackHint": "La fuente en directo no está disponible y se usan precios simulados. Los precios reales volverán poco a poco cuando se recupere"
   },
   "chart": {
     "candle": "Velas",
@@ -53,7 +55,10 @@
     "limit": "Límite",
     "previewLiq": "Liq. prevista",
     "reset": "Centrar",
-    "resetHint": "Ajusta el eje de precios a las velas visibles y salta al momento actual. Arrastra el eje de precios para estirar el eje Y, usa la rueda sobre él (o Mayús + rueda) para hacer zoom y haz doble clic en un eje para restablecerlo"
+    "resetHint": "Ajusta el eje de precios a las velas visibles y salta al momento actual. Arrastra el eje de precios para estirar el eje Y, usa la rueda sobre él (o Mayús + rueda) para hacer zoom y haz doble clic en un eje para restablecerlo",
+    "loadFailed": "No se ha podido cargar el gráfico",
+    "retry": "Reintentar",
+    "waiting": "Esperando datos de precios…"
   },
   "order": {
     "title": "Operación rápida",
@@ -421,9 +426,6 @@
       "fundsDone": "Saldo actualizado",
       "fundsHint": "Se registra como ajuste de administrador (flujo externo): cuenta para Los más ricos, no para la rentabilidad",
       "ledger": "Movimientos recientes",
-      "grantAdmin": "Hacer administrador",
-      "revokeAdmin": "Quitar administrador",
-      "adminHint": "Los administradores pueden usar los comandos /admin_*",
       "delete": "Eliminar jugador",
       "deleteConfirm": "Vuelve a pulsar para eliminar (irreversible)",
       "deleted": "Jugador eliminado"

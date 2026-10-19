@@ -18,7 +18,18 @@ const port = Number(process.env.EMBEDDED_PG_PORT ?? 54320);
 const fresh = !existsSync(dataDir);
 const pg = new EmbeddedPostgres({ databaseDir: dataDir, user: 'catpital', password: 'catpital', port, persistent: true, onLog: () => {} });
 if (fresh) await pg.initialise();
-await pg.start();
+// embedded-postgres 启动失败时只会 reject(undefined)，这里补上可读的原因
+await pg.start().catch((err: unknown) => {
+  const apiPort = process.env.API_PORT ?? '3001';
+  console.error(
+    `\n[dev] 内置 PostgreSQL 启动失败（端口 ${port}，数据目录 apps/server/.pgdata）。\n` +
+      `      最常见的原因：已经有一个 dev:server 在运行（数据库和 API 端口 ${apiPort} 被占用）。\n` +
+      `      先关掉那个进程再启动；PowerShell 里可以用：\n` +
+      `        Get-NetTCPConnection -LocalPort ${apiPort},${port} -State Listen | Select-Object OwningProcess\n`,
+    err ?? '',
+  );
+  process.exit(1);
+});
 if (fresh) await pg.createDatabase('catpital');
 
 const url = `postgresql://catpital:catpital@localhost:${port}/catpital`;

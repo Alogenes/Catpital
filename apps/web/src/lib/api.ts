@@ -47,6 +47,8 @@ export interface MarketInfo {
   nameI18n: Record<string, string>;
   kind: 'STOCK' | 'CRYPTO';
   dataSource: 'PROCEDURAL' | 'LIVE_API';
+  /** 外部行情市场：live = 真实报价，fallback = 外部源不可用、临时模拟；程序随机市场为 null */
+  feed?: 'live' | 'fallback' | null;
   status: 'ACTIVE' | 'HALTED' | 'DELISTED';
   open: boolean;
   price: string;

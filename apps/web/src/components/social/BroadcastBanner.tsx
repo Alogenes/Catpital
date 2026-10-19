@@ -43,7 +43,7 @@ export function BroadcastBanner() {
   }, [current, shift]);
 
   return (
-    <div className="pointer-events-none fixed inset-x-0 top-2 z-40 flex justify-center px-3">
+    <div className="pointer-events-none fixed inset-x-0 top-[calc(var(--safe-top)+0.5rem)] z-[105] flex justify-center px-3">
       <AnimatePresence mode="wait">
         {current && (
           <motion.div

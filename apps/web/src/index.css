@@ -8,6 +8,19 @@
   --c-down: 255 92 122;
   color-scheme: dark;
 }
+/*
+ * 顶部 / 底部安全区：
+ *   - env(safe-area-inset-*)：刘海屏
+ *   - --discord-safe-area-inset-*：Discord 客户端注入的 Activity 安全区（手机端顶部有悬浮控制条）
+ *   - Discord 手机端（URL 参数 platform=mobile）至少留 3rem，防止客户端没注入变量时被遮挡
+ */
+:root {
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--discord-safe-area-inset-top, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), var(--discord-safe-area-inset-bottom, 0px));
+}
+:root[data-discord-mobile='true'] {
+  --safe-top: max(env(safe-area-inset-top, 0px), var(--discord-safe-area-inset-top, 0px), 3rem);
+}
 :root[data-red-up='true'] {
   --c-up: 255 92 122;
   --c-down: 61 220 151;
@@ -30,6 +43,16 @@ body {
   background-attachment: fixed;
   overscroll-behavior: none;
   -webkit-tap-highlight-color: transparent;
+}
+
+@layer utilities {
+  /* 可横向滑动但不显示滚动条 */
+  .hide-scrollbar {
+    scrollbar-width: none;
+  }
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @layer components {

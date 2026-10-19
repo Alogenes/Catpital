@@ -25,6 +25,8 @@ export class LiveSource implements PriceSource {
   private emitted: Decimal;
   private dirty = false;
   private shocks: Shock[] = [];
+  /** 最近一次收到推送的本地时间（毫秒）；从未收到为 null。FallbackSource 据此判断外部源是否健康 */
+  lastQuoteAt: number | null = null;
 
   constructor(
     private readonly feed: LiveFeed,
@@ -37,6 +39,7 @@ export class LiveSource implements PriceSource {
   async start() {
     await this.feed.start((q) => {
       this.latest = q;
+      this.lastQuoteAt = Date.now();
       this.pendingVolume = this.pendingVolume.plus(q.volume);
       this.dirty = true;
     }, this.onError);
@@ -51,6 +54,11 @@ export class LiveSource implements PriceSource {
   }
 
   setOverrides(_: SourceOverrides) {}
+
+  /** 最近一次外部报价（不含事件冲击层）；从未收到为 null */
+  latestPrice(): Decimal | null {
+    return this.latest?.price ?? null;
+  }
 
   private shockFactor(nowMs: number) {
     this.shocks = this.shocks.filter((s) => nowMs - s.startedAt < s.durationMs);

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorText } from '../../i18n';
 import { ApiError, type ResumeView, api } from '../../lib/api';
-import { avatarUrl } from '../../lib/discord';
+import { Avatar } from '../common/Avatar';
 import { fmt, fmtDuration, fmtPct } from '../../lib/format';
 import { sound } from '../../lib/sound';
 import { useFeed } from '../../stores/feed';
@@ -70,14 +70,13 @@ export function ResumeCardBody({ resume, animate = true }: { resume: ResumeView;
   const { t } = useTranslation();
   const user = useSession((s) => s.user);
   const name = resume.user?.globalName ?? resume.user?.username ?? user?.globalName ?? user?.username ?? '';
-  const avatar = avatarUrl(resume.userId, resume.user?.avatarHash ?? user?.avatarHash);
   const stats = resumeStats(resume, t);
   return (
     <div className="relative overflow-hidden" data-testid="resume-card">
       <div className="bg-gradient-to-br from-ink-800 via-ink-900 to-ink-950 px-5 pb-4 pt-5">
         <p className="text-xs uppercase tracking-[0.3em] text-ink-400">📜 {t('bankruptcy.resume')}</p>
         <div className="mt-3 flex items-center gap-3">
-          <img src={avatar} alt="" className="h-14 w-14 rounded-full border-2 border-ink-600 grayscale" />
+          <Avatar userId={resume.userId} avatarHash={resume.user?.avatarHash ?? user?.avatarHash} name={name} size={64} className="h-14 w-14 border-2 border-ink-600 grayscale" />
           <div>
             <h2 className="text-xl font-bold">{name}</h2>
             <p className="text-sm text-ink-400">

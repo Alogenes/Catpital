@@ -12,6 +12,7 @@ export class BinanceFeed implements LiveFeed {
   private stopped = false;
   private retryMs = 1000;
   private timer: NodeJS.Timeout | null = null;
+  private connectTimer: NodeJS.Timeout | null = null;
 
   constructor(private readonly opts: FeedOptions) {}
 
@@ -24,7 +25,15 @@ export class BinanceFeed implements LiveFeed {
     const url = `wss://stream.binance.com:9443/ws/${this.opts.symbol.toLowerCase()}@aggTrade`;
     const ws = new WebSocket(url);
     this.ws = ws;
+    // 5 秒内握手不成功（被墙 / 地区限制 / 网络卡住）就主动断开，走下面的退避重连
+    this.connectTimer = setTimeout(() => {
+      if (ws.readyState !== WebSocket.OPEN) {
+        onError(new Error('binance connect timeout'));
+        ws.close();
+      }
+    }, 5_000);
     ws.onopen = () => {
+      if (this.connectTimer) clearTimeout(this.connectTimer);
       this.retryMs = 1000;
     };
     ws.onmessage = (ev) => {
@@ -37,6 +46,7 @@ export class BinanceFeed implements LiveFeed {
     };
     ws.onerror = (ev) => onError(ev);
     ws.onclose = () => {
+      if (this.connectTimer) clearTimeout(this.connectTimer);
       if (this.stopped) return;
       this.timer = setTimeout(() => this.connect(onQuote, onError), this.retryMs);
       this.retryMs = Math.min(this.retryMs * 2, 30_000);
@@ -46,6 +56,7 @@ export class BinanceFeed implements LiveFeed {
   async stop() {
     this.stopped = true;
     if (this.timer) clearTimeout(this.timer);
+    if (this.connectTimer) clearTimeout(this.connectTimer);
     this.ws?.close();
     this.ws = null;
   }

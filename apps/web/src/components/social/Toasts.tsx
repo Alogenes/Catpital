@@ -12,7 +12,7 @@ export function Toasts() {
   const toasts = useFeed((s) => s.toasts);
   const dismiss = useFeed((s) => s.dismissToast);
   return (
-    <div className="pointer-events-none fixed bottom-20 right-3 z-50 md:bottom-4 md:right-4 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" data-testid="toasts">
+    <div className="pointer-events-none fixed bottom-20 right-3 z-[120] md:bottom-4 md:right-4 flex w-80 max-w-[calc(100vw-2rem)] flex-col gap-2" data-testid="toasts">
       <AnimatePresence>
         {toasts.map((t) => (
           <motion.button

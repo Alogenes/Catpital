@@ -35,7 +35,9 @@
     "sim": "模拟行情",
     "vsOpen": "较初始价",
     "news": "金融快讯",
-    "noNews": "暂无快讯"
+    "noNews": "暂无快讯",
+    "fallback": "模拟中",
+    "fallbackHint": "实时行情源暂时不可用，正在用模拟行情顶替，恢复后会平滑切回真实价格"
   },
   "chart": {
     "candle": "K线",
@@ -53,7 +55,10 @@
     "limit": "挂单",
     "previewLiq": "预览斩杀",
     "reset": "回正",
-    "resetHint": "一键回正：只按当前 K 线自适应价格轴、回到最新时间。拖动价格轴可拉伸 Y 轴，在价格轴上滚动滚轮（或 Shift + 滚轮）可缩放 Y 轴，双击坐标轴复位"
+    "resetHint": "一键回正：只按当前 K 线自适应价格轴、回到最新时间。拖动价格轴可拉伸 Y 轴，在价格轴上滚动滚轮（或 Shift + 滚轮）可缩放 Y 轴，双击坐标轴复位",
+    "loadFailed": "K 线加载失败",
+    "retry": "重试",
+    "waiting": "等待行情数据…"
   },
   "order": {
     "title": "快捷交易",
@@ -421,9 +426,6 @@
       "fundsDone": "余额已更新",
       "fundsHint": "记为管理员调整（外部资金流），不影响收益率榜，只影响富豪榜",
       "ledger": "最近流水",
-      "grantAdmin": "设为管理员",
-      "revokeAdmin": "取消管理员",
-      "adminHint": "管理员可使用 /admin_* 斜杠命令",
       "delete": "删除玩家",
       "deleteConfirm": "再点一次确认删除（不可恢复）",
       "deleted": "玩家已删除"

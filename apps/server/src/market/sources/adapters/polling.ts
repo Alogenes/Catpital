@@ -3,6 +3,9 @@ import { parseLosslessJson } from '../../../lib/losslessJson.js';
 import type { FeedOptions, FeedQuote, LiveFeed } from './types.js';
 
 /** 轮询型适配器基类：子类只需实现 fetchQuote() */
+/** 单次 HTTP 请求超时：外部接口卡住时不能拖住轮询（FallbackSource 会在断流后切到程序随机行情） */
+export const FEED_REQUEST_TIMEOUT_MS = 5_000;
+
 abstract class PollingFeed implements LiveFeed {
   abstract readonly key: string;
   private timer: NodeJS.Timeout | null = null;
@@ -33,7 +36,10 @@ abstract class PollingFeed implements LiveFeed {
   }
 
   protected async getJson<T>(url: string): Promise<T> {
-    const res = await this.fetchImpl(url, { headers: { 'User-Agent': 'catpital/0.1' } });
+    const res = await this.fetchImpl(url, {
+      headers: { 'User-Agent': 'catpital/0.1' },
+      signal: AbortSignal.timeout(FEED_REQUEST_TIMEOUT_MS),
+    });
     if (!res.ok) throw new Error(`${this.key} HTTP ${res.status}`);
     return parseLosslessJson<T>(await res.text());
   }

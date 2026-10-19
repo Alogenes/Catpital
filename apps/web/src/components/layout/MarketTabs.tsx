@@ -21,7 +21,7 @@ export function MarketTabs() {
   return (
     <>
     {/* 手机端：横向滑动的小胶囊 */}
-    <nav className="flex gap-1.5 overflow-x-auto px-0.5 py-0.5 [scrollbar-width:none] md:hidden [&::-webkit-scrollbar]:hidden" data-testid="market-pills">
+    <nav className="hide-scrollbar flex w-full min-w-0 shrink-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 py-0.5 [touch-action:pan-x] md:hidden" data-testid="market-pills">
       {list.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);
@@ -46,7 +46,7 @@ export function MarketTabs() {
         );
       })}
     </nav>
-    <nav className="hidden max-w-full shrink-0 gap-2 overflow-x-auto px-0.5 pb-1.5 pt-1 [scrollbar-width:none] md:flex [&::-webkit-scrollbar]:hidden" data-testid="market-tabs">
+    <nav className="hide-scrollbar hidden min-w-0 max-w-full shrink flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-0.5 pb-1.5 pt-1 md:flex" data-testid="market-tabs">
       {list.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);

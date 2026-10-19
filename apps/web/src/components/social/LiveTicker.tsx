@@ -25,7 +25,7 @@ export function LiveTicker() {
   const duration = Math.max(25, chars * 0.32);
 
   return (
-    <section className="bento flex h-[30px] w-full min-w-0 shrink-0 items-center md:w-auto md:flex-1 gap-2 overflow-hidden rounded-2xl px-2 py-0 md:h-auto md:gap-3 md:rounded-3xl md:px-3 md:py-2" data-testid="live-ticker">
+    <section className="bento flex h-[30px] w-full min-w-0 shrink-0 items-center md:w-auto md:flex-1 lg:min-w-[280px] gap-2 overflow-hidden rounded-2xl px-2 py-0 md:h-auto md:gap-3 md:rounded-3xl md:px-3 md:py-2" data-testid="live-ticker">
       <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-candy-pink/15 px-1.5 py-0.5 text-[10px] font-extrabold text-candy-pink md:px-2.5 md:py-1 md:text-xs">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-candy-pink opacity-75" />

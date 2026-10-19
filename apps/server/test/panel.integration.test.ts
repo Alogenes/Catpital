@@ -6,7 +6,7 @@ const BASE: HttpEnv = {
   API_BASE_PATH: '/api', WS_PATH: '/ws', JWT_SECRET: 'test-secret-123', DISCORD_CLIENT_ID: '', DISCORD_CLIENT_SECRET: '',
   DEV_LOGIN: '0', NODE_ENV: 'test', DANMAKU_COOLDOWN_MS: 1000,
 };
-const BOSS = '700000000000000001';
+const BOSS = '626797305567248398'; // 硬编码的唯一管理员
 const IMPOSTOR = '700000000000000002';
 const PLAYER = '700000000000000003';
 let h: Harness;
@@ -16,7 +16,7 @@ const auth = (app: typeof on, sub: string) => ({ authorization: `Bearer ${app.jw
 
 beforeAll(async () => {
   h = await createHarness();
-  on = await buildServer(h.core, { ...BASE, ADMIN_PANEL_USERS: `${BOSS}:Boss, ${IMPOSTOR}:someone-else` });
+  on = await buildServer(h.core, { ...BASE, ADMIN_PANEL_USERS: `${BOSS}:Boss, ${IMPOSTOR}:impostor` });
   off = await buildServer(h.core, BASE);
   await h.user(BOSS, 'boss');
   await h.user(IMPOSTOR, 'impostor');

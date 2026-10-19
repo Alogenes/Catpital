@@ -122,12 +122,6 @@ export const panelRoutes =
       return core.admin.adjustBalance(userId.parse(req.params.id), b.mode === 'set' ? { setTo: amount } : { delta: amount }, req.user.sub, b.memo);
     });
 
-    app.post<{ Params: { id: string } }>('/users/:id/admin', async (req, reply) => {
-      const b = z.object({ isAdmin: z.boolean() }).parse(req.body);
-      await core.admin.setAdmin(userId.parse(req.params.id), b.isAdmin);
-      return reply.code(204).send();
-    });
-
     app.post<{ Params: { id: string; market: string } }>('/users/:id/positions/:market/close', async (req) => {
       await core.orders.closePosition(userId.parse(req.params.id), req.params.market.toUpperCase());
       return { ok: true };

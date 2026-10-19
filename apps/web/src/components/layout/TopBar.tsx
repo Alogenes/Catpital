@@ -2,7 +2,6 @@ import { D, netWorth } from '@catpital/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import { Suspense, lazy, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { avatarUrl } from '../../lib/discord';
 import { useSettledValue } from '../../lib/rolling';
 import { sound } from '../../lib/sound';
 import { type WsStatus, realtime } from '../../lib/ws';
@@ -10,6 +9,7 @@ import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 import { ResumeHistoryModal } from '../bankruptcy/ResumeHistoryModal';
 import { LeaderboardModal } from '../leaderboard/LeaderboardModal';
+import { Avatar } from '../common/Avatar';
 import { WalletPill } from './WalletPill';
 
 // 管理面板单独打包，只有白名单用户点开时才下载
@@ -66,7 +66,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
     'arcade-btn flex items-center gap-1.5 border-ink-950/60 bg-ink-800 px-3.5 py-1.5 text-sm text-ink-100 hover:-translate-y-0.5 hover:bg-ink-700';
 
   return (
-    <header ref={headerRef} className="bento relative flex items-center gap-2 px-2.5 py-1.5 md:flex-wrap md:gap-3 md:px-4 md:py-2">
+    <header ref={headerRef} className="bento relative z-[100] flex items-center gap-2 px-2.5 py-1.5 md:gap-3 md:px-4 md:py-2">
       <div className="flex shrink-0 items-center gap-2">
         <span className="animate-bob text-xl md:text-2xl">🐱</span>
         <span className="hidden text-lg font-black tracking-wide md:inline">
@@ -79,21 +79,21 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
       </div>
 
       {/* 中间：排行榜 / 人生履历（手机端收进汉堡菜单） */}
-      <nav className="hidden flex-1 items-center justify-center gap-2 md:flex">
+      <nav className="hidden min-w-0 flex-1 items-center justify-center gap-2 md:flex">
         <button className={navBtn} onClick={() => open('leaderboard')} data-testid="open-leaderboard">
-          🏆 <span>{t('nav.leaderboard')}</span>
+          🏆 <span className="hidden xl:inline">{t('nav.leaderboard')}</span>
         </button>
         <button className={navBtn} onClick={() => open('history')} data-testid="open-history">
-          📜 <span>{t('nav.history')}</span>
+          📜 <span className="hidden xl:inline">{t('nav.history')}</span>
         </button>
         {user?.panel && (
           <button className={navBtn} onClick={() => open('panel')} data-testid="open-panel">
-            🛠 <span>{t('nav.admin')}</span>
+            🛠 <span className="hidden xl:inline">{t('nav.admin')}</span>
           </button>
         )}
       </nav>
 
-      <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 md:flex-none md:flex-wrap md:gap-2.5">
+      <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 md:flex-none md:gap-2.5">
         <WalletPill icon="💰" label={t('wallet.netWorth')} value={nwSettled} mode="netWorth" glow="sun" danger={D(nwSettled).lte(0)} testId="net-worth" />
         <WalletPill
           icon="🪙"
@@ -107,8 +107,8 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
         />
         {D(locked).gt(0) && <span className="chip hidden font-mono md:inline-flex">🔒 {D(locked).toFixed(2)}</span>}
         {user && (
-          <div className="hidden items-center gap-2 rounded-full bg-ink-850 py-1 pl-1 pr-3 md:flex">
-            <img src={avatarUrl(user.id, user.avatarHash, 32)} alt="" className="h-8 w-8 rounded-full ring-2 ring-candy-grape/60" />
+          <div className="hidden items-center gap-2 rounded-full bg-ink-850 py-1 pl-1 pr-3 xl:flex">
+            <Avatar userId={user.id} avatarHash={user.avatarHash} name={user.globalName ?? user.username} size={32} className="h-8 w-8 ring-2 ring-candy-grape/60" />
             <div className="leading-tight">
               <div className="max-w-[110px] truncate text-sm font-bold">{user.globalName ?? user.username}</div>
               <div className="text-[10px] font-semibold text-candy-grape">{t('wallet.generation', { n: generation })}</div>
@@ -141,12 +141,12 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
               initial={{ opacity: 0, y: -8, scale: 0.97 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: -8, scale: 0.97 }}
-              className="absolute right-2 top-full z-50 mt-2 w-60 overflow-hidden rounded-2xl border border-ink-700 bg-ink-900 shadow-[0_6px_0_0_rgba(10,6,22,0.7)] md:hidden"
+              className="absolute right-2 top-full z-[100] mt-2 w-60 overflow-hidden rounded-2xl border border-ink-700 bg-ink-900 shadow-[0_6px_0_0_rgba(10,6,22,0.7)] md:hidden"
               data-testid="mobile-menu"
             >
               {user && (
                 <div className="flex items-center gap-2.5 border-b border-ink-800 px-3 py-3">
-                  <img src={avatarUrl(user.id, user.avatarHash, 32)} alt="" className="h-9 w-9 rounded-full ring-2 ring-candy-grape/60" />
+                  <Avatar userId={user.id} avatarHash={user.avatarHash} name={user.globalName ?? user.username} size={36} className="h-9 w-9 ring-2 ring-candy-grape/60" />
                   <div className="min-w-0 leading-tight">
                     <div className="truncate text-sm font-bold">{user.globalName ?? user.username}</div>
                     <div className="text-[11px] font-semibold text-candy-grape">{t('wallet.generation', { n: generation })}</div>

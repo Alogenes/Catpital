@@ -1,8 +1,9 @@
 import { D } from '@catpital/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
-import { fmt } from '../../lib/format';
+import { fmt, fmtCompact } from '../../lib/format';
 import { useRollingNumber } from '../../lib/rolling';
+import { useIsDesktop } from '../../lib/useMedia';
 import { useSession } from '../../stores/session';
 
 type Tone = 'gain' | 'loss' | 'neutral';
@@ -46,6 +47,8 @@ export function WalletPill({
   testId?: string;
 }) {
   const display = useRollingNumber(value);
+  // 手机顶栏很窄：百万以上改用 1.23M 这样的紧凑写法，其余情况超长时截断
+  const compact = !useIsDesktop() && D(display).abs().gte(1_000_000);
   const prev = useRef(value);
   const consumedSettlement = useRef(useSession.getState().settlement?.id ?? 0);
   const [floaters, setFloaters] = useState<Floater[]>([]);
@@ -111,15 +114,15 @@ export function WalletPill({
 
   return (
     <div className={`relative flex min-w-0 items-center gap-1.5 rounded-xl border-2 bg-ink-950/75 py-1 pl-1 pr-2 md:gap-2.5 md:rounded-2xl md:py-1.5 md:pl-1.5 md:pr-3.5 transition-[border-color,box-shadow] duration-300 ${glowCls}`}>
-      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-ink-800 text-sm md:h-10 md:w-10 md:rounded-xl md:text-2xl">{icon}</span>
-      <div className="leading-none">
+      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-ink-800 text-sm md:h-8 md:w-8 md:rounded-xl md:text-xl xl:h-10 xl:w-10 xl:text-2xl">{icon}</span>
+      <div className="min-w-0 leading-none">
         <div className="mb-0.5 flex items-center gap-1 whitespace-nowrap text-[9px] font-bold text-ink-400 md:mb-1 md:text-[11px]">
           {label}
           {badge && <span className="rounded-full bg-blood px-1.5 py-px text-[9px] text-white">{badge}</span>}
         </div>
-        <div className="flex items-center gap-1">
-          <span className={`whitespace-nowrap text-right font-mono text-sm font-extrabold md:min-w-[7.5ch] md:text-2xl tabular-nums transition-colors duration-300 ${numberCls}`} data-testid={testId}>
-            {fmt(display)}
+        <div className="flex min-w-0 items-center gap-1">
+          <span className={`min-w-0 truncate whitespace-nowrap text-right font-mono text-sm font-extrabold md:text-lg xl:min-w-[7.5ch] xl:text-2xl tabular-nums transition-colors duration-300 ${numberCls}`} data-testid={testId}>
+            {compact ? fmtCompact(display) : fmt(display)}
           </span>
           <AnimatePresence>
             {flash && flash.tone !== 'neutral' && (

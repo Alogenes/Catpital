@@ -6,6 +6,7 @@ import {
   SlashCommandBuilder,
   type RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from 'discord.js';
+import { isOwner } from '../admin/owner.js';
 import type { Core } from '../app.js';
 import { fromDb, wire } from '../lib/dec.js';
 import { isMarketOpen } from '../lib/tradingHours.js';
@@ -195,19 +196,14 @@ async function leaderboard(core: Core, ctx: CommandContext): Promise<Reply> {
   return { embeds: [leaderboardEmbed(ctx.locale, data, ctx.userId)], allowedMentions: { parse: [] } };
 }
 
-/** 管理员判定：Discord"管理服务器"权限 / 数据库 isAdmin / GuildConfig 指定的管理角色 */
-async function isAdmin(core: Core, ctx: CommandContext): Promise<boolean> {
-  if (ctx.memberCanManage) return true;
-  const user = await core.db.user.findUnique({ where: { id: ctx.userId }, select: { isAdmin: true } });
-  if (user?.isAdmin) return true;
-  if (!ctx.guildId) return false;
-  const cfg = await core.db.guildConfig.findUnique({ where: { guildId: ctx.guildId }, select: { adminRoleIds: true } });
-  return Boolean(cfg?.adminRoleIds.some((r) => ctx.roleIds.includes(r)));
+/** 管理员判定：只认硬编码的唯一管理员 UID（见 admin/owner.ts） */
+function isAdmin(ctx: CommandContext): boolean {
+  return isOwner(ctx.userId);
 }
 
 async function scheduleEvent(core: Core, ctx: CommandContext): Promise<Reply> {
   const t = pack(ctx.locale).admin;
-  if (!(await isAdmin(core, ctx))) return { content: t.noPermission, ephemeral: true };
+  if (!isAdmin(ctx)) return { content: t.noPermission, ephemeral: true };
 
   const code = (ctx.getString('market') ?? '').trim().toUpperCase();
   const market = core.markets.byCode(code);
@@ -250,7 +246,7 @@ async function scheduleEvent(core: Core, ctx: CommandContext): Promise<Reply> {
 
 async function setChannel(core: Core, ctx: CommandContext): Promise<Reply> {
   const t = pack(ctx.locale).admin;
-  if (!ctx.guildId || !(await isAdmin(core, ctx))) return { content: t.noPermission, ephemeral: true };
+  if (!ctx.guildId || !isAdmin(ctx)) return { content: t.noPermission, ephemeral: true };
   const channelId = ctx.getChannelId('channel') ?? ctx.channelId;
   await core.db.guildConfig.upsert({
     where: { guildId: ctx.guildId },

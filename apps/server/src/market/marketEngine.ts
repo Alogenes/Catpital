@@ -80,6 +80,10 @@ export class MarketEngine {
     return this.source.current();
   }
 
+  feedMode(): 'live' | 'fallback' | null {
+    return this.source.kind === 'LIVE_API' ? ((this.source as { mode?: 'live' | 'fallback' }).mode ?? 'live') : null;
+  }
+
   candles() {
     return this.aggregator.snapshot();
   }

@@ -68,6 +68,9 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
   /** 视口外的斩杀线提示 */
   const [offscreen, setOffscreen] = useState<{ price: string; dir: 'up' | 'down'; preview: boolean } | null>(null);
   const previewValueRef = useRef<number | null>(null);
+  /** K 线历史加载状态：失败显示重试，空数据显示等待行情 */
+  const [load, setLoad] = useState<'loading' | 'ok' | 'empty' | 'error'>('loading');
+  const [reloadKey, setReloadKey] = useState(0);
   const previewLiq = useTradePreview((s) => (s.market === market.code ? s.liq : null));
   const redUp = useSettings((s) => s.redUp);
   const position = useSession((s) => s.positions[market.code]);
@@ -158,8 +161,12 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
     barsRef.current = [];
 
     let cancelled = false;
-    void api.get<{ candles: CandleRow[] }>(`/markets/${market.code}/candles?interval=${interval}&limit=500`).then(({ candles }) => {
+    setLoad('loading');
+    void api
+      .get<{ candles: CandleRow[] }>(`/markets/${market.code}/candles?interval=${interval}&limit=500`)
+      .then(({ candles }) => {
       if (cancelled) return;
+      setLoad(candles.length ? 'ok' : 'empty');
       const bars = candles.map((c) => ({
         time: toTime(c.openTime),
         open: toChartNum(c.open),
@@ -170,7 +177,10 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       barsRef.current = bars;
       series.setData(bars.map((b) => toPoint(chartType, b)));
       chart.timeScale().scrollToRealTime();
-    });
+      })
+      .catch(() => {
+        if (!cancelled) setLoad('error');
+      });
 
     const off = onCandle(market.code, interval, (c) => {
       const bar: Bar = { time: toTime(c.openTime), open: toChartNum(c.open), high: toChartNum(c.high), low: toChartNum(c.low), close: toChartNum(c.close) };
@@ -179,12 +189,13 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
       if (last && last.time === bar.time) barsRef.current[barsRef.current.length - 1] = bar;
       else barsRef.current.push(bar);
       series.update(toPoint(chartType, bar));
+      setLoad((cur) => (cur === 'empty' ? 'ok' : cur));
     });
     return () => {
       cancelled = true;
       off();
     };
-  }, [market.code, market.tickSize, interval, chartType, up, down]);
+  }, [market.code, market.tickSize, interval, chartType, up, down, reloadKey]);
 
   // ---- 价格线：开仓均价 / 止盈 / 止损 / 斩杀线 / 挂单 ----
   useEffect(() => {
@@ -292,6 +303,22 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
   return (
     <>
       <div ref={containerRef} className="absolute inset-0" data-testid="price-chart" />
+      {(load === 'error' || load === 'empty') && (
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 text-sm text-ink-400" data-testid="chart-status">
+          <span className="text-3xl">{load === 'error' ? '😿' : '📡'}</span>
+          <span>{load === 'error' ? t('chart.loadFailed') : t('chart.waiting')}</span>
+          {load === 'error' && (
+            <button
+              type="button"
+              className="arcade-btn border-ink-950/60 bg-candy-grape px-3 py-1 text-xs font-bold text-ink-950"
+              onClick={() => setReloadKey((k) => k + 1)}
+              data-testid="chart-retry"
+            >
+              ⟳ {t('chart.retry')}
+            </button>
+          )}
+        </div>
+      )}
       <div className="pointer-events-none absolute right-16 top-2 z-20 flex flex-col items-end gap-1">
         <button
           type="button"

@@ -116,15 +116,15 @@ export default function App() {
           └────────────────┴─────────────┴──────────────┘
         768–1024px（平板）按 图表 → 下单 → 持仓/快讯 堆叠；< 768px 走 MobileShell。
       */}
-      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-3 p-3 lg:h-screen lg:min-h-[720px]">
+      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-2.5 p-3 pt-[calc(var(--safe-top)+0.75rem)] lg:h-[max(100dvh,780px)]">
         <TopBar onSettings={() => setSettingsOpen(true)} />
-        <div className="flex flex-wrap items-stretch gap-3">
+        <div className="flex min-w-0 flex-wrap items-stretch gap-3 lg:flex-nowrap">
           <MarketTabs />
           <LiveTicker />
         </div>
         {market && (
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(0,1fr)_minmax(200px,36%)]">
-            <ChartPanel market={market} className="min-h-[380px] lg:col-start-1 lg:row-start-1 lg:min-h-0" />
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(360px,1fr)_minmax(180px,32%)]">
+            <ChartPanel market={market} className="min-h-[400px] lg:col-start-1 lg:row-start-1 lg:min-h-0" />
             <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-y-auto lg:pr-0.5">
               <BankruptcyPrompt />
               <OrderPanel market={market} />
@@ -159,7 +159,7 @@ function MobileShell({ market, onSettings }: { market: MarketInfo | null; onSett
   const pane = (key: MobileTab, cls = '') => `${tab === key ? 'flex' : 'hidden'} min-h-0 flex-1 flex-col gap-2 ${cls}`;
 
   return (
-    <div id="shake-target" className="flex h-[100dvh] flex-col gap-1.5 px-2 pt-2">
+    <div id="shake-target" className="flex h-[100dvh] flex-col gap-1.5 px-2 pt-[calc(var(--safe-top)+0.5rem)]">
       <TopBar onSettings={onSettings} />
       <MarketTabs />
       {market && (
@@ -178,7 +178,7 @@ function MobileShell({ market, onSettings }: { market: MarketInfo | null; onSett
           </section>
         </main>
       )}
-      <nav className="-mx-2 grid shrink-0 grid-cols-3 border-t border-ink-700/70 bg-ink-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur" data-testid="mobile-tabbar">
+      <nav className="-mx-2 grid shrink-0 grid-cols-3 border-t border-ink-700/70 bg-ink-900/95 pb-[var(--safe-bottom)] backdrop-blur" data-testid="mobile-tabbar">
         {tabs.map(([key, icon, label, badge]) => (
           <button
             key={key}

@@ -48,7 +48,13 @@ export function PriceTicker({ market }: { market: MarketInfo }) {
         {fmtPct(change)}
       </span>
       <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${badge[0]}`}>{badge[1]}</span>
-      <span className="hidden text-[11px] text-ink-500 xl:inline">{market.dataSource === 'LIVE_API' ? `📡 ${t('market.live')}` : `🎲 ${t('market.sim')}`}</span>
+      {market.feed === 'fallback' ? (
+        <span className="rounded-full bg-candy-sun/15 px-2 py-0.5 text-[11px] font-bold text-candy-sun" title={t('market.fallbackHint')} data-testid="feed-fallback">
+          🛟 {t('market.fallback')}
+        </span>
+      ) : (
+        <span className="hidden text-[11px] text-ink-500 xl:inline">{market.dataSource === 'LIVE_API' ? `📡 ${t('market.live')}` : `🎲 ${t('market.sim')}`}</span>
+      )}
     </div>
   );
 }

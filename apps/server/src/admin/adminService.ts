@@ -141,9 +141,4 @@ export class AdminService {
     const { count } = await this.db.user.deleteMany({ where: { id: userId } });
     if (!count) throw new TradeError('error.userNotFound', 404);
   }
-
-  async setAdmin(userId: string, isAdmin: boolean) {
-    const { count } = await this.db.user.updateMany({ where: { id: userId }, data: { isAdmin } });
-    if (!count) throw new TradeError('error.userNotFound', 404);
-  }
 }

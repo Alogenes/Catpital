@@ -22,6 +22,8 @@ export const marketRoutes =
         nameI18n: m.nameI18n,
         kind: m.kind,
         dataSource: m.dataSource,
+        /** 外部行情市场：live = 真实报价，fallback = 外部源不可用、临时用程序随机行情；程序随机市场为 null */
+        feed: core.markets.feedMode(m.id),
         status: m.status,
         open: isMarketOpen(m.tradingHours, now),
         tradingHours: m.tradingHours,

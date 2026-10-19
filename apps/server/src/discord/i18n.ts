@@ -45,7 +45,7 @@ const zh = {
     footer: '{{key}} · 结束于 {{end}} · 收益率已剔除充值 / 救济金等外部资金',
   },
   admin: {
-    noPermission: '🚫 只有管理员可以使用这个命令。',
+    noPermission: '⛔ 你没有权限触发金融事件。',
     badMarket: '找不到市场 `{{market}}`。',
     badDelay: '`time_delay` 格式不对，例：`30s`、`5m`、`1h30m`。',
     badJump: '`price_jump` 格式不对，例：`-30%`、`+50%`、`0.25`（必须大于 -100%）。',
@@ -148,7 +148,7 @@ const en: typeof zh = {
     footer: '{{key}} · ends {{end}} · returns exclude deposits & relief funds',
   },
   admin: {
-    noPermission: '🚫 Admins only.',
+    noPermission: '⛔ You are not allowed to trigger market events.',
     badMarket: 'Unknown market `{{market}}`.',
     badDelay: 'Bad `time_delay`, e.g. `30s`, `5m`, `1h30m`.',
     badJump: 'Bad `price_jump`, e.g. `-30%`, `+50%`, `0.25` (must be above -100%).',
@@ -250,7 +250,7 @@ const es: typeof zh = {
     footer: '{{key}} · termina {{end}} · la rentabilidad no cuenta ingresos ni ayudas',
   },
   admin: {
-    noPermission: '🚫 Solo para administradores.',
+    noPermission: '⛔ No tienes permiso para lanzar eventos de mercado.',
     badMarket: 'Mercado desconocido: `{{market}}`.',
     badDelay: '`time_delay` no válido; p. ej. `30s`, `5m`, `1h30m`.',
     badJump: '`price_jump` no válido; p. ej. `-30%`, `+50%`, `0.25` (debe ser mayor que -100 %).',

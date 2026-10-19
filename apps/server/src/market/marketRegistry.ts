@@ -1,4 +1,4 @@
-import { CANDLE_INTERVALS, type Decimal, INTERVAL_MS } from '@catpital/shared';
+import { CANDLE_INTERVALS, D, type Decimal, INTERVAL_MS, ZERO } from '@catpital/shared';
 import type { Market, MarketEngineConfig, PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
 import { fromDb, fromDbOpt } from '../lib/dec.js';
@@ -8,6 +8,7 @@ import type { RiskEngine } from '../trading/risk/riskEngine.js';
 import { type MarketSnapshot, toMarketSnapshot } from '../trading/types.js';
 import { CandleAggregator, type CandleState, bucketStart } from './candles/aggregator.js';
 import { MarketEngine } from './marketEngine.js';
+import { FallbackSource } from './sources/FallbackSource.js';
 import { LiveSource } from './sources/LiveSource.js';
 import type { PriceSource } from './sources/PriceSource.js';
 import { ProceduralSource } from './sources/ProceduralSource.js';
@@ -46,6 +47,45 @@ export function buildProceduralSource(m: Market, cfg: MarketEngineConfig, seed: 
 }
 
 /**
+ * 外部行情市场断流时的程序随机参数（未在种子里配置 engine 时使用）：
+ * 年化波动 80%、时间加速 10 倍、偶发小跳跃，不做均值回归（从断流时的价格自然游走）。
+ */
+function fallbackSimFor(m: Market, cfg: MarketEngineConfig | null) {
+  return (from: Decimal) =>
+    new ProceduralSource(
+      { initialPrice: from, lastPrice: from, tickSize: fromDb(m.tickSize), lotSize: fromDb(m.lotSize), tickIntervalMs: m.tickIntervalMs },
+      cfg
+        ? {
+            drift: fromDb(cfg.drift),
+            volatility: fromDb(cfg.volatility),
+            meanReversionSpeed: ZERO,
+            meanReversionTarget: null,
+            jumpIntensity: fromDb(cfg.jumpIntensity),
+            jumpMean: fromDb(cfg.jumpMean),
+            jumpStdDev: fromDb(cfg.jumpStdDev),
+            baseVolume: fromDb(cfg.baseVolume),
+            volumeVolCoupling: fromDb(cfg.volumeVolCoupling),
+            timeScale: fromDb(cfg.timeScale),
+            priceFloor: fromDb(cfg.priceFloor),
+          }
+        : {
+            drift: ZERO,
+            volatility: D('0.8'),
+            meanReversionSpeed: ZERO,
+            meanReversionTarget: null,
+            jumpIntensity: D('50'),
+            jumpMean: ZERO,
+            jumpStdDev: D('0.01'),
+            baseVolume: D('1'),
+            volumeVolCoupling: D('1'),
+            timeScale: D('10'),
+            priceFloor: fromDb(m.tickSize),
+          },
+      new DecimalRng(`${m.code}:fallback:${Date.now()}`),
+    );
+}
+
+/**
  * 所有市场的注册表：市场规格快照 + 行情引擎实例。
  * 同时实现 RiskEngine / OrderService 需要的 MarketLookup / MarketDirectory 接口。
  */
@@ -79,6 +119,11 @@ export class MarketRegistry {
 
   price(marketId: string): Decimal | undefined {
     return this.engines.get(marketId)?.price();
+  }
+
+  /** 外部行情市场当前是真实报价还是降级模拟；程序随机市场为 null */
+  feedMode(marketId: string): 'live' | 'fallback' | null {
+    return this.engines.get(marketId)?.feedMode() ?? null;
   }
 
   engine(marketId: string) {
@@ -120,9 +165,11 @@ export class MarketRegistry {
     } else {
       if (!m.adapterKey || !m.adapterSymbol) throw new Error(`market ${m.code} missing adapter config`);
       const feed = createFeed(m.adapterKey, { symbol: m.adapterSymbol });
-      source = new LiveSource(feed, { lastPrice: fromDb(m.lastPrice), tickSize: fromDb(m.tickSize) }, (err) =>
-        this.log.warn({ err, market: m.code }, 'live feed error'),
+      const live = new LiveSource(feed, { lastPrice: fromDb(m.lastPrice), tickSize: fromDb(m.tickSize) }, (err) =>
+        this.log.warn({ err: err instanceof Error ? err.message : String(err), market: m.code }, 'live feed error'),
       );
+      // 外部 API 超时 / 断流 / 限流时自动降级为程序随机行情，恢复后平滑切回
+      source = new FallbackSource(live, fallbackSimFor(m, cfg), fromDb(m.tickSize), this.log, m.code);
     }
 
     const aggregator = new CandleAggregator(CANDLE_INTERVALS, await this.restoreCandles(m.id));

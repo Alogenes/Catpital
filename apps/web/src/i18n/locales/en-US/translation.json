@@ -35,7 +35,9 @@
     "sim": "Simulated",
     "vsOpen": "vs. initial",
     "news": "Breaking news",
-    "noNews": "No news yet"
+    "noNews": "No news yet",
+    "fallback": "Simulated",
+    "fallbackHint": "The live feed is unavailable, so simulated prices are filling in. Real prices return smoothly once the feed is back"
   },
   "chart": {
     "candle": "Candles",
@@ -53,7 +55,10 @@
     "limit": "Limit",
     "previewLiq": "Preview liq.",
     "reset": "Reset",
-    "resetHint": "Fit the price axis to visible candles and jump to now. Drag the price axis to stretch Y, scroll on the price axis (or Shift + wheel) to zoom Y, double-click an axis to reset it"
+    "resetHint": "Fit the price axis to visible candles and jump to now. Drag the price axis to stretch Y, scroll on the price axis (or Shift + wheel) to zoom Y, double-click an axis to reset it",
+    "loadFailed": "Couldn't load the chart",
+    "retry": "Retry",
+    "waiting": "Waiting for price data…"
   },
   "order": {
     "title": "Quick Trade",
@@ -421,9 +426,6 @@
       "fundsDone": "Balance updated",
       "fundsHint": "Booked as an admin adjustment (external flow): affects the Richest board, not Return %",
       "ledger": "Recent ledger",
-      "grantAdmin": "Make admin",
-      "revokeAdmin": "Remove admin",
-      "adminHint": "Admins can use the /admin_* slash commands",
       "delete": "Delete player",
       "deleteConfirm": "Click again to delete (irreversible)",
       "deleted": "Player deleted"

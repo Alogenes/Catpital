@@ -7,7 +7,7 @@ import { fromDb } from '../src/lib/dec.js';
 import { type Harness, createHarness, flushMicrotasks } from './support/harness.js';
 
 const PLAYER = '800000000000000001';
-const ADMIN = '800000000000000002';
+const ADMIN = '626797305567248398'; // 硬编码的唯一管理员
 const GUILD = '900000000000000001';
 const CHANNEL = '900000000000000002';
 let h: Harness;
@@ -72,7 +72,9 @@ describe('斜杠命令', () => {
 
   it('/admin_schedule_event: permission check, validation, then schedules a real event', async () => {
     const opts = { market: 'test', time_delay: '5m', price_jump: '-30%', news_title: 'Test Corp 暴雷', news_content: 'CEO 跑路', duration: 120 };
-    expect((await handleCommand(h.core, 'admin_schedule_event', ctx({ options: opts }))).content).toContain('只有管理员');
+    expect((await handleCommand(h.core, 'admin_schedule_event', ctx({ options: opts }))).content).toContain('你没有权限触发金融事件');
+    // 拥有"管理服务器"权限也不行，只认唯一管理员 UID
+    expect((await handleCommand(h.core, 'admin_schedule_event', ctx({ memberCanManage: true, options: opts }))).content).toContain('⛔');
     const admin = ctx({ userId: ADMIN, username: 'admin', memberCanManage: true });
     expect((await handleCommand(h.core, 'admin_schedule_event', { ...admin, getString: (n) => ({ ...opts, price_jump: '-150%' } as Record<string, unknown>)[n] as string })).content).toContain('price_jump');
     expect((await handleCommand(h.core, 'admin_schedule_event', { ...admin, getString: (n) => ({ ...opts, time_delay: 'soon' } as Record<string, unknown>)[n] as string })).content).toContain('time_delay');
@@ -92,7 +94,7 @@ describe('斜杠命令', () => {
 });
 
 describe('频道播报', () => {
-  it('routes engine events to the configured channel as embeds', async () => {
+  it('sends only bankruptcy obituaries and news to the channel (liquidations stay in the web UI)', async () => {
     await handleCommand(h.core, 'admin_set_channel', ctx({ userId: ADMIN, memberCanManage: true }));
     const sent: Array<{ channelId: string; payload: MessageCreateOptions }> = [];
     const log = { warn: () => {}, error: (o: unknown) => console.error(o) };
@@ -112,8 +114,11 @@ describe('频道播报', () => {
 
     const titles = sent.map((s) => (s.payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title);
     expect(sent.every((s) => s.channelId === CHANNEL)).toBe(true);
-    expect(titles).toContain('⚡ 惨绝人寰！');
-    expect(titles).toContain('🩸 穿仓了！负债了！');
+    // 斩杀、穿仓照常进总线（前端横幅），但不发到 Discord 频道
+    expect(h.botMessages.map((m) => m.broadcast.kind)).toEqual(expect.arrayContaining(['LIQUIDATION', 'DEFICIT', 'BANKRUPTCY']));
+    expect(titles).not.toContain('⚡ 惨绝人寰！');
+    expect(titles).not.toContain('🩸 穿仓了！负债了！');
+    expect(titles).toHaveLength(1);
     expect(titles.some((t) => t?.startsWith('⚰️ 讣告 · player 的第 1 世'))).toBe(true);
     const obit = sent.find((s) => (s.payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title?.startsWith('⚰️'))!;
     expect((obit.payload.embeds![0] as { toJSON(): { fields?: unknown[] } }).toJSON().fields).toHaveLength(6);

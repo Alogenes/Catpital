@@ -8,6 +8,7 @@ import type { Core } from '../app.js';
 import type { Env } from '../config/env.js';
 import { TradeError } from '../trading/types.js';
 import { registerWsGateway } from '../ws/gateway.js';
+import { isOwner } from '../admin/owner.js';
 import { PanelAccess } from '../admin/panelAccess.js';
 import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
@@ -56,8 +57,7 @@ export async function buildServer(core: Core, env: HttpEnv) {
     }
   });
   app.decorate('requireAdmin', async (req: FastifyRequest, reply: FastifyReply) => {
-    const user = await core.db.user.findUnique({ where: { id: req.user.sub }, select: { isAdmin: true } });
-    if (!user?.isAdmin) return reply.code(403).send({ error: 'error.forbidden' });
+    if (!isOwner(req.user.sub)) return reply.code(403).send({ error: 'error.forbidden' });
   });
 
   app.setErrorHandler((err: unknown, req, reply) => {

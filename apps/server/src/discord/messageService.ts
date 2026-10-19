@@ -9,11 +9,17 @@ import { type BotLocale, botLocaleOf } from './i18n.js';
 /** 发消息的抽象：生产环境由 discord.js Client 实现，测试里注入假的 */
 export type ChannelSender = (channelId: string, payload: MessageCreateOptions) => Promise<void>;
 
+/**
+ * 发到 Discord 频道的播报类型。为了不刷屏，只保留金融快讯和破产讣告；
+ * 暴富 / 大单 / 强平 / 穿仓 / 榜单冠军仍然照常推给前端（顶部横幅、跑马灯），只是不进频道。
+ */
+export const DISCORD_BROADCAST_KINDS: ReadonlySet<BroadcastKind> = new Set<BroadcastKind>(['MARKET_EVENT', 'BANKRUPTCY']);
+
 type Logger = { warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: string) => void };
 
 /**
- * 频道自动播报：订阅总线 `bot` topic（引擎在强平 / 暴富 / 大单 / 破产 / 快讯 / 结算时发布），
- * 为每个配置了播报频道的服务器生成对应语言的 Embed 卡片并发送。
+ * 频道自动播报：订阅总线 `bot` topic，只把 DISCORD_BROADCAST_KINDS（快讯、破产讣告）
+ * 按服务器语言生成 Embed 卡片发到频道。
  *   - 频道来源：GuildConfig.broadcastChannelId（/admin_set_channel 设置）+ 环境变量默认频道
  *   - 开关：GuildConfig.broadcastToggles，如 { "WHALE": false } 关闭大单播报
  *   - 发送串行排队；单个频道失败（无权限/被删）只记日志，不影响其它频道
@@ -58,6 +64,7 @@ export class BroadcastMessenger {
   }
 
   async handle({ broadcast, resumeId }: BotEnvelope) {
+    if (!DISCORD_BROADCAST_KINDS.has(broadcast.kind)) return;
     const targets = await this.targets(broadcast.kind);
     if (!targets.length) return;
     const extras = await this.extras(broadcast, resumeId);

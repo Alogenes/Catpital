@@ -35,9 +35,9 @@
       "volumeVolCoupling": "1.5",
       "timeScale": "60",
       "priceFloor": "0.01",
-      "impactLiquidity": "200000000",
-      "impactCap": "0.03",
-      "impactVolBoost": "2",
+      "impactLiquidity": "20000000000",
+      "impactCap": "0.0004",
+      "impactVolBoost": "1",
       "impactDecaySec": 25,
       "impactExponent": "0.8"
     }
@@ -78,9 +78,9 @@
       "volumeVolCoupling": "2",
       "timeScale": "60",
       "priceFloor": "0.0001",
-      "impactLiquidity": "150000000",
-      "impactCap": "0.03",
-      "impactVolBoost": "2.5",
+      "impactLiquidity": "15000000000",
+      "impactCap": "0.0004",
+      "impactVolBoost": "1",
       "impactDecaySec": 20,
       "impactExponent": "0.8"
     }
@@ -121,9 +121,9 @@
       "volumeVolCoupling": "2.5",
       "timeScale": "60",
       "priceFloor": "0.01",
-      "impactLiquidity": "250000000",
-      "impactCap": "0.02",
-      "impactVolBoost": "3",
+      "impactLiquidity": "25000000000",
+      "impactCap": "0.0004",
+      "impactVolBoost": "1",
       "impactDecaySec": 30,
       "impactExponent": "0.8"
     },
@@ -141,7 +141,7 @@
     "dataSource": "LIVE_API",
     "adapterKey": "binance",
     "adapterSymbol": "BTCUSDT",
-    "status": "HALTED",
+    "status": "ACTIVE",
     "tradingHours": {
       "timezone": "UTC",
       "sessions": []

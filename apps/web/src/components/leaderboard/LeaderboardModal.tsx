@@ -2,7 +2,7 @@ import { D } from '@catpital/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type LeaderboardResponse, api } from '../../lib/api';
-import { avatarUrl } from '../../lib/discord';
+import { Avatar } from '../common/Avatar';
 import { fmt } from '../../lib/format';
 import { useSession } from '../../stores/session';
 import { Modal } from '../common/Modal';
@@ -90,7 +90,7 @@ export function LeaderboardModal({ open, onClose }: { open: boolean; onClose: ()
                 className={`flex items-center gap-3 rounded-2xl px-3 py-2 ${mine ? 'border-2 border-candy-sun/70 bg-candy-sun/10' : top ? 'bg-ink-800' : 'bg-ink-850'}`}
               >
                 <span className={`w-8 text-center font-black ${top ? 'text-2xl' : 'font-mono text-sm text-ink-400'}`}>{top ? MEDALS[e.rank - 1] : `#${e.rank}`}</span>
-                <img src={avatarUrl(e.userId, e.avatarHash, 32)} alt="" className="h-8 w-8 rounded-full" />
+                <Avatar userId={e.userId} avatarHash={e.avatarHash} name={e.name} size={32} className="h-8 w-8" />
                 <span className="min-w-0 flex-1 leading-tight">
                   <span className="block truncate text-sm font-bold">{e.name}</span>
                   <span className="text-[10px] text-ink-500">{t('wallet.generation', { n: e.generation })}</span>

@@ -563,13 +563,6 @@ function UserDetail({ id, onBack }: { id: string; onBack: () => void }) {
       {/* 危险操作 */}
       <section className="flex flex-wrap items-center gap-2 border-t border-ink-800 pt-4">
         <button
-          className={`${btn} bg-ink-800`}
-          onClick={() => void run(() => api.post(`/panel/users/${u.id}/admin`, { isAdmin: !u.isAdmin }))}
-        >
-          {u.isAdmin ? t('panel.user.revokeAdmin') : t('panel.user.grantAdmin')}
-        </button>
-        <span className="text-[11px] text-ink-500">{t('panel.user.adminHint')}</span>
-        <button
           className={`${btn} ml-auto ${confirmDelete ? 'bg-blood text-white' : 'bg-ink-800 text-blood'}`}
           onClick={() => {
             if (!confirmDelete) return setConfirmDelete(true);
