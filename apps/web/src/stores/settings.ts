@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { api } from '../lib/api';
+import { BGM_OFF, BGM_SYNTH, bgm } from '../lib/bgm';
 import { sound } from '../lib/sound';
 import i18n, { detectLanguage } from '../i18n';
 
@@ -9,7 +10,10 @@ export type Interval = 'M1' | 'M5' | 'M15' | 'H1' | 'D1';
 export interface Settings {
   lang: string;
   vfx: boolean;
-  bgm: boolean;
+  /** 背景音乐：'off' / 'synth'（内置合成）/ public/bgm/ 下的文件名；只存本机 localStorage */
+  bgmTrack: string;
+  /** 背景音乐音量 0–100（与音效的总音量分开） */
+  bgmVolume: number;
   sfx: boolean;
   danmaku: boolean;
   /** 红涨绿跌（中文默认开启） */
@@ -23,11 +27,15 @@ export interface Settings {
 }
 
 const STORAGE_KEY = 'catpital.settings.v1';
-const CLOUD_KEYS = ['lang', 'vfx', 'bgm', 'sfx', 'danmaku', 'redUp', 'volume', 'degenUnlock'] as const;
+const CLOUD_KEYS = ['lang', 'vfx', 'sfx', 'danmaku', 'redUp', 'volume', 'degenUnlock'] as const;
 
 function readLocal(): Partial<Settings> {
   try {
-    return JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Settings>;
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? '{}') as Partial<Settings> & { bgm?: boolean };
+    // 旧版只有一个 BGM 开关：开着的迁移为内置合成曲
+    if (raw.bgmTrack === undefined && raw.bgm !== undefined) raw.bgmTrack = raw.bgm ? BGM_SYNTH : BGM_OFF;
+    delete raw.bgm;
+    return raw;
   } catch {
     return {};
   }
@@ -43,7 +51,7 @@ function writeLocal(s: Settings) {
 
 function defaults(): Settings {
   const lang = detectLanguage();
-  return { lang, vfx: true, bgm: false, sfx: true, danmaku: true, redUp: lang.startsWith('zh'), volume: 70, degenUnlock: false, chartType: 'candle', interval: 'M1' };
+  return { lang, vfx: true, bgmTrack: BGM_OFF, bgmVolume: 50, sfx: true, danmaku: true, redUp: lang.startsWith('zh'), volume: 70, degenUnlock: false, chartType: 'candle', interval: 'M1' };
 }
 
 /** 把设置作用到运行时：语言、涨跌色、音频 */
@@ -53,7 +61,7 @@ function apply(s: Settings) {
   document.documentElement.dataset.redUp = String(s.redUp);
   sound.setVolume(s.volume);
   sound.setSfx(s.sfx);
-  sound.setBgm(s.bgm);
+  bgm.set(s.bgmTrack, s.bgmVolume);
 }
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;

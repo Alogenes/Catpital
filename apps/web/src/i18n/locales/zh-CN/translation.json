@@ -259,7 +259,7 @@
     "sfx": "交易音效",
     "danmaku": "弹幕显示",
     "redUp": "红涨绿跌",
-    "volume": "音量",
+    "volume": "音效音量",
     "close": "完成",
     "degen": {
       "title": "解除杠杆限制（最高 200x）",
@@ -270,7 +270,10 @@
       "unlockedHint": "各市场最高可开到入场不即爆的上限（≤ 200x）",
       "relock": "重新上锁",
       "unlockedToast": "🔓 杠杆封印已解除！祝你好运"
-    }
+    },
+    "bgmOff": "关闭",
+    "bgmSynth": "内置小调",
+    "bgmVolume": "音乐音量"
   },
   "fx": {
     "liquidated": "斩 杀",

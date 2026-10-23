@@ -38,7 +38,7 @@ class SoundEngine {
     this.sfxGain = this.ctx.createGain();
     this.sfxGain.connect(this.master);
     this.bgmGain = this.ctx.createGain();
-    this.bgmGain.gain.value = 0.18;
+    this.bgmGain.gain.value = this.bgmLevel();
     this.bgmGain.connect(this.master);
     if (this.bgmEnabled) this.startBgm();
   }
@@ -51,6 +51,16 @@ class SoundEngine {
 
   setSfx(on: boolean) {
     this.sfxEnabled = on;
+  }
+
+  /** 内置合成 BGM 的音量（0–100，50 ≈ 原来的固定音量） */
+  setBgmVolume(v0to100: number) {
+    this.pendingBgmVolume = v0to100;
+    if (this.bgmGain) this.bgmGain.gain.value = this.bgmLevel();
+  }
+  private pendingBgmVolume = 50;
+  private bgmLevel() {
+    return 0.36 * Math.max(0, Math.min(1, this.pendingBgmVolume / 100));
   }
 
   setBgm(on: boolean) {

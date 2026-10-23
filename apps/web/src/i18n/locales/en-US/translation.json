@@ -259,7 +259,7 @@
     "sfx": "Trade sounds",
     "danmaku": "Bullet chat",
     "redUp": "Red = up",
-    "volume": "Volume",
+    "volume": "Sound volume",
     "close": "Done",
     "degen": {
       "title": "Unlock leverage (up to 200x)",
@@ -270,7 +270,10 @@
       "unlockedHint": "Each market goes up to the highest leverage that is not liquidated on entry (≤ 200x)",
       "relock": "Re-lock",
       "unlockedToast": "🔓 Leverage seal broken! Good luck"
-    }
+    },
+    "bgmOff": "Off",
+    "bgmSynth": "Built-in tune",
+    "bgmVolume": "Music volume"
   },
   "fx": {
     "liquidated": "LIQUIDATED",

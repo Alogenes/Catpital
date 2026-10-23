@@ -106,33 +106,34 @@ export default function App() {
       {overlays}
 
       {/*
-        Bento 双栏：桌面端锁定单屏高度（各卡片内部滚动），不再出现大块空白。
+        经典交易所布局：桌面端锁定单屏高度（各卡片内部滚动），适配 Discord Activity 的矮窗口。
           ┌──────── TopBar ─────────────────────────────┐
           │ 市场卡片 × N │ 全服广播 / 快讯 跑马灯（拉伸）  │
           ├──────────────────────────────┬──────────────┤
-          │ K线 + 弹幕（约 3/5 高）        │              │
-          ├────────────────┬─────────────┤  快捷交易面板  │
-          │ 持仓 / 挂单     │ 金融快讯     │              │
-          └────────────────┴─────────────┴──────────────┘
-        768–1024px（平板）按 图表 → 下单 → 持仓/快讯 堆叠；< 768px 走 MobileShell。
+          │ K线 + 弹幕（flex-1 撑满）      │ 快捷交易面板   │
+          │                              │ 持仓 / 挂单    │
+          ├──────────────────────────────┤ （侧栏整体滚动）│
+          │ 金融快讯（固定矮条）            │              │
+          └──────────────────────────────┴──────────────┘
+        768–1024px（平板）按 图表 → 下单/持仓 → 快讯 堆叠；< 768px 走 MobileShell。
       */}
-      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-2.5 p-3 pt-[calc(var(--safe-top)+0.75rem)] lg:h-[max(100dvh,780px)]">
+      <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-2.5 p-3 pt-[calc(var(--safe-top)+0.75rem)] lg:h-[max(100dvh,640px)]">
         <TopBar onSettings={() => setSettingsOpen(true)} />
         <div className="flex min-w-0 flex-wrap items-stretch gap-3 lg:flex-nowrap">
           <MarketTabs />
           <LiveTicker />
         </div>
         {market && (
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(360px,1fr)_minmax(180px,32%)]">
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(300px,1fr)_minmax(140px,24%)]">
+            {/* 左：K 线撑满剩余高度，下方是矮条快讯 */}
             <ChartPanel market={market} className="min-h-[400px] lg:col-start-1 lg:row-start-1 lg:min-h-0" />
-            <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-y-auto lg:pr-0.5">
+            {/* 右：下单 + 持仓共用一条可滚动侧栏 */}
+            <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-y-auto lg:pr-0.5" data-testid="trade-sidebar">
               <BankruptcyPrompt />
               <OrderPanel market={market} />
+              <PositionsCard className="min-h-[240px] shrink-0" />
             </aside>
-            <div className="grid min-h-0 gap-3 md:grid-cols-[minmax(0,3fr)_minmax(0,2fr)] lg:col-start-1 lg:row-start-2">
-              <PositionsCard className="min-h-[220px] lg:min-h-0" />
-              <NewsCard market={market.code} className="min-h-[220px] lg:min-h-0" />
-            </div>
+            <NewsCard market={market.code} className="min-h-[200px] lg:col-start-1 lg:row-start-2 lg:min-h-0" />
           </div>
         )}
       </div>

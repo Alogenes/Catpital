@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next';
 import { LANGUAGES } from '../../i18n';
+import { BGM_OFF, BGM_SYNTH, BGM_TRACKS } from '../../lib/bgm';
 import { sound } from '../../lib/sound';
 import { type Settings, useSettings } from '../../stores/settings';
 import { Modal } from '../common/Modal';
@@ -31,7 +32,6 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
   const s = useSettings();
   const toggles: Array<[keyof Settings, string]> = [
     ['vfx', 'settings.vfx'],
-    ['bgm', 'settings.bgm'],
     ['sfx', 'settings.sfx'],
     ['danmaku', 'settings.danmaku'],
     ['redUp', 'settings.redUp'],
@@ -59,6 +59,40 @@ export function SettingsModal({ open, onClose }: { open: boolean; onClose: () =>
           {toggles.map(([key, label]) => (
             <Toggle key={key} label={t(label)} checked={Boolean(s[key])} onChange={(v) => s.update({ [key]: v })} testId={`toggle-${key}`} />
           ))}
+        </div>
+        {/* 背景音乐：曲目 + 音量（保存在本机，下次打开自动恢复） */}
+        <div className="py-2.5" data-testid="bgm-settings">
+          <label className="flex items-center justify-between gap-3">
+            <span className="text-sm">🎵 {t('settings.bgm')}</span>
+            <select
+              value={s.bgmTrack}
+              onChange={(e) => s.update({ bgmTrack: e.target.value })}
+              className="min-w-0 max-w-[60%] rounded-md border border-ink-700 bg-ink-850 px-2 py-1 text-sm outline-none"
+              data-testid="bgm-select"
+            >
+              <option value={BGM_OFF}>{t('settings.bgmOff')}</option>
+              <option value={BGM_SYNTH}>{t('settings.bgmSynth')}</option>
+              {BGM_TRACKS.map((track) => (
+                <option key={track.id} value={track.id}>
+                  {track.title}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className={`mt-2 flex items-center justify-between gap-4 ${s.bgmTrack === BGM_OFF ? 'opacity-40' : ''}`}>
+            <span className="text-xs text-ink-400">{t('settings.bgmVolume')}</span>
+            <input
+              type="range"
+              min={0}
+              max={100}
+              value={s.bgmVolume}
+              disabled={s.bgmTrack === BGM_OFF}
+              onChange={(e) => s.update({ bgmVolume: Number(e.target.value) })}
+              className="flex-1 accent-accent"
+              data-testid="bgm-volume"
+            />
+            <span className="w-8 text-right font-mono text-xs">{s.bgmVolume}</span>
+          </label>
         </div>
         <div className="py-2.5">
           <DegenUnlock />

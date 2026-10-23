@@ -60,7 +60,7 @@ export function MarketTabs() {
               sound.play('click');
               select(m.code);
             }}
-            className={`relative flex w-[136px] shrink-0 items-center gap-2 overflow-hidden rounded-2xl border-2 px-2.5 py-2 text-left transition-all ${
+            className={`relative flex w-[136px] shrink-0 items-center gap-2 overflow-hidden rounded-2xl border-2 px-2.5 py-1.5 text-left transition-all ${
               active
                 ? '-translate-y-0.5 border-candy-grape bg-candy-grape/15 shadow-[0_5px_0_0_#6b4bc4]'
                 : 'border-ink-700/70 bg-ink-900/85 shadow-[0_4px_0_0_rgba(10,6,22,0.6)] hover:border-ink-500'

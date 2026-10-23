@@ -259,7 +259,7 @@
     "sfx": "Sonidos de operaciones",
     "danmaku": "Comentarios flotantes",
     "redUp": "Rojo = sube",
-    "volume": "Volumen",
+    "volume": "Volumen de efectos",
     "close": "Hecho",
     "degen": {
       "title": "Desbloquear apalancamiento (hasta 200x)",
@@ -270,7 +270,10 @@
       "unlockedHint": "Cada mercado llega al máximo apalancamiento que no te liquide al entrar (≤ 200x)",
       "relock": "Volver a bloquear",
       "unlockedToast": "🔓 ¡Sello del apalancamiento roto! Suerte"
-    }
+    },
+    "bgmOff": "Desactivada",
+    "bgmSynth": "Melodía integrada",
+    "bgmVolume": "Volumen de la música"
   },
   "fx": {
     "liquidated": "LIQUIDADO",
