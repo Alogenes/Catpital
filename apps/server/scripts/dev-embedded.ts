@@ -10,13 +10,14 @@ import { fileURLToPath } from 'node:url';
 import { createConnection } from 'node:net';
 import EmbeddedPostgres from 'embedded-postgres';
 import { loadDotenv } from '../src/config/dotenv.js';
+import { EMBEDDED_PG_FLAGS } from '../test/support/embeddedPg.js';
 
 loadDotenv();
 
 const dataDir = fileURLToPath(new URL('../.pgdata', import.meta.url));
 const port = Number(process.env.EMBEDDED_PG_PORT ?? 54320);
 const fresh = !existsSync(dataDir);
-const pg = new EmbeddedPostgres({ databaseDir: dataDir, user: 'catpital', password: 'catpital', port, persistent: true, onLog: () => {} });
+const pg = new EmbeddedPostgres({ databaseDir: dataDir, user: 'catpital', password: 'catpital', port, persistent: true, onLog: () => {}, postgresFlags: EMBEDDED_PG_FLAGS });
 if (fresh) await pg.initialise();
 // embedded-postgres 启动失败时只会 reject(undefined)，这里补上可读的原因
 await pg.start().catch((err: unknown) => {

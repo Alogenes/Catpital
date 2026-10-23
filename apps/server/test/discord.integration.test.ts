@@ -94,7 +94,7 @@ describe('斜杠命令', () => {
 });
 
 describe('频道播报', () => {
-  it('sends only bankruptcy obituaries and news to the channel (liquidations stay in the web UI)', async () => {
+  it('routes liquidations, deficits and obituaries to the configured channel as embeds', async () => {
     await handleCommand(h.core, 'admin_set_channel', ctx({ userId: ADMIN, memberCanManage: true }));
     const sent: Array<{ channelId: string; payload: MessageCreateOptions }> = [];
     const log = { warn: () => {}, error: (o: unknown) => console.error(o) };
@@ -114,15 +114,37 @@ describe('频道播报', () => {
 
     const titles = sent.map((s) => (s.payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title);
     expect(sent.every((s) => s.channelId === CHANNEL)).toBe(true);
-    // 斩杀、穿仓照常进总线（前端横幅），但不发到 Discord 频道
-    expect(h.botMessages.map((m) => m.broadcast.kind)).toEqual(expect.arrayContaining(['LIQUIDATION', 'DEFICIT', 'BANKRUPTCY']));
-    expect(titles).not.toContain('⚡ 惨绝人寰！');
-    expect(titles).not.toContain('🩸 穿仓了！负债了！');
-    expect(titles).toHaveLength(1);
+    expect(titles).toContain('⚡ 惨绝人寰！');
+    expect(titles).toContain('🩸 穿仓了！负债了！');
+    expect(titles).toHaveLength(3);
     expect(titles.some((t) => t?.startsWith('⚰️ 讣告 · player 的第 1 世'))).toBe(true);
     const obit = sent.find((s) => (s.payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title?.startsWith('⚰️'))!;
     expect((obit.payload.embeds![0] as { toJSON(): { fields?: unknown[] } }).toJSON().fields).toHaveLength(6);
     expect(sent.every((s) => JSON.stringify(s.payload.allowedMentions) === '{"parse":[]}')).toBe(true);
+  });
+
+  it('sends big wins to the channel but keeps whale and champion broadcasts web-only', async () => {
+    const WINNER = '800000000000000009';
+    await h.user(WINNER, 'winner');
+    const sent: string[] = [];
+    const messenger = new BroadcastMessenger(
+      h.core,
+      async (_channelId, payload) => void sent.push((payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title ?? ''),
+      { defaultLocale: 'zh-CN' },
+      { warn: () => {}, error: (o: unknown) => console.error(o) },
+    );
+    messenger.start();
+    await h.tick('100');
+    await h.core.orders.placeOrder(WINNER, { market: 'TEST', side: 'BUY', type: 'MARKET', quantity: D(50), leverage: D(10) });
+    await h.tick('130'); // +30% × 10x → ROE 远超 100%
+    await h.core.orders.closePosition(WINNER, 'TEST');
+    await h.core.notifier.broadcast('WHALE', 'broadcast.whalePump', { market: 'TEST', pct: '1', priceBefore: '1', priceAfter: '1.01' }, { userId: WINNER, market: 'TEST' });
+    await h.core.notifier.broadcast('CHAMPION', 'broadcast.champion', { periodKey: 'x', reward: '1' }, { userId: WINNER });
+    await flushMicrotasks();
+    await messenger.drain();
+    messenger.stop();
+    expect(h.botMessages.map((m) => m.broadcast.kind)).toEqual(expect.arrayContaining(['BIG_WIN', 'WHALE', 'CHAMPION']));
+    expect(sent).toEqual(['🚀 巨鲸出没！']);
   });
 
   it('per-guild toggles can mute a kind', async () => {

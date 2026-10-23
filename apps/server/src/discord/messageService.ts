@@ -10,15 +10,21 @@ import { type BotLocale, botLocaleOf } from './i18n.js';
 export type ChannelSender = (channelId: string, payload: MessageCreateOptions) => Promise<void>;
 
 /**
- * 发到 Discord 频道的播报类型。为了不刷屏，只保留金融快讯和破产讣告；
- * 暴富 / 大单 / 强平 / 穿仓 / 榜单冠军仍然照常推给前端（顶部横幅、跑马灯），只是不进频道。
+ * 发到 Discord 频道的播报类型：金融快讯、破产讣告、暴富高光（BIG_WIN 本身有收益率 / 金额门槛）、
+ * 斩杀与穿仓。大单拉砸（WHALE）和榜单冠军（CHAMPION）为了不刷屏只推给前端（顶部横幅、跑马灯），不进频道。
  */
-export const DISCORD_BROADCAST_KINDS: ReadonlySet<BroadcastKind> = new Set<BroadcastKind>(['MARKET_EVENT', 'BANKRUPTCY']);
+export const DISCORD_BROADCAST_KINDS: ReadonlySet<BroadcastKind> = new Set<BroadcastKind>([
+  'MARKET_EVENT',
+  'BANKRUPTCY',
+  'BIG_WIN',
+  'LIQUIDATION',
+  'DEFICIT',
+]);
 
 type Logger = { warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: string) => void };
 
 /**
- * 频道自动播报：订阅总线 `bot` topic，只把 DISCORD_BROADCAST_KINDS（快讯、破产讣告）
+ * 频道自动播报：订阅总线 `bot` topic，只把 DISCORD_BROADCAST_KINDS 里的类型
  * 按服务器语言生成 Embed 卡片发到频道。
  *   - 频道来源：GuildConfig.broadcastChannelId（/admin_set_channel 设置）+ 环境变量默认频道
  *   - 开关：GuildConfig.broadcastToggles，如 { "WHALE": false } 关闭大单播报
