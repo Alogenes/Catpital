@@ -412,7 +412,8 @@
       "created": "Event scheduled",
       "recent": "Recent events",
       "silentTag": "(silent)",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "endNow": "End now"
     },
     "user": {
       "search": "Search UID / username",

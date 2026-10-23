@@ -143,3 +143,31 @@ describe('市场定价', () => {
     expect(cfg.meanReversionTarget?.toFixed()).toBe('123');
   });
 });
+
+describe('提前结束事件', () => {
+  it('ends an active event immediately and restores the volatility', async () => {
+    const H = auth(on, BOSS);
+    // 先让前面测试留下的事件全部到期，否则波动倍数会和它们相乘
+    h.setNow(new Date(Date.now() + 2 * 3600_000));
+    await h.core.events.poll();
+    // 再拨回现在：新事件的触发时间按真实时钟计算，超过 1 小时的"迟到"事件会被作废
+    h.setNow(new Date(Date.now() + 60_000));
+    const created = await on.inject({
+      method: 'POST', url: '/api/v1/panel/events', headers: H,
+      payload: { market: 'TEST', direction: 'UP', gapPct: '0', volMultiplier: '20', trend: '400', delaySec: 0, durationSec: 3600 },
+    });
+    const id = created.json().id as string;
+    await h.core.events.poll();
+    const m = h.core.markets.byCode('TEST')!;
+    const during = await h.db.marketEngineConfig.findUniqueOrThrow({ where: { marketId: m.id } });
+    expect(during.volMultiplier.toFixed()).toBe('20');
+
+    expect((await on.inject({ method: 'DELETE', url: `/api/v1/panel/events/${id}`, headers: H })).statusCode).toBe(204);
+    const ev = await h.db.scheduledEvent.findUniqueOrThrow({ where: { id } });
+    expect(ev.status).toBe('COMPLETED');
+    const after = await h.db.marketEngineConfig.findUniqueOrThrow({ where: { marketId: m.id } });
+    expect([after.volMultiplier.toFixed(), after.driftOverride.toFixed()]).toEqual(['1', '0']);
+    // 已结束的事件不能再结束一次
+    expect((await on.inject({ method: 'DELETE', url: `/api/v1/panel/events/${id}`, headers: H })).statusCode).toBe(409);
+  });
+});

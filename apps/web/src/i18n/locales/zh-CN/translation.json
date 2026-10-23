@@ -412,7 +412,8 @@
       "created": "事件已排期",
       "recent": "最近事件",
       "silentTag": "（静默）",
-      "cancel": "取消"
+      "cancel": "取消",
+      "endNow": "立即结束"
     },
     "user": {
       "search": "搜索 UID / 用户名",

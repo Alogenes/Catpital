@@ -91,6 +91,18 @@ export class EventScheduler {
     return count === 1;
   }
 
+  /** 提前结束进行中的事件：立即撤掉它的趋势 / 波动放大（已经发生的跳空不回滚） */
+  async endNow(eventId: string) {
+    const ev = await this.db.scheduledEvent.findUnique({ where: { id: eventId }, select: { marketId: true } });
+    if (!ev) return false;
+    const { count } = await this.db.scheduledEvent.updateMany({
+      where: { id: eventId, status: 'ACTIVE' },
+      data: { status: 'COMPLETED', completedAt: this.clock() },
+    });
+    if (count === 1) await this.recomputeOverrides(ev.marketId);
+    return count === 1;
+  }
+
   /** 从 JSON 文件导入事件（按 market + triggerAt + headline 去重） */
   async seedFromJson(path: string) {
     const items = z.array(scheduledEventInput).parse(JSON.parse(await readFile(path, 'utf8')));

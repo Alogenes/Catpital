@@ -92,8 +92,10 @@ export const panelRoutes =
       return reply.code(201).send({ id: ev.id, triggerAt: ev.triggerAt.getTime() });
     });
 
+    /** 待触发的事件 → 取消；进行中的事件 → 立即结束（撤掉趋势和波动放大） */
     app.delete<{ Params: { id: string } }>('/events/:id', async (req, reply) => {
-      if (!(await core.events.cancel(req.params.id))) throw new TradeError('error.eventNotPending', 409);
+      const done = (await core.events.cancel(req.params.id)) || (await core.events.endNow(req.params.id));
+      if (!done) throw new TradeError('error.eventNotPending', 409);
       return reply.code(204).send();
     });
 

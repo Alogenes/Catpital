@@ -395,9 +395,9 @@ function EventsTab() {
                 <span className="text-ink-400">×{e.volMultiplier}</span>
                 <span className="min-w-0 flex-1 truncate">{e.headline || <em className="text-ink-500">{t('panel.event.silentTag')}</em>}</span>
                 <span className="shrink-0 text-ink-500">{new Date(e.triggerAt).toLocaleTimeString()}</span>
-                {e.status === 'PENDING' && (
-                  <button className="shrink-0 text-blood hover:underline" onClick={() => void cancel(e.id)}>
-                    {t('panel.event.cancel')}
+                {(e.status === 'PENDING' || e.status === 'ACTIVE') && (
+                  <button className="shrink-0 text-blood hover:underline" onClick={() => void cancel(e.id)} data-testid={`panel-event-stop-${e.id}`}>
+                    {e.status === 'PENDING' ? t('panel.event.cancel') : t('panel.event.endNow')}
                   </button>
                 )}
               </li>

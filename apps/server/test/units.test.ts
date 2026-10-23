@@ -84,6 +84,30 @@ describe('ProceduralSource', () => {
     for (let i = 0; i < 20; i++) expect(src.sample().price.gte('0.01')).toBe(true);
   });
 
+  it('stacked event volatility makes prices swing harder, not collapse to the floor', () => {
+    // FIH 级别：σ = 8、时间加速 60 倍，再叠加两个 ×10 事件（波动 ×100），无跳跃、无均值回归、无趋势
+    const wild = { ...params, volatility: D(8), timeScale: D(60), meanReversionSpeed: ZERO, jumpIntensity: ZERO, drift: ZERO };
+    const finals: number[] = [];
+    for (let seed = 1; seed <= 30; seed++) {
+      const src = new ProceduralSource({ ...spec, lastPrice: D(42) }, wild, new DecimalRng(seed));
+      src.setOverrides({ driftOverride: ZERO, volMultiplier: D(100) });
+      let prev = src.current();
+      for (let i = 0; i < 120; i++) {
+        const { price } = src.sample();
+        // 单 tick 扩散项封顶 4%：即使 6σ 的极端抽样，一秒内也不会超过 ±27%
+        expect(price.div(prev).ln().abs().lte('0.27')).toBe(true);
+        prev = price;
+      }
+      finals.push(prev.toNumber());
+    }
+    finals.sort((a, b) => a - b);
+    const median = finals[15]!;
+    // 旧公式（带 −σ²/2）下这组参数 2 分钟内大部分路径会被吸到 0.01
+    expect(median).toBeGreaterThan(21);
+    expect(median).toBeLessThan(84);
+    expect(finals.filter((x) => x <= 0.01)).toHaveLength(0);
+  });
+
   it('applyGap jumps the price instantly', () => {
     const src = new ProceduralSource(spec, params, new DecimalRng(1));
     expect(src.applyGap(D('-0.3')).toFixed()).toBe('70');

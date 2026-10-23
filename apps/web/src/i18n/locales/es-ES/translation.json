@@ -412,7 +412,8 @@
       "created": "Evento programado",
       "recent": "Eventos recientes",
       "silentTag": "(silencioso)",
-      "cancel": "Cancelar"
+      "cancel": "Cancelar",
+      "endNow": "Terminar ya"
     },
     "user": {
       "search": "Buscar UID / usuario",

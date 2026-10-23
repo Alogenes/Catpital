@@ -1,9 +1,14 @@
-import { D, type Decimal, ONE, ZERO, dmax, roundToStep } from '@catpital/shared';
+import { D, type Decimal, ONE, ZERO, dmax, dmin, roundToStep } from '@catpital/shared';
 import type { DecimalRng } from '../../lib/random.js';
 import type { PriceSource, Quote, SourceOverrides } from './PriceSource.js';
 
 const MS_PER_YEAR = D('31536000000'); // 365 天
-const HALF = D('0.5');
+/**
+ * 单个 tick 的扩散项上限（对数价格的标准差，0.04 ≈ 每秒 ±4%）。
+ * 多个事件的波动放大倍数相乘后可能达到 ×100 以上，不封顶的话一秒钟能把价格从 1 甩到 1000；
+ * 正常行情远低于这个值（FIH 基础约每秒 1.1%）。
+ */
+const MAX_TICK_SIGMA = D('0.04');
 const VOLUME_NOISE_SIGMA = D('0.25');
 /** 对数正态噪声均值修正 −σ²/2，使 E[exp(σZ − σ²/2)] = 1 */
 const VOLUME_NOISE_DRIFT = VOLUME_NOISE_SIGMA.pow(2).div(2).neg();
@@ -41,10 +46,12 @@ export interface ProceduralSpec {
  * 带均值回归与跳跃扩散的对数价格过程（Merton jump-diffusion + OU 均值回归）：
  *
  *   x = ln S
- *   dx = [ μ' − σ'²/2 + κ(ln θ − x) ] dt + σ' √dt · Z + J · 1{U < λ dt}
+ *   dx = [ μ' + κ(ln θ − x) ] dt + min(σ' √dt, 4%) · Z + J · 1{U < λ dt}
  *   μ' = μ + driftOverride，σ' = σ · volMultiplier，J ~ N(jumpMean, jumpStdDev²)
  *
- *   κ = 0、λ = 0 时退化为标准几何布朗运动（GBM）。
+ *   μ 是对数价格（中位数）的漂移：μ = 0 表示没有趋势。故意不带 GBM 的 −σ²/2 项——
+ *   否则波动越大价格越会系统性下滑（波动 ×100 的事件能把价格一路吸到地板价），
+ *   而游戏里"波动大"应该只意味着涨跌更猛。有均值回归时价格围绕 θ 波动。
  *   成交量 = baseVolume · (1 + coupling·|Z|) · LogNormal(均值 1)，与价格波动正相关。
  *
  * 内部保留连续的 x（不受 tickSize 舍入影响），对外输出按 tickSize 取整的价格。
@@ -109,13 +116,13 @@ export class ProceduralSource implements PriceSource {
     const sigma = p.volatility.mul(this.overrides.volMultiplier).mul(this.boostFactor(now.getTime()));
     const mu = p.drift.plus(this.overrides.driftOverride);
     const theta = (p.meanReversionTarget ?? this.spec.initialPrice).ln();
+    const tickSigma = dmin(sigma.mul(dt.sqrt()), MAX_TICK_SIGMA);
 
     const z = this.rng.normal();
     let dx = mu
-      .minus(sigma.pow(2).mul(HALF))
       .plus(p.meanReversionSpeed.mul(theta.minus(this.x)))
       .mul(dt)
-      .plus(sigma.mul(dt.sqrt()).mul(z));
+      .plus(tickSigma.mul(z));
 
     if (p.jumpIntensity.gt(0) && this.rng.uniform().lt(p.jumpIntensity.mul(dt))) {
       dx = dx.plus(p.jumpMean.plus(p.jumpStdDev.mul(this.rng.normal())));

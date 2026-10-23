@@ -68,7 +68,7 @@
     "initialPrice": "0.5",
     "sortOrder": 2,
     "engine": {
-      "drift": "3.125",
+      "drift": "0",
       "volatility": "2.5",
       "meanReversionSpeed": "10",
       "jumpIntensity": "60",
