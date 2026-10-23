@@ -25,7 +25,10 @@ await pg.start().catch((err: unknown) => {
     `\n[dev] 内置 PostgreSQL 启动失败（端口 ${port}，数据目录 apps/server/.pgdata）。\n` +
       `      最常见的原因：已经有一个 dev:server 在运行（数据库和 API 端口 ${apiPort} 被占用）。\n` +
       `      先关掉那个进程再启动；PowerShell 里可以用：\n` +
-      `        Get-NetTCPConnection -LocalPort ${apiPort},${port} -State Listen | Select-Object OwningProcess\n`,
+      `        Get-NetTCPConnection -LocalPort ${apiPort},${port} -State Listen | Select-Object OwningProcess\n` +
+      `      Windows 上强制结束过 dev:server 时，常会残留 postgres.exe 子进程继续占着端口\n` +
+      `      （上面查到的 PID 已经不存在）。清理本项目残留的数据库进程：\n` +
+      `        Get-CimInstance Win32_Process -Filter "Name='postgres.exe'" | Where-Object CommandLine -like '*Catpital*' | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }\n`,
     err ?? '',
   );
   process.exit(1);

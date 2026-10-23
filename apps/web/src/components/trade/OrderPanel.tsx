@@ -32,7 +32,9 @@ const PCTS = [25, 50, 75, 100] as const;
  *   做多 / 做空 → 拖杠杆 → 输入"投入本金" → 下单。
  *   默认市价逐仓；1x 即现货。限价单收在一个轻量开关里。止盈止损在持仓卡片上设置。
  */
-export function OrderPanel({ market }: { market: MarketInfo }) {
+export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; layout?: 'stack' | 'wide' }) {
+  /** wide：桌面端 K 线下方的横向三栏（方向+杠杆 / 本金+限价 / 预览+下单）；stack：平板 / 手机竖排 */
+  const wide = layout === 'wide';
   const { t } = useTranslation();
   const [side, setSide] = useState<Side>('BUY');
   const [lev, setLev] = useState(5);
@@ -142,13 +144,16 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
 
   const isLong = side === 'BUY';
 
-  return (
-    <section className="bento flex flex-col gap-2.5 p-3.5" data-testid="order-panel">
+  const headerEl = (
+<>
       <header className="flex items-center justify-between">
         <h2 className="text-base font-extrabold">⚡ {t('order.title')}</h2>
         <span className="chip font-mono">{market.code}</span>
       </header>
 
+</>  );
+  const sideEl = (
+<>
       {/* 做多 / 做空 */}
       <div className="grid grid-cols-2 gap-2">
         {(['BUY', 'SELL'] as const).map((s) => {
@@ -161,7 +166,7 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
                 sound.play('click');
                 setSide(s);
               }}
-              className={`arcade-btn flex flex-col items-center py-2 ${
+              className={`arcade-btn flex items-center justify-center ${wide ? 'flex-row gap-1.5 py-2' : 'flex-col py-2'} ${
                 active
                   ? long
                     ? 'border-black/25 bg-up text-white shadow-[0_0_24px_-6px_rgb(var(--c-up))]'
@@ -171,15 +176,18 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
               data-testid={long ? 'side-long' : 'side-short'}
             >
               <span className="text-lg leading-none">{long ? '📈' : '📉'}</span>
-              <span className="mt-1 text-sm">{t(long ? 'order.long' : 'order.short')}</span>
-              <span className="text-[10px] font-semibold opacity-75">{t(long ? 'order.longHint' : 'order.shortHint')}</span>
+              <span className={`text-sm ${wide ? '' : 'mt-1'}`}>{t(long ? 'order.long' : 'order.short')}</span>
+              <span className={`text-[10px] font-semibold opacity-75 ${wide ? 'hidden' : ''}`}>{t(long ? 'order.longHint' : 'order.shortHint')}</span>
             </button>
           );
         })}
       </div>
 
+</>  );
+  const levEl = (
+<>
       {/* 杠杆：趣味档位 */}
-      <div className="rounded-2xl bg-ink-850/80 px-3 py-2.5">
+      <div className={`rounded-2xl bg-ink-850/80 px-3 ${wide ? 'py-2' : 'py-2.5'}`}>
         <div className="mb-2 flex items-center justify-between">
           <span className="text-xs font-semibold text-ink-400">{t('order.lev')}</span>
           <span className="flex items-center gap-2">
@@ -205,12 +213,12 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
           style={{ ['--lev-color' as string]: tierColor, ['--lev-pct' as string]: `${maxLev > 1 ? ((leverage - 1) / (maxLev - 1)) * 100 : 100}%` }}
           data-testid="leverage"
         />
-        <div className="mt-2 flex flex-wrap gap-1">
+        <div className={`mt-2 flex gap-1 ${wide ? 'hide-scrollbar flex-nowrap overflow-x-auto' : 'flex-wrap'}`}>
           {leveragePresets(maxLev).map((v) => (
             <button
               key={v}
               onClick={() => setLev(v)}
-              className={`chip px-2 py-0.5 font-mono ${v === leverage ? 'border-transparent text-ink-950' : ''}`}
+              className={`chip shrink-0 px-2 py-0.5 font-mono ${v === leverage ? 'border-transparent text-ink-950' : ''}`}
               style={v === leverage ? { backgroundColor: TIER_COLOR[leverageTier(v)] } : undefined}
             >
               {v}x
@@ -219,6 +227,9 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
         </div>
       </div>
 
+</>  );
+  const amountEl = (
+<>
       {/* 投入本金 */}
       <div>
         <div className="mb-1 flex items-baseline justify-between text-xs">
@@ -234,7 +245,7 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
             value={amount}
             placeholder="0.00"
             onChange={(e) => setAmount(sanitizeDecimalInput(e.target.value, 2))}
-            className="min-w-0 flex-1 bg-transparent px-2 py-2.5 font-mono text-lg font-bold tabular-nums outline-none placeholder:text-ink-600"
+            className={`min-w-0 flex-1 bg-transparent px-2 ${wide ? 'py-1.5' : 'py-2.5'} font-mono text-lg font-bold tabular-nums outline-none placeholder:text-ink-600`}
             data-testid="order-amount"
           />
           <span className="pr-3 text-[10px] text-ink-500">{t('order.amountHint')}</span>
@@ -258,11 +269,14 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
         </div>
       </div>
 
+</>  );
+  const limitEl = (
+<>
       {/* 限价：轻量折叠开关 */}
       <div className="rounded-2xl border border-dashed border-ink-700 px-3 py-2">
         <button className="flex w-full items-center justify-between text-xs" onClick={() => setLimitOn((v) => !v)} data-testid="limit-toggle">
           <span className="font-semibold text-ink-300">
-            🎯 {t('order.limit')} <span className="font-normal text-ink-500">· {t('order.limitHint')}</span>
+            🎯 {t('order.limit')} <span className={`font-normal text-ink-500 ${wide ? 'hidden' : ''}`}>· {t('order.limitHint')}</span>
           </span>
           <span className={`relative h-5 w-9 rounded-full transition-colors ${limitOn ? 'bg-candy-grape' : 'bg-ink-700'}`}>
             <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white transition-all ${limitOn ? 'left-[18px]' : 'left-0.5'}`} />
@@ -284,14 +298,17 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
         </AnimatePresence>
       </div>
 
+</>  );
+  const previewEl = (
+<>
       {/* 预览：只保留最关键的三项 */}
-      <div className="grid gap-1.5">
-        <PreviewCard icon="📦" label={t('order.positionSize')}>
+      <div className={`grid ${wide ? 'gap-1' : 'gap-1.5'}`}>
+        <PreviewCard compact={wide} icon="📦" label={t('order.positionSize')}>
           <span className="font-mono text-lg font-black tabular-nums text-ink-100" data-testid="preview-size">
             {notional ? fmt(notional) : '—'}
           </span>
           {sizing?.fill && (
-            <span className="text-[10px] text-ink-500">
+            <span className={`text-[10px] text-ink-500 ${wide ? 'hidden' : ''}`}>
               {t('order.feeHint', { fee: fmt(sizing.fill.totalFee, 4), qty: fmt(sizing.quantity, decimalsOf(market.lotSize)) })}
             </span>
           )}
@@ -304,7 +321,7 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
             </span>
           )}
         </PreviewCard>
-        <PreviewCard icon={liq && liq.isZero() ? '🛡️' : '💀'} label={t('order.liqPrice')} tone={liq && liq.isZero() ? 'safe' : 'danger'}>
+        <PreviewCard compact={wide} icon={liq && liq.isZero() ? '🛡️' : '💀'} label={t('order.liqPrice')} tone={liq && liq.isZero() ? 'safe' : 'danger'}>
           <span
             className={`font-mono text-lg font-black tabular-nums ${liq && liq.isZero() ? 'text-candy-mint' : 'bg-gradient-to-r from-blood to-candy-peach bg-clip-text text-transparent'}`}
             data-testid="preview-liq"
@@ -312,37 +329,75 @@ export function OrderPanel({ market }: { market: MarketInfo }) {
             {liq ? (liq.isZero() ? t('order.noLiq') : fmt(liq, priceDp)) : '—'}
           </span>
         </PreviewCard>
-        <PreviewCard icon="🎢" label={t('order.perPct')}>
+        <PreviewCard compact={wide} icon="🎢" label={t('order.perPct')}>
           <span className="font-mono text-lg font-black tabular-nums text-candy-sun">{notional ? `±${fmt(notional.div(100))}` : '—'}</span>
-          <span className="text-[10px] text-ink-500">{t('order.perPctHint', { pct: leverage })}</span>
+          <span className={`text-[10px] text-ink-500 ${wide ? 'hidden' : ''}`}>{t('order.perPctHint', { pct: leverage })}</span>
         </PreviewCard>
       </div>
 
+</>  );
+  const notesEl = (
+<>
       {sizing?.fill && sizing.fill.closedQuantity.gt(0) && (
         <p className="rounded-xl bg-candy-sun/10 px-3 py-1.5 text-xs text-candy-sun">↩ {t('order.closing', { qty: fmt(sizing.fill.closedQuantity, decimalsOf(market.lotSize)) })}</p>
       )}
       {tier === 'degen' && <p className="rounded-xl bg-blood/10 px-3 py-1.5 text-xs text-blood">⚠ {t('order.highLevWarn')}</p>}
 
-      <div className="sticky bottom-0 -mx-3.5 -mb-3.5 rounded-b-3xl bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-3.5 pb-3.5 pt-2">
+</>  );
+  const submitEl = (
+<>
       <button
         disabled={busy || Boolean(blocker)}
         onClick={() => void submit()}
-        className={`arcade-btn w-full py-3 text-base text-white ${
+        className={`arcade-btn w-full ${wide ? 'py-2' : 'py-3'} text-base text-white ${
           blocker ? 'border-ink-950/60 bg-ink-700' : isLong ? 'border-black/25 bg-up' : 'border-black/25 bg-down'
         }`}
         data-testid="submit-order"
       >
         {blocker ?? t(isLong ? 'order.submit.long' : 'order.submit.short', { code: market.code, lev: leverage })}
       </button>
+</>  );
+
+  if (wide) {
+    return (
+      <section className="bento grid grid-cols-3 gap-3 p-3" data-testid="order-panel" data-layout="wide">
+        <div className="flex min-w-0 flex-col gap-2">
+          {sideEl}
+          {levEl}
+        </div>
+        <div className="flex min-w-0 flex-col gap-2">
+          {amountEl}
+          {limitEl}
+        </div>
+        <div className="flex min-w-0 flex-col gap-1.5">
+          {previewEl}
+          {notesEl}
+          <div className="mt-auto">{submitEl}</div>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="bento flex flex-col gap-2.5 p-3.5" data-testid="order-panel">
+      {headerEl}
+      {sideEl}
+      {levEl}
+      {amountEl}
+      {limitEl}
+      {previewEl}
+      {notesEl}
+      <div className="sticky bottom-0 -mx-3.5 -mb-3.5 rounded-b-3xl bg-gradient-to-t from-ink-900 via-ink-900/95 to-transparent px-3.5 pb-3.5 pt-2">
+        {submitEl}
       </div>
     </section>
   );
 }
 
-function PreviewCard({ icon, label, tone, children }: { icon: string; label: string; tone?: 'safe' | 'danger'; children: React.ReactNode }) {
+function PreviewCard({ icon, label, tone, compact, children }: { icon: string; label: string; tone?: 'safe' | 'danger'; compact?: boolean; children: React.ReactNode }) {
   const border = tone === 'danger' ? 'border-blood/40 bg-blood/[0.07]' : tone === 'safe' ? 'border-candy-mint/40 bg-candy-mint/[0.07]' : 'border-ink-700 bg-ink-850/70';
   return (
-    <div className={`flex items-center justify-between gap-2 rounded-2xl border px-3 py-1.5 ${border}`}>
+    <div className={`flex items-center justify-between gap-2 rounded-2xl border px-3 ${compact ? 'py-0.5 [&_.text-lg]:text-base' : 'py-1.5'} ${border}`} data-preview-card>
       <span className="flex items-center gap-1.5 text-xs font-semibold text-ink-300">
         <span className="text-base">{icon}</span>
         {label}

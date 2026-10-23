@@ -73,7 +73,7 @@ export function MarketTabs() {
                 {pos && <span className={`h-2 w-2 rounded-full ${pos.side === 'LONG' ? 'bg-up' : 'bg-down'}`} title={pos.side} />}
                 {closed && <span className="text-[10px]">💤</span>}
               </span>
-              <span className="block truncate text-[10px] text-ink-400">{m.nameI18n[i18n.language] ?? m.name}</span>
+              <span className="block truncate text-[10px] text-ink-400 [@media(max-height:760px)]:hidden">{m.nameI18n[i18n.language] ?? m.name}</span>
               <span className="flex items-baseline justify-between gap-1 font-mono text-[11px] tabular-nums">
                 <span>{fmt(price, Math.min(decimalsOf(m.tickSize), 4))}</span>
                 <span className={change.gte(0) ? 'text-up' : 'text-down'}>{fmtPct(change, 1)}</span>

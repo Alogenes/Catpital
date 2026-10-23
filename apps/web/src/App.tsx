@@ -16,7 +16,7 @@ import { PositionsCard } from './components/trade/PositionsPanel';
 import { ApiError, type MarketInfo, api, setToken } from './lib/api';
 import { type AuthResult, authenticateWithDiscord, devLogin, isEmbedded } from './lib/discord';
 import { sound } from './lib/sound';
-import { useIsDesktop } from './lib/useMedia';
+import { useIsDesktop, useMediaQuery } from './lib/useMedia';
 import { startRealtime } from './realtime/bridge';
 import { useMarkets, useSelectedMarket } from './stores/markets';
 import { type MeResponse, useSession } from './stores/session';
@@ -39,6 +39,8 @@ export default function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const embedded = isEmbedded();
   const isDesktop = useIsDesktop();
+  // ≥ lg：下单面板横排在 K 线下方；平板竖排
+  const isWide = useMediaQuery('(min-width: 1024px)');
 
   const login = useCallback(
     async (fn: () => Promise<AuthResult>) => {
@@ -110,12 +112,12 @@ export default function App() {
           ┌──────── TopBar ─────────────────────────────┐
           │ 市场卡片 × N │ 全服广播 / 快讯 跑马灯（拉伸）  │
           ├──────────────────────────────┬──────────────┤
-          │ K线 + 弹幕（flex-1 撑满）      │ 快捷交易面板   │
-          │                              │ 持仓 / 挂单    │
-          ├──────────────────────────────┤ （侧栏整体滚动）│
-          │ 金融快讯（固定矮条）            │              │
+          │ K线 + 弹幕（撑满剩余高度）      │ 持仓 / 挂单    │
+          │                              │              │
+          ├──────────────────────────────┤──────────────┤
+          │ 快捷交易（横向三栏，固定高度）   │ 金融快讯       │
           └──────────────────────────────┴──────────────┘
-        768–1024px（平板）按 图表 → 下单/持仓 → 快讯 堆叠；< 768px 走 MobileShell。
+        768–1024px（平板）按 图表 → 下单（竖排）→ 持仓 → 快讯 堆叠；< 768px 走 MobileShell。
       */}
       <div id="shake-target" className="mx-auto flex min-h-screen max-w-[1680px] flex-col gap-2.5 p-3 pt-[calc(var(--safe-top)+0.75rem)] lg:h-[max(100dvh,640px)]">
         <TopBar onSettings={() => setSettingsOpen(true)} />
@@ -124,16 +126,19 @@ export default function App() {
           <LiveTicker />
         </div>
         {market && (
-          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(320px,1fr)] lg:grid-rows-[minmax(300px,1fr)_minmax(140px,24%)]">
-            {/* 左：K 线撑满剩余高度，下方是矮条快讯 */}
+          <div className="grid min-h-0 flex-1 gap-3 lg:grid-cols-[minmax(0,3fr)_minmax(300px,1fr)] lg:grid-rows-[minmax(0,1fr)_auto]">
+            {/* 左上：K 线撑满剩余高度 */}
             <ChartPanel market={market} className="min-h-[400px] lg:col-start-1 lg:row-start-1 lg:min-h-0" />
-            {/* 右：下单 + 持仓共用一条可滚动侧栏 */}
-            <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:overflow-y-auto lg:pr-0.5" data-testid="trade-sidebar">
+            {/* 左下：操作区（横向三栏） */}
+            <div className="min-w-0 lg:col-start-1 lg:row-start-2">
+              <OrderPanel market={market} layout={isWide ? 'wide' : 'stack'} />
+            </div>
+            {/* 右：持仓在上、快讯在下，各自内部滚动 */}
+            <aside className="flex min-h-0 flex-col gap-3 lg:col-start-2 lg:row-span-2 lg:row-start-1" data-testid="side-column">
               <BankruptcyPrompt />
-              <OrderPanel market={market} />
-              <PositionsCard className="min-h-[240px] shrink-0" />
+              <PositionsCard className="min-h-[220px] lg:min-h-0 lg:flex-[3]" />
+              <NewsCard market={market.code} className="min-h-[200px] lg:min-h-0 lg:flex-[2]" />
             </aside>
-            <NewsCard market={market.code} className="min-h-[200px] lg:col-start-1 lg:row-start-2 lg:min-h-0" />
           </div>
         )}
       </div>
