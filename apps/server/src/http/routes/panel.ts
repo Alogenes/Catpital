@@ -97,6 +97,22 @@ export const panelRoutes =
       return reply.code(204).send();
     });
 
+    // ---------------------------------------------------------------- 市场定价
+    app.get('/markets', async () => core.admin.listMarkets());
+
+    app.post<{ Params: { code: string } }>('/markets/:code/price', async (req) => {
+      const b = z
+        .object({
+          price: positiveDecimal.refine((v) => D(v).gt(0), 'price must be > 0'),
+          /** 同时把均值回归锚点改成新价格（仅程序随机市场） */
+          anchor: z.boolean().default(true),
+        })
+        .parse(req.body);
+      const result = await core.admin.setMarketPrice(req.params.code.toUpperCase(), D(b.price), b.anchor);
+      req.log.info({ admin: req.user.sub, ...result }, 'admin set market price');
+      return result;
+    });
+
     // ---------------------------------------------------------------- 用户
     app.get('/users', async (req) => {
       const q = z.object({ q: z.string().trim().max(64).default('') }).parse(req.query);

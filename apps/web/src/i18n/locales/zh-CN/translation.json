@@ -376,7 +376,8 @@
     "empty": "暂无",
     "tabs": {
       "events": "事件",
-      "users": "用户"
+      "users": "用户",
+      "markets": "市场"
     },
     "status": {
       "PENDING": "待触发",
@@ -432,6 +433,17 @@
       "delete": "删除玩家",
       "deleteConfirm": "再点一次确认删除（不可恢复）",
       "deleted": "玩家已删除"
+    },
+    "market": {
+      "warning": "直接改价会像突发事件一样立即生效：K 线跳空，被打穿斩杀线的仓位会被强平。不会发快讯或频道播报。",
+      "initial": "初始价",
+      "anchor": "回归锚点",
+      "toInitial": "回到初始价",
+      "apply": "设定价格",
+      "anchorToggle": "同时设为新的基准价（之后围绕这个价格波动，不会被拉回原来的锚点）",
+      "liveNote": "外部实时行情：改价 10 分钟内逐渐回到真实价格",
+      "noReversion": "这个市场没有均值回归，改价后会继续自然漂移",
+      "done": "{{code}} 已从 {{before}} 改为 {{after}}"
     }
   }
 }

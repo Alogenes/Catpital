@@ -1,4 +1,4 @@
-import { type Decimal, type ImpactQuote, type OrderSide, ZERO, impactQuote } from '@catpital/shared';
+import { type Decimal, type ImpactQuote, ONE, type OrderSide, ZERO, impactQuote } from '@catpital/shared';
 import type { PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
 import { toDb, wire } from '../lib/dec.js';
@@ -146,6 +146,28 @@ export class MarketEngine {
       await this.processPrice(after, ZERO, now, { scheduledEventId, gap: true });
       return [before, after];
     });
+  }
+
+  /**
+   * 管理员直接定价：瞬间把价格设为 target，与事件跳空走同一条路径（K 线、行情推送、风控强平）。
+   * 外部行情市场无法真正改价，改价是一层冲击，durationSec 内线性回落到真实价。
+   */
+  async setPrice(target: Decimal, durationSec: number): Promise<[Decimal, Decimal]> {
+    return this.deps.queue.run(this.market.id, async () => {
+      const now = this.now();
+      const before = this.source.current();
+      const after = this.source.applyGap(target.div(before).minus(ONE), now, durationSec);
+      await this.processPrice(after, ZERO, now, { gap: true });
+      return [before, after];
+    });
+  }
+
+  /** 程序随机市场：把均值回归的锚点改为 price，之后围绕新价格波动，而不是被拉回初始价。外部行情市场返回 false */
+  setAnchor(price: Decimal): boolean {
+    const src = this.source as PriceSource & { setParams?: (p: { meanReversionTarget: Decimal }) => void };
+    if (src.kind !== 'PROCEDURAL' || !src.setParams) return false;
+    src.setParams({ meanReversionTarget: price });
+    return true;
   }
 
   setOverrides(o: SourceOverrides) {

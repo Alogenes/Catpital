@@ -1,13 +1,16 @@
 import { type Decimal, ZERO, netWorth } from '@catpital/shared';
 import type { Position, PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
-import { fromDb, wire } from '../lib/dec.js';
+import { fromDb, toDb, wire } from '../lib/dec.js';
 import type { MarketRegistry } from '../market/marketRegistry.js';
 import { getActiveLife } from '../trading/lifeStats.js';
 import type { RiskEngine } from '../trading/risk/riskEngine.js';
 import { TradeError, toPositionView } from '../trading/types.js';
 import { lockWallet, postLedger } from '../trading/wallet.js';
 import type { UserService } from '../users/userService.js';
+
+/** 外部行情市场（BTC）无法真正改价：改价是一层冲击，这么久之后回到真实价格 */
+const LIVE_PRICE_OVERRIDE_SEC = 600;
 
 /**
  * 管理面板的用户管理。资金调整一律记 ADMIN_ADJUST 流水（外部资金流），
@@ -22,6 +25,43 @@ export class AdminService {
     private readonly notifier: Notifier,
     private readonly clock: () => Date = () => new Date(),
   ) {}
+
+  /** 管理面板的市场列表：现价、初始价、均值回归锚点与力度（看得出这个市场会不会被拉回去） */
+  async listMarkets() {
+    const rows = await this.db.market.findMany({ orderBy: { sortOrder: 'asc' }, include: { engineConfig: true } });
+    return rows.map((m) => ({
+      code: m.code,
+      name: m.name,
+      nameI18n: m.nameI18n,
+      dataSource: m.dataSource,
+      status: m.status,
+      tickSize: wire(fromDb(m.tickSize)),
+      price: wire(this.markets.price(m.id) ?? fromDb(m.lastPrice)),
+      initialPrice: wire(fromDb(m.initialPrice)),
+      anchor: m.engineConfig ? wire(fromDb(m.engineConfig.meanReversionTarget ?? m.initialPrice)) : null,
+      reversionSpeed: m.engineConfig ? wire(fromDb(m.engineConfig.meanReversionSpeed)) : null,
+      feed: this.markets.feedMode(m.id),
+    }));
+  }
+
+  /**
+   * 直接定价。anchor = true 时（仅程序随机市场）同时把均值回归锚点改成新价格并写库，
+   * 重启后仍然生效（种子数据不会覆盖已设置的锚点）。外部行情市场的改价 10 分钟内回落到真实价。
+   */
+  async setMarketPrice(code: string, price: Decimal, anchor: boolean) {
+    const snap = this.markets.byCode(code);
+    const engine = snap && this.markets.engine(snap.id);
+    if (!snap || !engine) throw new TradeError('error.marketNotFound', 404);
+    if (price.lt(snap.tickSize)) throw new TradeError('error.invalidPrice', 400);
+    const live = this.markets.feedMode(snap.id) !== null;
+    const [before, after] = await engine.setPrice(price, live ? LIVE_PRICE_OVERRIDE_SEC : 0);
+    let anchored = false;
+    if (anchor && engine.setAnchor(after)) {
+      await this.db.marketEngineConfig.update({ where: { marketId: snap.id }, data: { meanReversionTarget: toDb(after) } });
+      anchored = true;
+    }
+    return { code: snap.code, before: wire(before), after: wire(after), anchored, revertsInSec: live ? LIVE_PRICE_OVERRIDE_SEC : null };
+  }
 
   private netWorthOf(balance: Decimal, locked: Decimal, positions: Position[]) {
     return netWorth({

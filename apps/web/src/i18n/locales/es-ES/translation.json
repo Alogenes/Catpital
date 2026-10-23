@@ -376,7 +376,8 @@
     "empty": "No hay nada",
     "tabs": {
       "events": "Eventos",
-      "users": "Usuarios"
+      "users": "Usuarios",
+      "markets": "Mercados"
     },
     "status": {
       "PENDING": "Pendiente",
@@ -432,6 +433,17 @@
       "delete": "Eliminar jugador",
       "deleteConfirm": "Vuelve a pulsar para eliminar (irreversible)",
       "deleted": "Jugador eliminado"
+    },
+    "market": {
+      "warning": "Fijar un precio surte efecto al instante, como un salto por noticia: el gráfico salta y se liquidan las posiciones que superen su precio de liquidación. No se publica ninguna noticia ni aviso en Discord.",
+      "initial": "Inicial",
+      "anchor": "Ancla",
+      "toInitial": "Volver al inicial",
+      "apply": "Fijar precio",
+      "anchorToggle": "Usarlo también como nuevo precio base (fluctuará a su alrededor en lugar de volver al ancla anterior)",
+      "liveNote": "Datos en directo: el cambio vuelve poco a poco al precio real en 10 minutos",
+      "noReversion": "Este mercado no tiene reversión a la media: seguirá derivando después de fijarlo",
+      "done": "{{code}} ha pasado de {{before}} a {{after}}"
     }
   }
 }

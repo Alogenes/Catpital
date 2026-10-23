@@ -68,9 +68,9 @@
     "initialPrice": "0.5",
     "sortOrder": 2,
     "engine": {
-      "drift": "0",
+      "drift": "3.125",
       "volatility": "2.5",
-      "meanReversionSpeed": "0",
+      "meanReversionSpeed": "10",
       "jumpIntensity": "60",
       "jumpMean": "0",
       "jumpStdDev": "0.08",
@@ -157,5 +157,46 @@
     "liquidationFeeRate": "0.002",
     "initialPrice": "60000",
     "sortOrder": 4
+  },
+  {
+    "code": "NVDA",
+    "name": "英伟达（实时）",
+    "nameI18n": {
+      "zh-CN": "英伟达（实时）",
+      "en-US": "NVIDIA (Live)",
+      "es-ES": "NVIDIA (en vivo)"
+    },
+    "kind": "STOCK",
+    "dataSource": "LIVE_API",
+    "adapterKey": "yahoo",
+    "adapterSymbol": "NVDA",
+    "status": "ACTIVE",
+    "tradingHours": {
+      "timezone": "America/New_York",
+      "sessions": [
+        {
+          "days": [
+            1,
+            2,
+            3,
+            4,
+            5
+          ],
+          "open": "09:30",
+          "close": "16:00"
+        }
+      ]
+    },
+    "tickIntervalMs": 1000,
+    "tickSize": "0.01",
+    "lotSize": "0.01",
+    "minNotional": "10",
+    "maxLeverage": "20",
+    "maintenanceMarginRate": "0.01",
+    "makerFeeRate": "0.0003",
+    "takerFeeRate": "0.001",
+    "liquidationFeeRate": "0.002",
+    "initialPrice": "210.96",
+    "sortOrder": 5
   }
 ]

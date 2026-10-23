@@ -60,7 +60,7 @@ function useNotify() {
 
 export default function AdminPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'events' | 'users'>('events');
+  const [tab, setTab] = useState<'events' | 'markets' | 'users'>('events');
   return (
     <Modal open={open} onClose={onClose} className="!max-w-3xl">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-ink-800 bg-ink-900 px-5 py-3">
@@ -68,6 +68,9 @@ export default function AdminPanel({ open, onClose }: { open: boolean; onClose: 
         <div className="ml-3 flex gap-1.5">
           <button className={chipBtn(tab === 'events')} onClick={() => setTab('events')} data-testid="panel-tab-events">
             📰 {t('panel.tabs.events')}
+          </button>
+          <button className={chipBtn(tab === 'markets')} onClick={() => setTab('markets')} data-testid="panel-tab-markets">
+            📈 {t('panel.tabs.markets')}
           </button>
           <button className={chipBtn(tab === 'users')} onClick={() => setTab('users')} data-testid="panel-tab-users">
             👥 {t('panel.tabs.users')}
@@ -77,8 +80,128 @@ export default function AdminPanel({ open, onClose }: { open: boolean; onClose: 
           ✕
         </button>
       </div>
-      <div className="p-5">{tab === 'events' ? <EventsTab /> : <UsersTab />}</div>
+      <div className="p-5">{tab === 'events' ? <EventsTab /> : tab === 'markets' ? <MarketsTab /> : <UsersTab />}</div>
     </Modal>
+  );
+}
+
+// =============================================================================
+// 市场定价
+// =============================================================================
+
+interface PanelMarket {
+  code: string;
+  name: string;
+  nameI18n: Record<string, string>;
+  dataSource: 'PROCEDURAL' | 'LIVE_API';
+  status: string;
+  tickSize: string;
+  price: string;
+  initialPrice: string;
+  /** 均值回归锚点（程序随机市场；外部行情为 null） */
+  anchor: string | null;
+  reversionSpeed: string | null;
+  feed: 'live' | 'fallback' | null;
+}
+
+function MarketsTab() {
+  const { t } = useTranslation();
+  const notify = useNotify();
+  const [rows, setRows] = useState<PanelMarket[]>([]);
+  const load = useCallback(() => api.get<PanelMarket[]>('/panel/markets').then(setRows).catch(notify), [notify]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  return (
+    <div className="space-y-3" data-testid="panel-markets">
+      <p className="rounded-xl bg-candy-sun/10 px-3 py-2 text-xs text-candy-sun">⚠ {t('panel.market.warning')}</p>
+      {rows.map((m) => (
+        <MarketPriceRow key={m.code} m={m} onDone={() => void load()} />
+      ))}
+    </div>
+  );
+}
+
+function MarketPriceRow({ m, onDone }: { m: PanelMarket; onDone: () => void }) {
+  const { t, i18n } = useTranslation();
+  const notify = useNotify();
+  const toast = useFeed((s) => s.toast);
+  // 现价用实时行情（WS 推送），拿不到时用接口返回值
+  const live = useMarkets((s) => s.prices[m.code]?.price) ?? m.price;
+  const [price, setPrice] = useState('');
+  const [anchor, setAnchor] = useState(true);
+  const [busy, setBusy] = useState(false);
+  const dp = m.tickSize.includes('.') ? m.tickSize.split('.')[1]!.length : 0;
+  const procedural = m.dataSource === 'PROCEDURAL';
+  const noReversion = procedural && m.reversionSpeed !== null && D(m.reversionSpeed).isZero();
+  const target = price && D(price).gt(0) ? D(price) : null;
+  const change = target ? target.div(live).minus(1).mul(100) : null;
+
+  const submit = async () => {
+    if (!target) return;
+    setBusy(true);
+    try {
+      const r = await api.post<{ before: string; after: string; anchored: boolean }>(`/panel/markets/${m.code}/price`, { price, anchor: procedural && anchor });
+      toast('success', t('panel.market.done', { code: m.code, before: r.before, after: r.after }));
+      setPrice('');
+      onDone();
+    } catch (err) {
+      notify(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  return (
+    <div className="rounded-2xl border border-ink-700 p-3" data-testid={`panel-market-${m.code}`}>
+      <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+        <span className="font-black">{m.code}</span>
+        <span className="text-xs text-ink-400">{m.nameI18n[i18n.language] ?? m.name}</span>
+        <span className="ml-auto font-mono text-lg font-black tabular-nums">{fmt(live, dp)}</span>
+      </div>
+      <div className="mt-1 flex flex-wrap gap-x-3 font-mono text-[11px] text-ink-500">
+        <span>
+          {t('panel.market.initial')} {fmt(m.initialPrice, dp)}
+        </span>
+        {m.anchor && (
+          <span>
+            ⚓ {t('panel.market.anchor')} {fmt(m.anchor, dp)}
+          </span>
+        )}
+        {!procedural && <span className="text-candy-sky">📡 {t('panel.market.liveNote')}</span>}
+        {noReversion && <span className="text-candy-sun">↘ {t('panel.market.noReversion')}</span>}
+      </div>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <input
+          className={`${input} w-40 font-mono`}
+          inputMode="decimal"
+          value={price}
+          placeholder={fmt(live, dp)}
+          onChange={(e) => setPrice(sanitizeDecimalInput(e.target.value, dp))}
+          data-testid={`panel-price-${m.code}`}
+        />
+        <button className={chipBtn(false)} onClick={() => setPrice(D(m.initialPrice).toFixed(dp))}>
+          ↺ {t('panel.market.toInitial')}
+        </button>
+        {change && (
+          <span className={`font-mono text-xs font-bold ${change.gte(0) ? 'text-candy-mint' : 'text-blood'}`}>
+            {change.gt(0) ? '+' : ''}
+            {change.toFixed(2)}%
+          </span>
+        )}
+        <button className={`${btn} ml-auto bg-candy-grape text-ink-950`} disabled={!target || busy} onClick={() => void submit()} data-testid={`panel-price-submit-${m.code}`}>
+          {t('panel.market.apply')}
+        </button>
+      </div>
+      {/* 没有均值回归的市场（κ = 0）改锚点没有意义，不显示 */}
+      {procedural && !noReversion && (
+        <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-ink-300">
+          <input type="checkbox" checked={anchor} onChange={(e) => setAnchor(e.target.checked)} className="accent-candy-grape" />
+          {t('panel.market.anchorToggle')}
+        </label>
+      )}
+    </div>
   );
 }
 

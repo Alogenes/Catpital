@@ -1,6 +1,8 @@
+import { D } from '@catpital/shared';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { buildServer, type HttpEnv } from '../src/http/server.js';
-import { type Harness, createHarness } from './support/harness.js';
+import { seedMarkets } from '../src/seed/seedMarkets.js';
+import { type Harness, TEST_MARKET, createHarness, flushMicrotasks } from './support/harness.js';
 
 const BASE: HttpEnv = {
   API_BASE_PATH: '/api', WS_PATH: '/ws', JWT_SECRET: 'test-secret-123', DISCORD_CLIENT_ID: '', DISCORD_CLIENT_SECRET: '',
@@ -102,5 +104,42 @@ describe('事件', () => {
       payload: { market: 'TEST', direction: 'DOWN', gapPct: '100', volMultiplier: '1', delaySec: 0, durationSec: 0 },
     });
     expect(bad.statusCode).toBe(400);
+  });
+});
+
+describe('市场定价', () => {
+  it('sets the price instantly and liquidates through the normal risk path', async () => {
+    const H = auth(on, BOSS);
+    const SHORTER = '700000000000000004';
+    await h.user(SHORTER, 'shorter');
+    const m = h.core.markets.byCode('TEST')!;
+    const p0 = h.core.markets.price(m.id)!;
+    // 50x 空单：价格直接拉高 10% 必然被斩杀
+    await h.core.orders.placeOrder(SHORTER, { market: 'TEST', side: 'SELL', type: 'MARKET', quantity: D(10), leverage: D(50) });
+    const target = p0.mul('1.1').toDecimalPlaces(2).toFixed();
+
+    const res = await on.inject({ method: 'POST', url: '/api/v1/panel/markets/test/price', headers: H, payload: { price: target } });
+    expect(res.statusCode).toBe(200);
+    // 测试用数据源没有均值回归，anchored = false；不是外部行情，不会回落
+    expect(res.json()).toMatchObject({ code: 'TEST', after: target, anchored: false, revertsInSec: null });
+    expect(h.core.markets.price(m.id)!.toFixed()).toBe(target);
+    await flushMicrotasks();
+    expect(await h.db.liquidation.count({ where: { userId: SHORTER } })).toBe(1);
+
+    const list = (await on.inject({ method: 'GET', url: '/api/v1/panel/markets', headers: H })).json();
+    expect(list.find((x: { code: string }) => x.code === 'TEST')).toMatchObject({ price: target, initialPrice: '100', anchor: '100' });
+
+    const post = (code: string, price: string, headers = H) => on.inject({ method: 'POST', url: `/api/v1/panel/markets/${code}/price`, headers, payload: { price } });
+    expect((await post('TEST', '0')).statusCode).toBe(400);
+    expect((await post('NOPE', '10')).statusCode).toBe(404);
+    expect((await post('TEST', '10', auth(on, IMPOSTOR))).statusCode).toBe(404);
+  });
+
+  it('keeps an anchor set from the panel when markets are re-seeded on restart', async () => {
+    const m = h.core.markets.byCode('TEST')!;
+    await h.db.marketEngineConfig.update({ where: { marketId: m.id }, data: { meanReversionTarget: '123' } });
+    await seedMarkets(h.db, [TEST_MARKET]);
+    const cfg = await h.db.marketEngineConfig.findUniqueOrThrow({ where: { marketId: m.id } });
+    expect(cfg.meanReversionTarget?.toFixed()).toBe('123');
   });
 });

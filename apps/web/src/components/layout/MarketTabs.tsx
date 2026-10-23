@@ -6,7 +6,7 @@ import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 
 /** 市场吉祥物（未知代码按类型兜底） */
-const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙' };
+const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙', NVDA: '🎮' };
 export const mascotOf = (code: string, kind?: string) => MASCOT[code] ?? (kind === 'CRYPTO' ? '💎' : '📈');
 
 /** 市场切换卡片：吉祥物、最新价、涨跌幅、是否持仓 */

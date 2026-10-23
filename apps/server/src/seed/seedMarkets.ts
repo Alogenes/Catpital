@@ -59,11 +59,12 @@ export async function seedMarkets(db: PrismaClient, raw: unknown) {
       update: spec,
     });
     if (engine) {
-      const cfg = { ...engine, meanReversionTarget: engine.meanReversionTarget ?? null };
+      // 种子里没写锚点时，更新不碰它：管理面板"设为新基准价"写进去的锚点重启后仍然有效
+      const { meanReversionTarget, ...rest } = engine;
       await db.marketEngineConfig.upsert({
         where: { marketId: market.id },
-        create: { marketId: market.id, ...cfg },
-        update: cfg,
+        create: { marketId: market.id, ...rest, meanReversionTarget: meanReversionTarget ?? null },
+        update: meanReversionTarget === undefined ? rest : { ...rest, meanReversionTarget },
       });
     }
   }

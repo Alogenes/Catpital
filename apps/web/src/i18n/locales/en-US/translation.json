@@ -376,7 +376,8 @@
     "empty": "Nothing here",
     "tabs": {
       "events": "Events",
-      "users": "Users"
+      "users": "Users",
+      "markets": "Markets"
     },
     "status": {
       "PENDING": "Pending",
@@ -432,6 +433,17 @@
       "delete": "Delete player",
       "deleteConfirm": "Click again to delete (irreversible)",
       "deleted": "Player deleted"
+    },
+    "market": {
+      "warning": "Setting a price takes effect instantly, just like a breaking-news gap: the chart jumps and positions past their liquidation price are liquidated. No news or Discord broadcast is sent.",
+      "initial": "Initial",
+      "anchor": "Anchor",
+      "toInitial": "Back to initial",
+      "apply": "Set price",
+      "anchorToggle": "Also make this the new baseline (prices will wander around it instead of being pulled back to the old anchor)",
+      "liveNote": "Live feed: the override fades back to the real price within 10 minutes",
+      "noReversion": "This market has no mean reversion, so it keeps drifting after you set it",
+      "done": "{{code}} moved from {{before}} to {{after}}"
     }
   }
 }
