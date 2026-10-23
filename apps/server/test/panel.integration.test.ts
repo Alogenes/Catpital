@@ -171,3 +171,50 @@ describe('提前结束事件', () => {
     expect((await on.inject({ method: 'DELETE', url: `/api/v1/panel/events/${id}`, headers: H })).statusCode).toBe(409);
   });
 });
+
+describe('市场历史', () => {
+  const event = (marketId: string, status: 'ACTIVE' | 'COMPLETED' | 'CANCELLED', triggeredAt: Date, headline: string) =>
+    h.db.scheduledEvent.create({
+      data: {
+        marketId, status, triggerAt: triggeredAt, triggeredAt, headline, content: '', i18n: {},
+        gapPercent: '0.1', driftAdjust: '0', volMultiplier: '1', durationSec: status === 'ACTIVE' ? 86_400 : 60, source: 'DASHBOARD',
+      },
+    });
+
+  it('news only lists events triggered in the last 48 hours', async () => {
+    const m = h.core.markets.byCode('TEST')!;
+    await h.db.scheduledEvent.deleteMany({ where: { marketId: m.id } });
+    await event(m.id, 'COMPLETED', new Date(Date.now() - 3 * 86_400_000), 'three days ago');
+    await event(m.id, 'COMPLETED', new Date(Date.now() - 47 * 3_600_000), 'forty-seven hours ago');
+    const rows = (await on.inject({ method: 'GET', url: '/api/v1/markets/TEST/events', headers: auth(on, PLAYER) })).json();
+    expect(rows.map((r: { headline: string }) => r.headline)).toEqual(['forty-seven hours ago']);
+  });
+
+  it('clears candles and finished news, keeps running events, and tells clients', async () => {
+    const H = auth(on, BOSS);
+    const m = h.core.markets.byCode('TEST')!;
+    await h.db.candle.createMany({
+      data: [1, 2, 3].map((i) => ({ marketId: m.id, interval: 'M1' as const, openTime: new Date(Date.now() - i * 60_000), open: '1', high: '1', low: '1', close: '1', volume: '1' })),
+    });
+    await h.tick('101');
+    expect(h.core.markets.engine(m.id)!.candles().length).toBeGreaterThan(0);
+    const running = await event(m.id, 'ACTIVE', new Date(), 'still running');
+    h.messages.length = 0;
+
+    const res = await on.inject({ method: 'POST', url: '/api/v1/panel/markets/test/clear-history', headers: H, payload: { candles: true, news: true } });
+    expect(res.statusCode).toBe(200);
+    // 除了这里插入的 3 根，前面测试的 tick 也写过 K 线
+    expect(res.json()).toMatchObject({ code: 'TEST', newsDeleted: 2 });
+    expect(res.json().candlesDeleted).toBeGreaterThanOrEqual(3);
+    expect(await h.db.candle.count({ where: { marketId: m.id } })).toBe(0);
+    expect(h.core.markets.engine(m.id)!.candles()).toEqual([]);
+    expect((await h.db.scheduledEvent.findMany({ where: { marketId: m.id } })).map((e) => e.id)).toEqual([running.id]);
+    expect(h.messages.map((x) => x.msg)).toContainEqual({ ch: 'history:TEST', d: { market: 'TEST', candles: true, news: true } });
+
+    // 下一个 tick 从现价重新开一根 K 线
+    await h.tick('102');
+    expect(h.core.markets.engine(m.id)!.candles().map((c) => c.open.toFixed())).toContain('102');
+
+    expect((await on.inject({ method: 'POST', url: '/api/v1/panel/markets/TEST/clear-history', headers: H, payload: { candles: false, news: false } })).statusCode).toBe(400);
+  });
+});

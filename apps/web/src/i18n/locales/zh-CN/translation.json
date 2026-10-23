@@ -444,7 +444,13 @@
       "anchorToggle": "同时设为新的基准价（之后围绕这个价格波动，不会被拉回原来的锚点）",
       "liveNote": "外部实时行情：改价 10 分钟内逐渐回到真实价格",
       "noReversion": "这个市场没有均值回归，改价后会继续自然漂移",
-      "done": "{{code}} 已从 {{before}} 改为 {{after}}"
+      "done": "{{code}} 已从 {{before}} 改为 {{after}}",
+      "clearTitle": "清除历史",
+      "clearCandles": "K 线",
+      "clearNews": "快讯（已结束的事件）",
+      "clear": "清除",
+      "clearConfirm": "再点一次确认（不可恢复）",
+      "cleared": "{{code}}：已删除 {{candles}} 根 K 线、{{news}} 条快讯"
     }
   }
 }

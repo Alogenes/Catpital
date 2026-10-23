@@ -1,4 +1,4 @@
-import type { MarketEventPayload } from '@catpital/shared';
+import { type MarketEventPayload, NEWS_RETENTION_MS } from '@catpital/shared';
 import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { api } from '../../lib/api';
@@ -43,7 +43,9 @@ export function NewsFeed({ market }: { market: string }) {
     );
   }, [market, setNews]);
 
-  const items = news.filter((n) => n.market === market);
+  // 只显示 48 小时内的快讯（页面开着跨天时，过期的也会自动消失）
+  const cutoff = Date.now() - NEWS_RETENTION_MS;
+  const items = news.filter((n) => n.market === market && n.ts >= cutoff);
   if (!items.length) return <p className="py-6 text-center text-sm text-ink-500">📭 {t('market.noNews')}</p>;
   return (
     <ul className="space-y-2">

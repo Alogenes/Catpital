@@ -115,6 +115,16 @@ export const panelRoutes =
       return result;
     });
 
+    app.post<{ Params: { code: string } }>('/markets/:code/clear-history', async (req) => {
+      const b = z
+        .object({ candles: z.boolean().default(true), news: z.boolean().default(false) })
+        .refine((x) => x.candles || x.news, 'nothing to clear')
+        .parse(req.body);
+      const result = await core.admin.clearMarketHistory(req.params.code.toUpperCase(), b);
+      req.log.info({ admin: req.user.sub, ...result }, 'admin cleared market history');
+      return result;
+    });
+
     // ---------------------------------------------------------------- 用户
     app.get('/users', async (req) => {
       const q = z.object({ q: z.string().trim().max(64).default('') }).parse(req.query);

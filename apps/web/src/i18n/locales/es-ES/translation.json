@@ -444,7 +444,13 @@
       "anchorToggle": "Usarlo también como nuevo precio base (fluctuará a su alrededor en lugar de volver al ancla anterior)",
       "liveNote": "Datos en directo: el cambio vuelve poco a poco al precio real en 10 minutos",
       "noReversion": "Este mercado no tiene reversión a la media: seguirá derivando después de fijarlo",
-      "done": "{{code}} ha pasado de {{before}} a {{after}}"
+      "done": "{{code}} ha pasado de {{before}} a {{after}}",
+      "clearTitle": "Borrar historial",
+      "clearCandles": "Velas",
+      "clearNews": "Noticias (eventos terminados)",
+      "clear": "Borrar",
+      "clearConfirm": "Vuelve a pulsar para confirmar (irreversible)",
+      "cleared": "{{code}}: se han borrado {{candles}} velas y {{news}} noticias"
     }
   }
 }

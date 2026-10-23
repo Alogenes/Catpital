@@ -1,4 +1,4 @@
-import { maxSafeLeverage } from '@catpital/shared';
+import { NEWS_RETENTION_MS, maxSafeLeverage } from '@catpital/shared';
 import type { FastifyPluginAsync } from 'fastify';
 import type { Core } from '../../app.js';
 import { fromDb, wire, wireOpt } from '../../lib/dec.js';
@@ -88,12 +88,17 @@ export const marketRoutes =
       return { market: m.code, interval: q.interval, candles };
     });
 
-    /** 已触发 / 进行中的金融快讯（未来事件不公开，防剧透） */
+    /** 最近 48 小时内已触发 / 进行中的金融快讯（未来事件不公开，防剧透） */
     app.get<{ Params: { code: string } }>('/:code/events', async (req) => {
       const m = core.markets.byCode(req.params.code);
       if (!m) throw new TradeError('error.marketNotFound', 404);
       const rows = await core.db.scheduledEvent.findMany({
-        where: { marketId: m.id, status: { in: ['ACTIVE', 'COMPLETED'] }, headline: { not: '' } },
+        where: {
+          marketId: m.id,
+          status: { in: ['ACTIVE', 'COMPLETED'] },
+          headline: { not: '' },
+          triggeredAt: { gte: new Date(Date.now() - NEWS_RETENTION_MS) },
+        },
         orderBy: { triggeredAt: 'desc' },
         take: 20,
       });

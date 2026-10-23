@@ -162,6 +162,19 @@ export class MarketEngine {
     });
   }
 
+  /**
+   * 清除全部 K 线历史（库里的和内存里未收盘的）。在本市场串行队列内执行，
+   * 不会和正在写库的 tick 交错；下一个 tick 从现价重新开始画。
+   */
+  async clearCandles(): Promise<number> {
+    return this.deps.queue.run(this.market.id, async () => {
+      this.dirtyCandles.clear();
+      this.aggregator.reset();
+      const { count } = await this.deps.db.candle.deleteMany({ where: { marketId: this.market.id } });
+      return count;
+    });
+  }
+
   /** 程序随机市场：把均值回归的锚点改为 price，之后围绕新价格波动，而不是被拉回初始价。外部行情市场返回 false */
   setAnchor(price: Decimal): boolean {
     const src = this.source as PriceSource & { setParams?: (p: { meanReversionTarget: Decimal }) => void };

@@ -126,8 +126,19 @@ export type UserEvent =
   | { type: 'bankruptcyAvailable'; available: boolean }
   | { type: 'resume'; resumeId: string };
 
+/** 金融快讯只展示最近 48 小时触发的事件（更早的仍在数据库里，只是不再显示） */
+export const NEWS_RETENTION_MS = 48 * 3600 * 1000;
+
+/** 管理员清除了某个市场的历史：前端据此重新加载 K 线 / 清空快讯 */
+export interface HistoryResetPayload {
+  market: string;
+  candles: boolean;
+  news: boolean;
+}
+
 export type ServerMessage =
   | { ch: `tick:${string}`; d: TickPayload }
+  | { ch: `history:${string}`; d: HistoryResetPayload }
   | { ch: `kline:${string}`; d: CandlePayload }
   | { ch: `danmaku:${string}`; d: DanmakuPayload }
   | { ch: `event:${string}`; d: MarketEventPayload }

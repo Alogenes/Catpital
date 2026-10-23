@@ -3,6 +3,7 @@ import type {
   BroadcastPayload,
   CandlePayload,
   DanmakuPayload,
+  HistoryResetPayload,
   MarketEventPayload,
   TickPayload,
   UserEvent,
@@ -31,6 +32,10 @@ export class Notifier {
 
   candle(d: CandlePayload) {
     this.bus.publish('ws', { msg: { ch: `kline:${d.market}:${d.interval}`, d } });
+  }
+
+  historyReset(d: HistoryResetPayload) {
+    this.bus.publish('ws', { msg: { ch: `history:${d.market}`, d } });
   }
 
   marketEvent(d: MarketEventPayload) {

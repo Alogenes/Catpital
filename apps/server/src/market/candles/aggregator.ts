@@ -56,6 +56,11 @@ export class CandleAggregator {
     return { updated, closed };
   }
 
+  /** 清空所有未收盘 K 线（管理员清除历史后，下一个 tick 从现价重新开一根） */
+  reset() {
+    this.current.clear();
+  }
+
   snapshot(): CandleState[] {
     return [...this.current.values()];
   }

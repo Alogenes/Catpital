@@ -63,6 +63,24 @@ export class AdminService {
     return { code: snap.code, before: wire(before), after: wire(after), anchored, revertsInSec: live ? LIVE_PRICE_OVERRIDE_SEC : null };
   }
 
+  /**
+   * 清除市场历史：
+   *   candles → 删除全部 K 线（图表从现价重新开始画）
+   *   news    → 删除已结束 / 已取消的事件（快讯里不再出现）；进行中和待触发的事件还在影响行情，保留
+   * 在线玩家会收到 history:<市场> 消息，自动重新加载图表 / 清空快讯。
+   */
+  async clearMarketHistory(code: string, what: { candles: boolean; news: boolean }) {
+    const snap = this.markets.byCode(code);
+    const engine = snap && this.markets.engine(snap.id);
+    if (!snap || !engine) throw new TradeError('error.marketNotFound', 404);
+    const candlesDeleted = what.candles ? await engine.clearCandles() : 0;
+    const newsDeleted = what.news
+      ? (await this.db.scheduledEvent.deleteMany({ where: { marketId: snap.id, status: { in: ['COMPLETED', 'CANCELLED'] } } })).count
+      : 0;
+    this.notifier.historyReset({ market: snap.code, candles: what.candles, news: what.news });
+    return { code: snap.code, candlesDeleted, newsDeleted };
+  }
+
   private netWorthOf(balance: Decimal, locked: Decimal, positions: Position[]) {
     return netWorth({
       balance,

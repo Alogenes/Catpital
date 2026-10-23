@@ -16,7 +16,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { type CandleRow, type MarketInfo, api } from '../../lib/api';
 import { decimalsOf } from '../../lib/format';
-import { onCandle } from '../../realtime/bridge';
+import { onCandle, onHistoryReset } from '../../realtime/bridge';
 import { useSession } from '../../stores/session';
 import { useTradePreview } from '../../stores/tradePreview';
 import { type ChartType, type Interval, useSettings } from '../../stores/settings';
@@ -71,6 +71,8 @@ export function PriceChart({ market, interval, chartType }: { market: MarketInfo
   /** K 线历史加载状态：失败显示重试，空数据显示等待行情 */
   const [load, setLoad] = useState<'loading' | 'ok' | 'empty' | 'error'>('loading');
   const [reloadKey, setReloadKey] = useState(0);
+  // 管理员清除了这个市场的 K 线：重新加载（历史为空时显示"等待行情数据"，下一根 K 线到来后正常绘制）
+  useEffect(() => onHistoryReset(market.code, () => setReloadKey((k) => k + 1)), [market.code]);
   const previewLiq = useTradePreview((s) => (s.market === market.code ? s.liq : null));
   const redUp = useSettings((s) => s.redUp);
   const position = useSession((s) => s.positions[market.code]);

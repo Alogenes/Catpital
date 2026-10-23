@@ -444,7 +444,13 @@
       "anchorToggle": "Also make this the new baseline (prices will wander around it instead of being pulled back to the old anchor)",
       "liveNote": "Live feed: the override fades back to the real price within 10 minutes",
       "noReversion": "This market has no mean reversion, so it keeps drifting after you set it",
-      "done": "{{code}} moved from {{before}} to {{after}}"
+      "done": "{{code}} moved from {{before}} to {{after}}",
+      "clearTitle": "Clear history",
+      "clearCandles": "Candles",
+      "clearNews": "News (ended events)",
+      "clear": "Clear",
+      "clearConfirm": "Click again to confirm (irreversible)",
+      "cleared": "{{code}}: deleted {{candles}} candles and {{news}} news items"
     }
   }
 }

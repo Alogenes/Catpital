@@ -201,6 +201,55 @@ function MarketPriceRow({ m, onDone }: { m: PanelMarket; onDone: () => void }) {
           {t('panel.market.anchorToggle')}
         </label>
       )}
+      <ClearHistory code={m.code} />
+    </div>
+  );
+}
+
+/** 清除市场历史：K 线 / 快讯，二次点击确认 */
+function ClearHistory({ code }: { code: string }) {
+  const { t } = useTranslation();
+  const notify = useNotify();
+  const toast = useFeed((s) => s.toast);
+  const [candles, setCandles] = useState(true);
+  const [news, setNews] = useState(false);
+  const [confirm, setConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const run = async () => {
+    if (!confirm) return setConfirm(true);
+    setBusy(true);
+    try {
+      const r = await api.post<{ candlesDeleted: number; newsDeleted: number }>(`/panel/markets/${code}/clear-history`, { candles, news });
+      toast('success', t('panel.market.cleared', { code, candles: r.candlesDeleted, news: r.newsDeleted }));
+    } catch (err) {
+      notify(err);
+    } finally {
+      setBusy(false);
+      setConfirm(false);
+    }
+  };
+
+  return (
+    <div className="mt-2 flex flex-wrap items-center gap-3 border-t border-ink-800 pt-2 text-xs text-ink-300">
+      <span className="font-bold text-ink-400">🧹 {t('panel.market.clearTitle')}</span>
+      <label className="flex cursor-pointer items-center gap-1">
+        <input type="checkbox" checked={candles} onChange={(e) => setCandles(e.target.checked)} className="accent-candy-grape" />
+        {t('panel.market.clearCandles')}
+      </label>
+      <label className="flex cursor-pointer items-center gap-1">
+        <input type="checkbox" checked={news} onChange={(e) => setNews(e.target.checked)} className="accent-candy-grape" />
+        {t('panel.market.clearNews')}
+      </label>
+      <button
+        className={`${btn} ml-auto ${confirm ? 'bg-blood text-white' : 'bg-ink-800 text-blood'}`}
+        disabled={busy || (!candles && !news)}
+        onClick={() => void run()}
+        onBlur={() => setConfirm(false)}
+        data-testid={`panel-clear-${code}`}
+      >
+        {confirm ? t('panel.market.clearConfirm') : t('panel.market.clear')}
+      </button>
     </div>
   );
 }

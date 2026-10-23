@@ -23,6 +23,16 @@ export function onCandle(market: string, interval: string, l: CandleListener) {
   return () => void set!.delete(l);
 }
 
+/** 管理员清除了 K 线历史：图表组件订阅后重新加载 */
+const historyResetListeners = new Map<string, Set<() => void>>();
+
+export function onHistoryReset(market: string, l: () => void) {
+  let set = historyResetListeners.get(market);
+  if (!set) historyResetListeners.set(market, (set = new Set()));
+  set.add(l);
+  return () => void set!.delete(l);
+}
+
 const t = (k: string, o?: Record<string, unknown>) => i18n.t(k, o);
 
 let focused: string[] = [];
@@ -37,7 +47,7 @@ const GATE_TOLERANCE_MS = 250;
 
 /** 切换当前看盘市场/周期：订阅 K 线、弹幕、快讯频道 */
 export function focusMarket(code: string, interval: string) {
-  const next = [`kline:${code}:${interval}`, `danmaku:${code}`, `event:${code}`];
+  const next = [`kline:${code}:${interval}`, `danmaku:${code}`, `event:${code}`, `history:${code}`];
   const drop = focused.filter((c) => !next.includes(c));
   if (drop.length) realtime.unsubscribe(drop);
   realtime.subscribe(next);
@@ -85,6 +95,10 @@ function handle(msg: ServerMessage) {
     if (fresh && useSettings.getState().danmaku) useFeed.getState().pushDanmaku(d);
   } else if (ch.startsWith('event:')) {
     useMarkets.getState().pushNews((msg as Extract<ServerMessage, { ch: `event:${string}` }>).d);
+  } else if (ch.startsWith('history:')) {
+    const d = (msg as Extract<ServerMessage, { ch: `history:${string}` }>).d;
+    if (d.candles) historyResetListeners.get(d.market)?.forEach((l) => l());
+    if (d.news) useMarkets.getState().setNews(d.market, []);
   } else if (ch === 'broadcast') {
     const b = (msg as Extract<ServerMessage, { ch: 'broadcast' }>).d;
     useFeed.getState().pushBanner(b);

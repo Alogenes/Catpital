@@ -13,7 +13,7 @@ const clientMessage = z.discriminatedUnion('op', [
   z.object({ op: z.literal('ping'), ts: z.number() }),
 ]);
 
-const PUBLIC_CHANNEL = /^(tick|danmaku|event):[A-Z0-9_-]{1,32}$|^kline:[A-Z0-9_-]{1,32}:(M1|M5|M15|H1|D1)$|^broadcast$/;
+const PUBLIC_CHANNEL = /^(tick|danmaku|event|history):[A-Z0-9_-]{1,32}$|^kline:[A-Z0-9_-]{1,32}:(M1|M5|M15|H1|D1)$|^broadcast$/;
 const MAX_SUBS = 64;
 
 interface Conn {
