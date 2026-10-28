@@ -8,10 +8,10 @@ import { sound } from '../../lib/sound';
 import { useFeed } from '../../stores/feed';
 import { useSession } from '../../stores/session';
 import { Modal } from '../common/Modal';
-import { Bolivar, MeuwCoin } from './art';
+import { Bolivar, MeowCoin } from './art';
 
 /**
- * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meuw Coin，1:1。
+ * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meow Coin，1:1。
  * 一张简单的兑换表单：上面"支付"、下面"获得"，快捷数量 + 一个兑换按钮，结果用 toast 提示。
  * 只用项目已有的 ink / candy 配色和 chip / arcade-btn，没有绝对定位的装饰，窄屏（Discord 活动窗口）也不会叠在一起。
  */
@@ -19,7 +19,7 @@ import { Bolivar, MeuwCoin } from './art';
 interface ExchangeState {
   enabled: boolean;
   rate: number;
-  meuw: string;
+  meow: string;
   bolivares: number | null;
   history: Array<{ id: string; direction: 'IN' | 'OUT'; amount: string; status: string; createdAt: number }>;
 }
@@ -37,7 +37,7 @@ const MAX_AMOUNT = 10_000_000;
 const QUICK = [1_000, 5_000, 10_000, 50_000];
 
 const CURRENCY = {
-  meuw: { name: 'Meuw Coin', Icon: MeuwCoin, color: 'text-candy-sun' },
+  meow: { name: 'Meow Coin', Icon: MeowCoin, color: 'text-candy-sun' },
   bolivar: { name: 'Bolívares', Icon: Bolivar, color: 'text-candy-mint' },
 } as const;
 type Currency = (typeof CURRENCY)[keyof typeof CURRENCY];
@@ -45,7 +45,7 @@ type Currency = (typeof CURRENCY)[keyof typeof CURRENCY];
 export default function ExchangeShop({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
   const user = useSession((s) => s.user);
-  const liveMeuw = useSession((s) => s.balance);
+  const liveMeow = useSession((s) => s.balance);
   const toast = useFeed((s) => s.toast);
   const [tab, setTab] = useState<Direction>('in');
   const [state, setState] = useState<ExchangeState | null>(null);
@@ -76,10 +76,10 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
   const bolivares = state?.bolivares ?? null;
   const available = Boolean(state?.enabled);
   const bsText = bolivares === null ? '—' : bolivares.toLocaleString('es-ES');
-  const from = tab === 'in' ? CURRENCY.bolivar : CURRENCY.meuw;
-  const to = tab === 'in' ? CURRENCY.meuw : CURRENCY.bolivar;
-  // 最多能兑多少：充值看 bolívares（拿不到就不拦，交给后端判断），兑回看可用 Meuw Coin 的整数部分
-  const max = Math.min(MAX_AMOUNT, tab === 'in' ? (bolivares ?? MAX_AMOUNT) : D(liveMeuw).floor().toNumber());
+  const from = tab === 'in' ? CURRENCY.bolivar : CURRENCY.meow;
+  const to = tab === 'in' ? CURRENCY.meow : CURRENCY.bolivar;
+  // 最多能兑多少：充值看 bolívares（拿不到就不拦，交给后端判断），兑回看可用 Meow Coin 的整数部分
+  const max = Math.min(MAX_AMOUNT, tab === 'in' ? (bolivares ?? MAX_AMOUNT) : D(liveMeow).floor().toNumber());
   const n = /^\d{1,8}$/.test(amount) ? Number(amount) : 0;
   const enough = n <= max;
   const canSubmit = available && n > 0 && enough && !busy;
@@ -151,7 +151,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
         {state?.enabled && bolivares === null && <p className="mb-4 rounded-2xl bg-ink-850 px-3 py-2 text-center text-xs text-ink-300">⚠ {t('shop.skylbotOffline')}</p>}
 
         {/* 支付 */}
-        <Field label={t('shop.pay')} balance={tab === 'in' ? bsText : fmt(liveMeuw)} currency={from}>
+        <Field label={t('shop.pay')} balance={tab === 'in' ? bsText : fmt(liveMeow)} currency={from}>
           <input
             inputMode="numeric"
             value={amount}
@@ -175,7 +175,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
         <p className="my-2 text-center text-xs font-bold text-ink-400">↓ 1 : 1</p>
 
         {/* 获得 */}
-        <Field label={t('shop.receive')} balance={tab === 'in' ? fmt(liveMeuw) : bsText} currency={to}>
+        <Field label={t('shop.receive')} balance={tab === 'in' ? fmt(liveMeow) : bsText} currency={to}>
           <span className="font-mono text-xl font-black text-ink-100">{n.toLocaleString('en-US')}</span>
         </Field>
 
@@ -202,7 +202,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
             ) : (
               state.history.map((h) => (
                 <li key={h.id} className="flex items-center gap-2 rounded-2xl bg-ink-850 px-3 py-2 text-sm">
-                  <span className="shrink-0 text-xs font-bold text-ink-400">{h.direction === 'IN' ? '→ Meuw' : '→ Bs'}</span>
+                  <span className="shrink-0 text-xs font-bold text-ink-400">{h.direction === 'IN' ? '→ Meow' : '→ Bs'}</span>
                   <b className="font-mono">{fmt(h.amount, 0)}</b>
                   <span className="min-w-0 flex-1 truncate text-right text-[11px] text-ink-500">{new Date(h.createdAt).toLocaleString()}</span>
                   <span

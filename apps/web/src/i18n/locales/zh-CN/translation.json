@@ -506,8 +506,8 @@
     },
     "exchange": {
       "hint": "这里是 Skylbot 超时、余额又对不上，系统没法自动判断的兑换。请先在 Skylbot 里查这个玩家的 Bolívares 有没有变动，再选择处理方式。",
-      "in": "充值：Bolívares → Meuw Coin",
-      "out": "兑回：Meuw Coin → Bolívares",
+      "in": "充值：Bolívares → Meow Coin",
+      "out": "兑回：Meow Coin → Bolívares",
       "applied": "钱已动（补发 / 完成）",
       "notApplied": "钱没动（作废 / 退回）",
       "confirm": "再点一次确认",
@@ -518,9 +518,9 @@
   "shop": {
     "title": "商店",
     "open": "充值 / 兑换",
-    "tabIn": "充值 Meuw Coin",
+    "tabIn": "充值 Meow Coin",
     "tabOut": "兑回 Bolívares",
-    "rateNote": "汇率固定 1 Bolívar = 1 Meuw Coin。兑换计入外部资金，不影响收益率排行榜。",
+    "rateNote": "汇率固定 1 Bolívar = 1 Meow Coin。兑换计入外部资金，不影响收益率排行榜。",
     "disabled": "兑换服务暂未开放（服务器还没有接入 Skylbot）",
     "skylbotOffline": "暂时连不上 Skylbot，Bolívares 余额未知",
     "exchange": "兑换",

@@ -2,7 +2,7 @@ import { useId } from 'react';
 
 /**
  * 商店图标（内联 SVG，不请求外部资源）：
- *   MeuwCoin  —— 3D 金币：有厚度的币边、浮雕猫脸、左上高光，可选外圈光晕
+ *   MeowCoin  —— 3D 金币：有厚度的币边、浮雕猫脸、左上高光，可选外圈光晕
  *   Bolivar   —— 带厚度的绿色钞票
  * 渐变 id 用 useId 生成，同一页面里画多枚也不会互相串色。
  */
@@ -10,7 +10,7 @@ import { useId } from 'react';
 const GLOW_GOLD = 'drop-shadow(0 0 6px rgba(255,209,102,0.65)) drop-shadow(0 3px 2px rgba(10,6,22,0.6))';
 const GLOW_GREEN = 'drop-shadow(0 0 5px rgba(61,220,151,0.45)) drop-shadow(0 3px 2px rgba(10,6,22,0.6))';
 
-export function MeuwCoin({ size = 24, glow = true, className = '' }: { size?: number; glow?: boolean; className?: string }) {
+export function MeowCoin({ size = 24, glow = true, className = '' }: { size?: number; glow?: boolean; className?: string }) {
   const id = useId().replace(/:/g, '');
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} style={glow ? { filter: GLOW_GOLD } : undefined} aria-hidden>

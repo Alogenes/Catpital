@@ -68,7 +68,7 @@ export function createCore({ db, bus, economy, log, clock = () => new Date(), sk
   );
   /** 临时管理面板：用户管理 */
   const admin = new AdminService(db, users, markets, risk, notifier, clock);
-  /** Skylbot bolívares ⇄ Meuw Coin 兑换 */
+  /** Skylbot bolívares ⇄ Meow Coin 兑换 */
   const exchange = new SkylbotExchange(
     db,
     notifier,

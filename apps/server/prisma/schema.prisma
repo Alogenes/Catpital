@@ -774,18 +774,18 @@ model ApiNonce {
 }
 
 // -----------------------------------------------------------------------------
-// 与 Skylbot 的 1:1 货币兑换（Bolívares ⇄ Meuw Coin），由 Catpital 发起
+// 与 Skylbot 的 1:1 货币兑换（Bolívares ⇄ Meow Coin），由 Catpital 发起
 // -----------------------------------------------------------------------------
 
 enum ExchangeDirection {
-  IN // Bolívares → Meuw Coin（充值）
-  OUT // Meuw Coin → Bolívares（兑回）
+  IN // Bolívares → Meow Coin（充值）
+  OUT // Meow Coin → Bolívares（兑回）
 }
 
 enum ExchangeStatus {
   PENDING // 已发起，Skylbot 结果未知（超时 / 断线），由后台对账重试
   COMPLETED
-  FAILED // 明确失败（余额不足等）；OUT 方向已把扣掉的 Meuw Coin 退回
+  FAILED // 明确失败（余额不足等）；OUT 方向已把扣掉的 Meow Coin 退回
 }
 
 model CurrencyExchange {

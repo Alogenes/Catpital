@@ -18,19 +18,19 @@ export interface ExchangeResult {
   direction: 'IN' | 'OUT';
   amount: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
-  /** 兑换后的 Meuw Coin 可用余额 */
+  /** 兑换后的 Meow Coin 可用余额 */
   balance: string;
   /** 兑换后的 bolívares 余额（结果待核对时为 null） */
   bolivares: number | null;
 }
 
 /**
- * Skylbot 的 bolívares ⇄ Catpital 的 Meuw Coin，1:1，由 Catpital 发起，调用 Skylbot 已有的
+ * Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1，由 Catpital 发起，调用 Skylbot 已有的
  * /api/balance/withdraw 与 /api/balance/deposit。
  *
  *   IN（充值）：先让 Skylbot 扣 bolívares，成功后再给 Catpital 记 EXTERNAL_DEPOSIT
- *   OUT（兑回）：先在 Catpital 扣 Meuw Coin（EXTERNAL_WITHDRAW），再让 Skylbot 加 bolívares；
- *                Skylbot 明确拒绝时把 Meuw Coin 退回
+ *   OUT（兑回）：先在 Catpital 扣 Meow Coin（EXTERNAL_WITHDRAW），再让 Skylbot 加 bolívares；
+ *                Skylbot 明确拒绝时把 Meow Coin 退回
  *
  * Skylbot 的接口没有幂等号，重发一次就会再动一次钱，所以绝不自动重试。
  * 超时 / 5xx 时回读一次 Skylbot 余额：正好变动了这笔金额 → 视为成功；完全没变 → 视为失败；
@@ -116,7 +116,7 @@ export class SkylbotExchange {
     }));
   }
 
-  /** Bolívares → Meuw Coin */
+  /** Bolívares → Meow Coin */
   exchangeIn(userId: string, amount: number): Promise<ExchangeResult> {
     const client = this.remote();
     return this.perUser.run(userId, async () => {
@@ -139,12 +139,12 @@ export class SkylbotExchange {
     });
   }
 
-  /** Meuw Coin → Bolívares */
+  /** Meow Coin → Bolívares */
   exchangeOut(userId: string, amount: number): Promise<ExchangeResult> {
     const client = this.remote();
     return this.perUser.run(userId, async () => {
       await this.ensureTable();
-      // 先确认 Skylbot 在线，免得扣了 Meuw Coin 才发现送不出去
+      // 先确认 Skylbot 在线，免得扣了 Meow Coin 才发现送不出去
       const before = await this.balanceOrThrow(client, userId);
       const now = this.clock();
       // 只能动用可用余额，挂单冻结和逐仓保证金不可兑
@@ -204,9 +204,9 @@ export class SkylbotExchange {
 
   /**
    * applied = Skylbot 那边的钱确实已经动了：
-   *   IN  → 补发 Meuw Coin；OUT → 直接完成
+   *   IN  → 补发 Meow Coin；OUT → 直接完成
    * applied = false（钱没动）：
-   *   IN  → 标记失败；OUT → 退回 Meuw Coin
+   *   IN  → 标记失败；OUT → 退回 Meow Coin
    */
   async resolve(id: string, applied: boolean) {
     const rec = await this.db.currencyExchange.findUnique({ where: { id } });

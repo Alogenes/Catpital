@@ -506,8 +506,8 @@
     },
     "exchange": {
       "hint": "Exchanges where Skylbot timed out and the balance didn't add up, so the system couldn't decide on its own. Check the player's Bolívares in Skylbot first, then pick an outcome.",
-      "in": "Top-up: Bolívares → Meuw Coin",
-      "out": "Cash-out: Meuw Coin → Bolívares",
+      "in": "Top-up: Bolívares → Meow Coin",
+      "out": "Cash-out: Meow Coin → Bolívares",
       "applied": "Money moved (credit / complete)",
       "notApplied": "Money didn't move (cancel / refund)",
       "confirm": "Click again to confirm",
@@ -518,9 +518,9 @@
   "shop": {
     "title": "Shop",
     "open": "Top up / exchange",
-    "tabIn": "Top up Meuw Coin",
+    "tabIn": "Top up Meow Coin",
     "tabOut": "Back to Bolívares",
-    "rateNote": "Fixed rate: 1 Bolívar = 1 Meuw Coin. Exchanges count as external funds and do not affect the return leaderboard.",
+    "rateNote": "Fixed rate: 1 Bolívar = 1 Meow Coin. Exchanges count as external funds and do not affect the return leaderboard.",
     "disabled": "Exchange is not available yet (the server is not connected to Skylbot)",
     "skylbotOffline": "Cannot reach Skylbot right now; Bolívares balance unknown",
     "exchange": "Exchange",

@@ -10,10 +10,10 @@ const amountBody = z.object({
 });
 
 /**
- * 货币兑换（/api/v1/exchange）：Skylbot 的 bolívares ⇄ Catpital 的 Meuw Coin，1:1。
+ * 货币兑换（/api/v1/exchange）：Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1。
  *   GET  /      状态、两边余额、最近记录（未配置 Skylbot 时 enabled = false）
- *   POST /in    bolívares → Meuw Coin
- *   POST /out   Meuw Coin → bolívares
+ *   POST /in    bolívares → Meow Coin
+ *   POST /out   Meow Coin → bolívares
  * 结果未知（Skylbot 超时）时返回 202 + status PENDING，后台对账补完后通过钱包推送到账。
  */
 export const exchangeRoutes =
@@ -24,9 +24,9 @@ export const exchangeRoutes =
     app.get('/', async (req) => {
       const userId = req.user.sub;
       const wallet = await core.db.wallet.findUniqueOrThrow({ where: { userId } });
-      if (!core.exchange.enabled) return { enabled: false, rate: 1, meuw: wire(fromDb(wallet.balance)), bolivares: null, history: [] };
+      if (!core.exchange.enabled) return { enabled: false, rate: 1, meow: wire(fromDb(wallet.balance)), bolivares: null, history: [] };
       const [bolivares, history] = await Promise.all([core.exchange.bolivares(userId), core.exchange.history(userId)]);
-      return { enabled: true, rate: 1, meuw: wire(fromDb(wallet.balance)), bolivares, history };
+      return { enabled: true, rate: 1, meow: wire(fromDb(wallet.balance)), bolivares, history };
     });
 
     app.post('/in', async (req, reply) => {

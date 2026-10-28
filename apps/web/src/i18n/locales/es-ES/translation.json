@@ -506,8 +506,8 @@
     },
     "exchange": {
       "hint": "Cambios en los que Skylbot no respondió a tiempo y el saldo no cuadra, así que el sistema no pudo decidir solo. Revisa primero los bolívares del jugador en Skylbot y luego elige qué hacer.",
-      "in": "Recarga: bolívares → Meuw Coin",
-      "out": "Retirada: Meuw Coin → bolívares",
+      "in": "Recarga: bolívares → Meow Coin",
+      "out": "Retirada: Meow Coin → bolívares",
       "applied": "El dinero se movió (abonar / completar)",
       "notApplied": "El dinero no se movió (anular / devolver)",
       "confirm": "Vuelve a pulsar para confirmar",
@@ -518,9 +518,9 @@
   "shop": {
     "title": "Tienda",
     "open": "Recargar / cambiar",
-    "tabIn": "Recargar Meuw Coin",
+    "tabIn": "Recargar Meow Coin",
     "tabOut": "Volver a bolívares",
-    "rateNote": "Cambio fijo: 1 bolívar = 1 Meuw Coin. Los cambios cuentan como fondos externos y no afectan a la clasificación por rentabilidad.",
+    "rateNote": "Cambio fijo: 1 bolívar = 1 Meow Coin. Los cambios cuentan como fondos externos y no afectan a la clasificación por rentabilidad.",
     "disabled": "El cambio aún no está disponible (el servidor no está conectado a Skylbot)",
     "skylbotOffline": "Ahora mismo no se puede contactar con Skylbot; saldo en bolívares desconocido",
     "exchange": "Cambiar",

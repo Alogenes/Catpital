@@ -1,6 +1,6 @@
 # Skylbot ⇄ Catpital 货币兑换
 
-玩家在 Catpital 里点「可用余额」打开商店，用 Skylbot 的 **Bolívares** 1:1 兑换 **Meuw Coin**，也可以兑回去。
+玩家在 Catpital 里点「可用余额」打开商店，用 Skylbot 的 **Bolívares** 1:1 兑换 **Meow Coin**，也可以兑回去。
 破产冷却期间（24 小时只能破产一次），这也是重新拿到本金的正规途径。
 
 ## 配置
@@ -30,7 +30,7 @@ Skylbot 的接口没有请求编号，同一个请求发两次就会扣两次钱
 |---|---|
 | 正常返回 | 两边同时变动 |
 | Bolívares 不够 | 下单前先查余额，不够直接拒绝；Skylbot 返回「Saldo insuficiente」也一样 |
-| 兑回时 Skylbot 报错 | 把扣掉的 Meuw Coin 退回 |
+| 兑回时 Skylbot 报错 | 把扣掉的 Meow Coin 退回 |
 | 超时 / 断线 | 回读一次 Skylbot 余额：正好变动了这笔金额 → 视为成功；没变 → 视为失败；对不上（玩家同时在 Skylbot 里花钱）→ 标记「待核对」 |
 
 「待核对」的兑换出现在管理面板「兑换」页，管理员到 Skylbot 确认钱动没动以后，点「已到账」或「未到账」，系统自动补发或退回。
@@ -39,7 +39,7 @@ Skylbot 的接口没有请求编号，同一个请求发两次就会扣两次钱
 
 `main.py` 的这些接口**没有任何鉴权**，Flask 又监听在 `0.0.0.0:5000`。任何能连上这个端口的人都可以：
 
-- 调 `/api/balance/deposit` 给自己加任意多的 Bolívares，**再到 Catpital 兑成 Meuw Coin**；
+- 调 `/api/balance/deposit` 给自己加任意多的 Bolívares，**再到 Catpital 兑成 Meow Coin**；
 - 调 `/api/all_users` 读取所有玩家数据；
 - 用 `/api/gacha/pull/<id>` 替任何人抽卡、花光他们的钱。
 

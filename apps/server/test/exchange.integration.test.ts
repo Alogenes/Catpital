@@ -68,7 +68,7 @@ let url: string;
 let app: Awaited<ReturnType<typeof buildServer>>;
 const silent = { info: () => {}, warn: () => {}, error: (o: unknown) => console.error(o) };
 const auth = (sub = USER) => ({ authorization: `Bearer ${app.jwt.sign({ sub })}` });
-const meuw = async () => Number((await h.wallet(USER)).balance);
+const meow = async () => Number((await h.wallet(USER)).balance);
 const bolivares = () => Number(fake.balances.get(USER) ?? 0n);
 const exchange = (direction: 'in' | 'out', amount: unknown) =>
   app.inject({ method: 'POST', url: `/api/v1/exchange/${direction}`, headers: auth(), payload: { amount } });
@@ -104,14 +104,14 @@ describe('兑换关闭时', () => {
   });
 });
 
-describe('Bolívares → Meuw Coin', () => {
+describe('Bolívares → Meow Coin', () => {
   it('moves money 1:1 on both sides, with the full-precision Discord id', async () => {
     fake.balances.set(USER, 5000n);
-    const before = await meuw();
+    const before = await meow();
     const r = await exchange('in', '1200');
     expect(r.statusCode).toBe(200);
     expect(r.json()).toMatchObject({ direction: 'IN', status: 'COMPLETED', amount: '1200', bolivares: 3800 });
-    expect(await meuw()).toBe(before + 1200);
+    expect(await meow()).toBe(before + 1200);
     expect(bolivares()).toBe(3800);
     const entry = await h.db.ledgerEntry.findFirstOrThrow({ where: { userId: USER, memo: 'skylbot:in' } });
     expect([entry.type, entry.isExternal]).toEqual(['EXTERNAL_DEPOSIT', true]);
@@ -119,39 +119,39 @@ describe('Bolívares → Meuw Coin', () => {
 
   it('refuses up front when the player does not have enough bolívares', async () => {
     fake.balances.set(USER, 50n);
-    const [before, moves] = [await meuw(), fake.moves];
+    const [before, moves] = [await meow(), fake.moves];
     const r = await exchange('in', 100);
     expect([r.statusCode, r.json().error]).toEqual([409, 'error.exchangeInsufficient']);
-    expect([await meuw(), bolivares(), fake.moves]).toEqual([before, 50, moves]);
+    expect([await meow(), bolivares(), fake.moves]).toEqual([before, 50, moves]);
   });
 
   it('confirms a lost response by re-reading the balance, without sending the request again', async () => {
     fake.balances.set(USER, 1000n);
-    const [before, moves] = [await meuw(), fake.moves];
+    const [before, moves] = [await meow(), fake.moves];
     fake.fault = 'drop';
     const r = await exchange('in', 400);
     expect(r.json()).toMatchObject({ status: 'COMPLETED', bolivares: 600 });
-    expect(await meuw()).toBe(before + 400);
+    expect(await meow()).toBe(before + 400);
     expect(fake.moves - moves).toBe(1); // 绝不重发
   });
 
   it('fails cleanly when Skylbot errors before touching the balance', async () => {
     fake.balances.set(USER, 1000n);
-    const before = await meuw();
+    const before = await meow();
     fake.fault = 'down';
     const r = await exchange('in', 400);
     expect([r.statusCode, r.json().error]).toEqual([503, 'error.exchangeUnavailable']);
-    expect([await meuw(), bolivares()]).toEqual([before, 1000]);
+    expect([await meow(), bolivares()]).toEqual([before, 1000]);
     expect((await lastRecord()).status).toBe('FAILED');
   });
 
   it('parks an unverifiable top-up for the admin, who can then credit it', async () => {
     fake.balances.set(USER, 1000n);
-    const before = await meuw();
+    const before = await meow();
     fake.fault = 'dropBlind';
     const r = await exchange('in', 300);
     expect([r.statusCode, r.json().status]).toEqual([202, 'PENDING']);
-    expect(await meuw()).toBe(before); // 不确定时先不入账
+    expect(await meow()).toBe(before); // 不确定时先不入账
     expect(bolivares()).toBe(700);
 
     const boss = auth(BOSS);
@@ -160,23 +160,23 @@ describe('Bolívares → Meuw Coin', () => {
     expect(pending[0]).toMatchObject({ userId: USER, direction: 'IN', amount: '300', name: 'trader' });
     const resolved = await app.inject({ method: 'POST', url: `/api/v1/panel/exchanges/${pending[0].id}/resolve`, headers: boss, payload: { applied: true } });
     expect(resolved.json()).toEqual({ id: pending[0].id, status: 'COMPLETED' });
-    expect(await meuw()).toBe(before + 300);
+    expect(await meow()).toBe(before + 300);
     // 不能处理两次
     const again = await app.inject({ method: 'POST', url: `/api/v1/panel/exchanges/${pending[0].id}/resolve`, headers: boss, payload: { applied: true } });
     expect(again.statusCode).toBe(409);
-    expect(await meuw()).toBe(before + 300);
+    expect(await meow()).toBe(before + 300);
     // 普通玩家看不到这个接口
     expect((await app.inject({ method: 'GET', url: '/api/v1/panel/exchanges/pending', headers: auth() })).statusCode).toBe(404);
   });
 });
 
-describe('Meuw Coin → Bolívares', () => {
+describe('Meow Coin → Bolívares', () => {
   it('moves money 1:1 and only from the available balance', async () => {
     fake.balances.set(USER, 0n);
-    const before = await meuw();
+    const before = await meow();
     const r = await exchange('out', 500);
     expect(r.json()).toMatchObject({ direction: 'OUT', status: 'COMPLETED', bolivares: 500 });
-    expect([await meuw(), bolivares()]).toEqual([before - 500, 500]);
+    expect([await meow(), bolivares()]).toEqual([before - 500, 500]);
 
     const tooMuch = await exchange('out', before * 10);
     expect([tooMuch.statusCode, tooMuch.json().error]).toEqual([409, 'error.insufficientFunds']);
@@ -185,27 +185,27 @@ describe('Meuw Coin → Bolívares', () => {
 
   it('refunds the coins when Skylbot fails before paying', async () => {
     fake.balances.set(USER, 0n);
-    const before = await meuw();
+    const before = await meow();
     fake.fault = 'down';
     const r = await exchange('out', 250);
     expect([r.statusCode, r.json().error]).toEqual([503, 'error.exchangeUnavailable']);
-    expect([await meuw(), bolivares()]).toEqual([before, 0]);
+    expect([await meow(), bolivares()]).toEqual([before, 0]);
     const inv = await h.assertLedgerInvariant(USER);
     expect(inv.ledgerSum).toBe(inv.balance);
   });
 
   it('parks a cash-out whose balance no longer adds up, and the admin can refund it', async () => {
     fake.balances.set(USER, 100n);
-    const before = await meuw();
+    const before = await meow();
     fake.fault = 'dropRace';
     const r = await exchange('out', 200);
     expect([r.statusCode, r.json().status]).toEqual([202, 'PENDING']);
-    expect(await meuw()).toBe(before - 200); // 已扣，等核对
+    expect(await meow()).toBe(before - 200); // 已扣，等核对
 
     const boss = auth(BOSS);
     const [pending] = (await app.inject({ method: 'GET', url: '/api/v1/panel/exchanges/pending', headers: boss })).json();
     await app.inject({ method: 'POST', url: `/api/v1/panel/exchanges/${pending.id}/resolve`, headers: boss, payload: { applied: false } });
-    expect(await meuw()).toBe(before);
+    expect(await meow()).toBe(before);
     expect((await h.db.currencyExchange.findUniqueOrThrow({ where: { id: pending.id } })).status).toBe('FAILED');
   });
 });
@@ -213,12 +213,12 @@ describe('Meuw Coin → Bolívares', () => {
 describe('Skylbot 连不上', () => {
   it('refuses before moving anything', async () => {
     h.core.exchange = new SkylbotExchange(h.db, h.core.notifier, new SkylbotClient({ url: 'http://127.0.0.1:9', timeoutMs: 500 }), silent, h.clock);
-    const before = await meuw();
+    const before = await meow();
     for (const d of ['in', 'out'] as const) {
       const r = await exchange(d, 10);
       expect([r.statusCode, r.json().error]).toEqual([503, 'error.exchangeUnavailable']);
     }
-    expect(await meuw()).toBe(before);
+    expect(await meow()).toBe(before);
     const state = (await app.inject({ method: 'GET', url: '/api/v1/exchange', headers: auth() })).json();
     expect(state).toMatchObject({ enabled: true, bolivares: null });
   });
@@ -234,14 +234,14 @@ describe('数据库没迁移', () => {
     for (const table of Object.values(tableless)) {
       const db = new Proxy(h.db, { get: (t, k) => (k === 'currencyExchange' ? table : Reflect.get(t, k)) });
       h.core.exchange = new SkylbotExchange(db, h.core.notifier, new SkylbotClient({ url, timeoutMs: 1000 }), silent, h.clock);
-      const before = await meuw();
+      const before = await meow();
       const state = await app.inject({ method: 'GET', url: '/api/v1/exchange', headers: auth() });
       expect([state.statusCode, state.json().error]).toEqual([503, 'error.exchangeNotMigrated']);
       for (const d of ['in', 'out'] as const) {
         const r = await exchange(d, 10);
         expect([r.statusCode, r.json().error]).toEqual([503, 'error.exchangeNotMigrated']);
       }
-      expect(await meuw()).toBe(before);
+      expect(await meow()).toBe(before);
     }
   });
 });
