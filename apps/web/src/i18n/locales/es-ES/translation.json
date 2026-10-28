@@ -378,7 +378,7 @@
     "exchangeDisabled": "El cambio de moneda no está disponible",
     "exchangeInsufficient": "No tienes suficientes bolívares",
     "exchangeRejected": "Skylbot ha rechazado el cambio; no se ha cobrado nada",
-    "bankruptcyCooldown": "⏳ ¡El portal de reencarnación se está enfriando! Solo puedes declararte en quiebra una vez al día. Hoy ya has renacido: usa Cambiar / Recargar para conseguir dinero y seguir conquistando el mercado.",
+    "bankruptcyCooldown": "Solo puedes declararte en quiebra y volver a empezar una vez al día. Hoy ya has renacido, pero aún puedes usar Cambiar / Recargar para conseguir dinero y seguir conquistando el mercado.",
     "exchangeUnavailable": "Ahora mismo no se puede contactar con Skylbot; no se ha cobrado nada",
     "exchangeNotPending": "Este cambio ya se ha resuelto"
   },

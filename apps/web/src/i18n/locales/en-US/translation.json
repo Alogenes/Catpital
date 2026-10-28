@@ -378,7 +378,7 @@
     "exchangeDisabled": "Currency exchange is not available",
     "exchangeInsufficient": "Not enough Bolívares",
     "exchangeRejected": "Skylbot rejected the exchange; nothing was charged",
-    "bankruptcyCooldown": "⏳ The reincarnation portal is cooling down! You can only declare bankruptcy once a day. You've already been reborn today — use Exchange / Top-up to get funds and keep conquering the market!",
+    "bankruptcyCooldown": "You can only declare bankruptcy and start over once a day. You've already been reborn today, but you can still use Exchange / Top-up to get funds and keep conquering the market!",
     "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
     "exchangeNotPending": "This exchange has already been resolved"
   },

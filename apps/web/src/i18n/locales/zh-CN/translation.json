@@ -378,7 +378,7 @@
     "exchangeDisabled": "兑换服务未开放",
     "exchangeInsufficient": "Bolívares 不够",
     "exchangeRejected": "Skylbot 拒绝了这次兑换，已原路退回",
-    "bankruptcyCooldown": "⏳ 轮回通道正在冷却中！每天只能破产重开 1 次。您今天已经重生过了，请使用【兑换/充值】功能获取金钱，继续您的跨服大业！",
+    "bankruptcyCooldown": "每天只能破产重开 1 次。您今天已经重生过了，还可以【兑换/充值】功能获取金钱，继续您的跨服大业！",
     "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
     "exchangeNotPending": "这笔兑换已经处理过了"
   },
