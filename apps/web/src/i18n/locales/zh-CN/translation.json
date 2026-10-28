@@ -540,6 +540,9 @@
       "PENDING": "待核对",
       "COMPLETED": "已到账",
       "FAILED": "失败"
-    }
+    },
+    "notEnough": "余额不足",
+    "loadFailed": "兑换信息加载失败（{{code}}）。如果刚更新过代码，请重启后端。",
+    "retry": "重试"
   }
 }

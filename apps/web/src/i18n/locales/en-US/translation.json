@@ -540,6 +540,9 @@
       "PENDING": "Under review",
       "COMPLETED": "Done",
       "FAILED": "Failed"
-    }
+    },
+    "notEnough": "Not enough",
+    "loadFailed": "Could not load the exchange ({{code}}). If you just updated the code, restart the backend.",
+    "retry": "Retry"
   }
 }

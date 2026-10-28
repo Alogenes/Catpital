@@ -540,6 +540,9 @@
       "PENDING": "En revisión",
       "COMPLETED": "Completado",
       "FAILED": "Fallido"
-    }
+    },
+    "notEnough": "Saldo insuficiente",
+    "loadFailed": "No se ha podido cargar el cambio ({{code}}). Si acabas de actualizar el código, reinicia el backend.",
+    "retry": "Reintentar"
   }
 }
