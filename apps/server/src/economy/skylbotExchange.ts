@@ -31,7 +31,7 @@ export interface ExchangeResult {
 const receivedOf = (r: CurrencyExchange) => fromDb(r.received ?? r.amount);
 
 /**
- * Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 0.0069% 手续费（见 shared 的 exchangeQuote），
+ * Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 1% 手续费（见 shared 的 exchangeQuote），
  * 由 Catpital 发起，调用 Skylbot 已有的 /api/balance/withdraw 与 /api/balance/deposit。
  *
  *   IN（充值）：先让 Skylbot 扣全额 bolívares，成功后再给 Catpital 记 EXTERNAL_DEPOSIT（扣费后，2 位小数）

@@ -4,14 +4,14 @@
 
 ## 手续费
 
-双向收取 **0.0069%**（`packages/shared/src/math/exchange.ts` 的 `EXCHANGE_FEE_RATE`），到账数量的小数直接截断：
+双向收取 **1%**（`packages/shared/src/math/exchange.ts` 的 `EXCHANGE_FEE_RATE`），到账数量的小数直接截断：
 
 | 方向 | 支付 | 到账 |
 |---|---|---|
-| 充值 | 整数 Bolívares，全额从 Skylbot 扣 | Meow Coin = 支付 × 0.999931，保留 2 位小数 |
-| 兑回 | 整数 Meow Coin，全额从 Catpital 扣 | Bolívares = 支付 × 0.999931，只取整数（Skylbot 不支持小数）；不足 1 时拒绝 |
+| 充值 | 整数 Bolívares，全额从 Skylbot 扣 | Meow Coin = 支付 × 0.99，保留 2 位小数 |
+| 兑回 | 整数 Meow Coin，全额从 Catpital 扣 | Bolívares = 支付 × 0.99，只取整数（Skylbot 不支持小数）；不足 1 时拒绝 |
 
-例：充值 1,000 Bs 到账 999.93 Meow Coin；兑回 1,000 Meow Coin 到账 999 Bs。商店里会明文显示费率、这一笔扣多少和实际到账。
+例：充值 1,000 Bs 到账 990 Meow Coin；兑回 1,000 Meow Coin 到账 990 Bs。商店里会明文显示费率、这一笔扣多少和实际到账。
 每笔的到账数量在建单时算好存进记录（`received`），之后补发、核对都按它来。
 破产冷却期间（24 小时只能破产一次），这也是重新拿到本金的正规途径。
 

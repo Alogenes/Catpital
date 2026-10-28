@@ -795,7 +795,7 @@ model CurrencyExchange {
   direction     ExchangeDirection
   /// 玩家支付的数量（整数）
   amount        Decimal           @db.Decimal(36, 8)
-  /// 扣 0.0069% 手续费、截断小数后实际到账的数量；加手续费之前的记录为空（当时 1:1 全额到账）
+  /// 扣 1% 手续费、截断小数后实际到账的数量；加手续费之前的记录为空（当时 1:1 全额到账）
   received      Decimal?          @db.Decimal(36, 8)
   status        ExchangeStatus    @default(PENDING)
   /// Skylbot 返回的兑换后 bolívares 余额

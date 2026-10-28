@@ -11,7 +11,7 @@ import { Modal } from '../common/Modal';
 import { Bolivar, MeowCoin } from './art';
 
 /**
- * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 0.0069% 手续费，小数直接截断。
+ * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 1% 手续费，小数直接截断。
  * 一张简单的兑换表单：上面"支付"、中间明示手续费、下面"实际到账"（与服务端共用 exchangeQuote），结果用 toast 提示。
  * 只用项目已有的 ink / candy 配色和 chip / arcade-btn，没有绝对定位的装饰，窄屏（Discord 活动窗口）也不会叠在一起。
  */
@@ -36,7 +36,7 @@ type Direction = 'in' | 'out';
 /** 与后端 EXCHANGE_MAX_AMOUNT 一致 */
 const MAX_AMOUNT = 10_000_000;
 const QUICK = [1_000, 5_000, 10_000, 50_000];
-/** 手续费百分比，如 "0.0069" */
+/** 手续费百分比，如 "1" */
 const FEE_PCT = EXCHANGE_FEE_RATE.mul(100).toFixed();
 /** 到账显示的小数位：Meow Coin 2 位，bolívares 只有整数 */
 const receivedDp = (direction: 'IN' | 'OUT') => (direction === 'IN' ? 2 : 0);
