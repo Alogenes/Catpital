@@ -380,7 +380,8 @@
     "exchangeRejected": "Skylbot ha rechazado el cambio; no se ha cobrado nada",
     "bankruptcyCooldown": "Solo puedes declararte en quiebra y volver a empezar una vez al día. Hoy ya has renacido, pero aún puedes usar Cambiar / Recargar para conseguir dinero y seguir conquistando el mercado.",
     "exchangeUnavailable": "Ahora mismo no se puede contactar con Skylbot; no se ha cobrado nada",
-    "exchangeNotPending": "Este cambio ya se ha resuelto"
+    "exchangeNotPending": "Este cambio ya se ha resuelto",
+    "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Ejecuta prisma generate y prisma migrate deploy en el servidor y reinicia el backend."
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"

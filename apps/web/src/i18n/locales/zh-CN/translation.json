@@ -380,7 +380,8 @@
     "exchangeRejected": "Skylbot 拒绝了这次兑换，已原路退回",
     "bankruptcyCooldown": "每天只能破产重开 1 次。您今天已经重生过了，还可以【兑换/充值】功能获取金钱，继续您的跨服大业！",
     "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
-    "exchangeNotPending": "这笔兑换已经处理过了"
+    "exchangeNotPending": "这笔兑换已经处理过了",
+    "exchangeNotMigrated": "兑换功能的数据库还没升级：请在服务器上执行 prisma generate 和 prisma migrate deploy，然后重启后端。"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"

@@ -380,7 +380,8 @@
     "exchangeRejected": "Skylbot rejected the exchange; nothing was charged",
     "bankruptcyCooldown": "You can only declare bankruptcy and start over once a day. You've already been reborn today, but you can still use Exchange / Top-up to get funds and keep conquering the market!",
     "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
-    "exchangeNotPending": "This exchange has already been resolved"
+    "exchangeNotPending": "This exchange has already been resolved",
+    "exchangeNotMigrated": "The exchange database has not been upgraded yet. Run prisma generate and prisma migrate deploy on the server, then restart the backend."
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"

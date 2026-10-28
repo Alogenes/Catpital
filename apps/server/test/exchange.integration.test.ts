@@ -1,5 +1,6 @@
 import { type Server, type ServerResponse, createServer } from 'node:http';
 import type { AddressInfo } from 'node:net';
+import { Prisma } from '@prisma/client';
 import { afterAll, beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { SkylbotClient } from '../src/economy/skylbotClient.js';
 import { SkylbotExchange } from '../src/economy/skylbotExchange.js';
@@ -220,6 +221,28 @@ describe('Skylbot 连不上', () => {
     expect(await meuw()).toBe(before);
     const state = (await app.inject({ method: 'GET', url: '/api/v1/exchange', headers: auth() })).json();
     expect(state).toMatchObject({ enabled: true, bolivares: null });
+  });
+});
+
+describe('数据库没迁移', () => {
+  it('reports exchangeNotMigrated instead of an internal error, for a stale client or a missing table', async () => {
+    const missingTable = new Prisma.PrismaClientKnownRequestError('table does not exist', { code: 'P2021', clientVersion: 'test' });
+    const tableless = {
+      stale: undefined,
+      unmigrated: { findFirst: () => Promise.reject(missingTable) },
+    };
+    for (const table of Object.values(tableless)) {
+      const db = new Proxy(h.db, { get: (t, k) => (k === 'currencyExchange' ? table : Reflect.get(t, k)) });
+      h.core.exchange = new SkylbotExchange(db, h.core.notifier, new SkylbotClient({ url, timeoutMs: 1000 }), silent, h.clock);
+      const before = await meuw();
+      const state = await app.inject({ method: 'GET', url: '/api/v1/exchange', headers: auth() });
+      expect([state.statusCode, state.json().error]).toEqual([503, 'error.exchangeNotMigrated']);
+      for (const d of ['in', 'out'] as const) {
+        const r = await exchange(d, 10);
+        expect([r.statusCode, r.json().error]).toEqual([503, 'error.exchangeNotMigrated']);
+      }
+      expect(await meuw()).toBe(before);
+    }
   });
 });
 

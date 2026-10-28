@@ -52,6 +52,42 @@ export class SkylbotExchange {
     return this.client !== null;
   }
 
+  /** 兑换表确认可用后就不再探测 */
+  private tableReady = false;
+
+  /**
+   * 兑换表可用性：迁移没跑（P2021 表不存在）或 Prisma Client 没重新生成（没有 currencyExchange 模型）时
+   * 抛 error.exchangeNotMigrated，而不是笼统的 error.internal。只缓存成功，补跑迁移后无需重启即可恢复。
+   */
+  private async ensureTable() {
+    if (this.tableReady) return;
+    if (!(this.db as Partial<PrismaClient>).currencyExchange) throw new TradeError('error.exchangeNotMigrated', 503);
+    try {
+      await this.db.currencyExchange.findFirst({ select: { id: true } });
+      this.tableReady = true;
+    } catch (err) {
+      if (err instanceof Prisma.PrismaClientKnownRequestError && (err.code === 'P2021' || err.code === 'P2022')) {
+        throw new TradeError('error.exchangeNotMigrated', 503);
+      }
+      throw err;
+    }
+  }
+
+  /** 启动自检：配置了 Skylbot 但兑换表不可用时打一条明确的错误日志（不阻止启动） */
+  async selfCheck() {
+    if (!this.enabled) return;
+    await this.ensureTable().catch((err: unknown) => {
+      if (err instanceof TradeError) {
+        this.log.error(
+          {},
+          'currency exchange table missing: run `pnpm --filter @catpital/server prisma:generate` and `pnpm --filter @catpital/server exec prisma migrate deploy`, then restart',
+        );
+      } else {
+        this.log.warn({ err: (err as Error).message }, 'currency exchange self-check failed');
+      }
+    });
+  }
+
   private remote() {
     if (!this.client) throw new TradeError('error.exchangeDisabled', 503);
     return this.client;
@@ -68,6 +104,7 @@ export class SkylbotExchange {
   }
 
   async history(userId: string, limit = 10) {
+    await this.ensureTable();
     const rows = await this.db.currencyExchange.findMany({ where: { userId }, orderBy: { createdAt: 'desc' }, take: limit });
     return rows.map((r) => ({
       id: r.id,
@@ -83,6 +120,7 @@ export class SkylbotExchange {
   exchangeIn(userId: string, amount: number): Promise<ExchangeResult> {
     const client = this.remote();
     return this.perUser.run(userId, async () => {
+      await this.ensureTable();
       const before = await this.balanceOrThrow(client, userId);
       if (before < amount) throw new TradeError('error.exchangeInsufficient', 409);
       const rec = await this.db.currencyExchange.create({ data: { userId, direction: 'IN', amount: toDb(D(amount)), createdAt: this.clock() } });
@@ -105,6 +143,7 @@ export class SkylbotExchange {
   exchangeOut(userId: string, amount: number): Promise<ExchangeResult> {
     const client = this.remote();
     return this.perUser.run(userId, async () => {
+      await this.ensureTable();
       // 先确认 Skylbot 在线，免得扣了 Meuw Coin 才发现送不出去
       const before = await this.balanceOrThrow(client, userId);
       const now = this.clock();
@@ -146,6 +185,7 @@ export class SkylbotExchange {
   // ---------------------------------------------------------------------------
 
   async listPending() {
+    await this.ensureTable();
     const rows = await this.db.currencyExchange.findMany({
       where: { status: 'PENDING' },
       orderBy: { createdAt: 'asc' },

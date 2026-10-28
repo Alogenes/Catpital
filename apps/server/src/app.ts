@@ -103,6 +103,7 @@ export function createCore({ db, bus, economy, log, clock = () => new Date(), sk
       await risk.load();
       await events.restoreOverrides();
       await leaderboard.ensureBaselines();
+      await exchange.selfCheck();
     },
     /** 启动行情 tick、事件轮询、净值巡检 */
     async startEngines() {
