@@ -1,4 +1,4 @@
-import { D, type Decimal } from '@catpital/shared';
+import { D, type Decimal, exchangeQuote } from '@catpital/shared';
 import { Prisma, type CurrencyExchange, type PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
 import { fromDb, toDb, wire } from '../lib/dec.js';
@@ -16,7 +16,10 @@ export const EXCHANGE_MAX_AMOUNT = 10_000_000;
 export interface ExchangeResult {
   id: string;
   direction: 'IN' | 'OUT';
+  /** 支付的数量 */
   amount: string;
+  /** 扣手续费、截断小数后到账的数量 */
+  received: string;
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   /** 兑换后的 Meow Coin 可用余额 */
   balance: string;
@@ -24,13 +27,17 @@ export interface ExchangeResult {
   bolivares: number | null;
 }
 
+/** 到账数量；加手续费之前的记录没有 received，当时是 1:1 全额到账 */
+const receivedOf = (r: CurrencyExchange) => fromDb(r.received ?? r.amount);
+
 /**
- * Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1，由 Catpital 发起，调用 Skylbot 已有的
- * /api/balance/withdraw 与 /api/balance/deposit。
+ * Skylbot 的 bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 0.0069% 手续费（见 shared 的 exchangeQuote），
+ * 由 Catpital 发起，调用 Skylbot 已有的 /api/balance/withdraw 与 /api/balance/deposit。
  *
- *   IN（充值）：先让 Skylbot 扣 bolívares，成功后再给 Catpital 记 EXTERNAL_DEPOSIT
- *   OUT（兑回）：先在 Catpital 扣 Meow Coin（EXTERNAL_WITHDRAW），再让 Skylbot 加 bolívares；
- *                Skylbot 明确拒绝时把 Meow Coin 退回
+ *   IN（充值）：先让 Skylbot 扣全额 bolívares，成功后再给 Catpital 记 EXTERNAL_DEPOSIT（扣费后，2 位小数）
+ *   OUT（兑回）：先在 Catpital 扣全额 Meow Coin（EXTERNAL_WITHDRAW），再让 Skylbot 加 bolívares（扣费后取整）；
+ *                Skylbot 明确拒绝时把扣掉的 Meow Coin 全额退回
+ *   到账数量在建单时算好存进 received，之后补发 / 核对都按它来，不受费率调整影响
  *
  * Skylbot 的接口没有幂等号，重发一次就会再动一次钱，所以绝不自动重试。
  * 超时 / 5xx 时回读一次 Skylbot 余额：正好变动了这笔金额 → 视为成功；完全没变 → 视为失败；
@@ -110,6 +117,7 @@ export class SkylbotExchange {
       id: r.id,
       direction: r.direction,
       amount: wire(fromDb(r.amount)),
+      received: wire(receivedOf(r)),
       status: r.status,
       error: r.error,
       createdAt: r.createdAt.getTime(),
@@ -123,7 +131,10 @@ export class SkylbotExchange {
       await this.ensureTable();
       const before = await this.balanceOrThrow(client, userId);
       if (before < amount) throw new TradeError('error.exchangeInsufficient', 409);
-      const rec = await this.db.currencyExchange.create({ data: { userId, direction: 'IN', amount: toDb(D(amount)), createdAt: this.clock() } });
+      const { received } = exchangeQuote('IN', amount);
+      const rec = await this.db.currencyExchange.create({
+        data: { userId, direction: 'IN', amount: toDb(D(amount)), received: toDb(received), createdAt: this.clock() },
+      });
       let after: number;
       try {
         after = await client.withdraw(userId, amount);
@@ -133,7 +144,7 @@ export class SkylbotExchange {
         if (outcome === 'not_applied') return this.fail(rec, err);
         after = before - amount;
       }
-      const balance = await this.credit(rec, `skylbot:${rec.id}:in`, 'skylbot:in');
+      const balance = await this.credit(rec, receivedOf(rec), `skylbot:${rec.id}:in`, 'skylbot:in');
       await this.finish(rec.id, 'COMPLETED', { remoteBalance: after });
       return this.result(rec, 'COMPLETED', balance, after);
     });
@@ -142,6 +153,10 @@ export class SkylbotExchange {
   /** Meow Coin → Bolívares */
   exchangeOut(userId: string, amount: number): Promise<ExchangeResult> {
     const client = this.remote();
+    // Skylbot 只收整数：扣费取整后到账不足 1 bolívar 的直接拒绝
+    const { received } = exchangeQuote('OUT', amount);
+    if (received.lt(1)) throw new TradeError('error.exchangeTooSmall', 400);
+    const payout = received.toNumber();
     return this.perUser.run(userId, async () => {
       await this.ensureTable();
       // 先确认 Skylbot 在线，免得扣了 Meow Coin 才发现送不出去
@@ -151,7 +166,9 @@ export class SkylbotExchange {
       const { rec, wallet } = await this.db.$transaction(async (tx) => {
         const w = await lockWallet(tx, userId);
         if (w.balance.lt(amount)) throw new TradeError('error.insufficientFunds', 409);
-        const created = await tx.currencyExchange.create({ data: { userId, direction: 'OUT', amount: toDb(D(amount)), createdAt: now } });
+        const created = await tx.currencyExchange.create({
+          data: { userId, direction: 'OUT', amount: toDb(D(amount)), received: toDb(received), createdAt: now },
+        });
         const life = await getActiveLife(tx, userId);
         const after = await postLedger(
           tx,
@@ -165,15 +182,15 @@ export class SkylbotExchange {
       this.notifier.wallet(userId, wallet);
       let after: number;
       try {
-        after = await client.deposit(userId, amount);
+        after = await client.deposit(userId, payout);
       } catch (err) {
-        const outcome = await this.verify(client, rec, err, before, before + amount);
+        const outcome = await this.verify(client, rec, err, before, before + payout);
         if (outcome === 'unknown') return this.pending(rec, err);
         if (outcome === 'not_applied') {
-          await this.credit(rec, `skylbot:${rec.id}:refund`, 'skylbot:refund');
+          await this.credit(rec, fromDb(rec.amount), `skylbot:${rec.id}:refund`, 'skylbot:refund');
           return this.fail(rec, err);
         }
-        after = before + amount;
+        after = before + payout;
       }
       await this.finish(rec.id, 'COMPLETED', { remoteBalance: after });
       return this.result(rec, 'COMPLETED', await this.walletBalance(userId), after);
@@ -197,6 +214,7 @@ export class SkylbotExchange {
       name: r.user.globalName ?? r.user.username,
       direction: r.direction,
       amount: wire(fromDb(r.amount)),
+      received: wire(receivedOf(r)),
       error: r.error,
       createdAt: r.createdAt.getTime(),
     }));
@@ -204,20 +222,20 @@ export class SkylbotExchange {
 
   /**
    * applied = Skylbot 那边的钱确实已经动了：
-   *   IN  → 补发 Meow Coin；OUT → 直接完成
+   *   IN  → 补发扣费后的 Meow Coin；OUT → 直接完成
    * applied = false（钱没动）：
-   *   IN  → 标记失败；OUT → 退回 Meow Coin
+   *   IN  → 标记失败；OUT → 全额退回 Meow Coin
    */
   async resolve(id: string, applied: boolean) {
     const rec = await this.db.currencyExchange.findUnique({ where: { id } });
     if (!rec || rec.status !== 'PENDING') throw new TradeError('error.exchangeNotPending', 409);
     return this.perUser.run(rec.userId, async () => {
       if (applied) {
-        if (rec.direction === 'IN') await this.credit(rec, `skylbot:${rec.id}:in`, 'skylbot:in');
+        if (rec.direction === 'IN') await this.credit(rec, receivedOf(rec), `skylbot:${rec.id}:in`, 'skylbot:in');
         await this.finish(rec.id, 'COMPLETED', { error: 'resolved by admin' });
         return { id, status: 'COMPLETED' as const };
       }
-      if (rec.direction === 'OUT') await this.credit(rec, `skylbot:${rec.id}:refund`, 'skylbot:refund');
+      if (rec.direction === 'OUT') await this.credit(rec, fromDb(rec.amount), `skylbot:${rec.id}:refund`, 'skylbot:refund');
       await this.finish(rec.id, 'FAILED', { error: 'resolved by admin: not applied' });
       return { id, status: 'FAILED' as const };
     });
@@ -262,12 +280,12 @@ export class SkylbotExchange {
   }
 
   /** 给 Catpital 钱包记一笔外部入账；幂等键保证同一笔不会入账两次 */
-  private async credit(rec: CurrencyExchange, idempotencyKey: string, memo: string): Promise<Decimal> {
+  private async credit(rec: CurrencyExchange, amount: Decimal, idempotencyKey: string, memo: string): Promise<Decimal> {
     try {
       const wallet = await this.db.$transaction(async (tx) => {
         const w = await lockWallet(tx, rec.userId);
         const life = await getActiveLife(tx, rec.userId);
-        return postLedger(tx, w, life.id, [{ type: 'EXTERNAL_DEPOSIT', amount: fromDb(rec.amount), memo, idempotencyKey }], this.clock());
+        return postLedger(tx, w, life.id, [{ type: 'EXTERNAL_DEPOSIT', amount, memo, idempotencyKey }], this.clock());
       });
       this.notifier.wallet(rec.userId, wallet);
       return wallet.balance;
@@ -295,6 +313,6 @@ export class SkylbotExchange {
   }
 
   private result(rec: CurrencyExchange, status: ExchangeResult['status'], balance: Decimal, bolivares: number | null): ExchangeResult {
-    return { id: rec.id, direction: rec.direction, amount: wire(fromDb(rec.amount)), status, balance: wire(balance), bolivares };
+    return { id: rec.id, direction: rec.direction, amount: wire(fromDb(rec.amount)), received: wire(receivedOf(rec)), status, balance: wire(balance), bolivares };
   }
 }

@@ -381,7 +381,8 @@
     "bankruptcyCooldown": "You can only declare bankruptcy and start over once a day. You've already been reborn today, but you can still use Exchange / Top-up to get funds and keep conquering the market!",
     "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
     "exchangeNotPending": "This exchange has already been resolved",
-    "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details."
+    "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details.",
+    "exchangeTooSmall": "Amount too small: less than 1 Bolívar arrives after the fee and rounding down"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -520,7 +521,7 @@
     "open": "Top up / exchange",
     "tabIn": "Top up Meow Coin",
     "tabOut": "Back to Bolívares",
-    "rateNote": "Fixed rate: 1 Bolívar = 1 Meow Coin. Exchanges count as external funds and do not affect the return leaderboard.",
+    "rateNote": "Rate 1:1 with a {{rate}}% fee both ways; fractions are cut off: Bolívares are whole numbers only, Meow Coin keeps 2 decimals. Exchanges count as external funds and do not affect the return leaderboards.",
     "disabled": "Exchange is not available yet (the server is not connected to Skylbot)",
     "skylbotOffline": "Cannot reach Skylbot right now; Bolívares balance unknown",
     "exchange": "Exchange",
@@ -539,6 +540,8 @@
     "receive": "You get",
     "balance": "Balance",
     "max": "Max",
-    "done": "Exchanged: +{{amount}} {{currency}}"
+    "done": "Exchanged: +{{amount}} {{currency}}",
+    "fee": "Fee {{rate}}%",
+    "tooSmall": "Too small: less than 1 after the fee"
   }
 }

@@ -58,7 +58,8 @@ function PositionRow({ p }: { p: PositionView }) {
           <div className="text-xs font-bold">{fmtPct(roe)}</div>
         </div>
       </div>
-      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-xs sm:grid-cols-6">
+      {/* 固定 3 列：卡片宽度取决于所在栏而不是视口，sm:grid-cols-6 在侧栏里放不下 */}
+      <dl className="mt-2 grid grid-cols-3 gap-x-3 gap-y-1 text-xs">
         <Cell label={t('position.qty')} value={fmt(p.quantity, market ? decimalsOf(market.lotSize) : 2)} />
         <Cell label={t('position.entry')} value={fmt(p.entryPrice, dp)} />
         <Cell label={t('position.mark')} value={fmt(last, dp)} />
@@ -160,7 +161,8 @@ export function PositionsPanel() {
   const positions = Object.values(byMarket);
   if (!positions.length) return <p className="py-6 text-center text-sm text-ink-500">{t('position.empty')}</p>;
   return (
-    <div className="grid gap-2 2xl:grid-cols-2">
+    // 一行一个仓位：卡片放在窄侧栏里，按视口宽度分多列会把卡片挤扁、数字叠在一起
+    <div className="grid gap-2">
       {positions.map((p) => (
         <PositionRow key={p.id} p={p} />
       ))}

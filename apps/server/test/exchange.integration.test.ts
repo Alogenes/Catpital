@@ -105,16 +105,17 @@ describe('兑换关闭时', () => {
 });
 
 describe('Bolívares → Meow Coin', () => {
-  it('moves money 1:1 on both sides, with the full-precision Discord id', async () => {
+  it('takes the full amount from Skylbot and credits it minus the 0.0069% fee, truncated to 2 decimals', async () => {
     fake.balances.set(USER, 5000n);
     const before = await meow();
     const r = await exchange('in', '1200');
     expect(r.statusCode).toBe(200);
-    expect(r.json()).toMatchObject({ direction: 'IN', status: 'COMPLETED', amount: '1200', bolivares: 3800 });
-    expect(await meow()).toBe(before + 1200);
+    // 1200 × 0.999931 = 1199.9172 → 1199.91
+    expect(r.json()).toMatchObject({ direction: 'IN', status: 'COMPLETED', amount: '1200', received: '1199.91', bolivares: 3800 });
+    expect(await meow()).toBeCloseTo(before + 1199.91, 8);
     expect(bolivares()).toBe(3800);
     const entry = await h.db.ledgerEntry.findFirstOrThrow({ where: { userId: USER, memo: 'skylbot:in' } });
-    expect([entry.type, entry.isExternal]).toEqual(['EXTERNAL_DEPOSIT', true]);
+    expect([entry.type, entry.isExternal, entry.amount.toString()]).toEqual(['EXTERNAL_DEPOSIT', true, '1199.91']);
   });
 
   it('refuses up front when the player does not have enough bolívares', async () => {
@@ -131,7 +132,7 @@ describe('Bolívares → Meow Coin', () => {
     fake.fault = 'drop';
     const r = await exchange('in', 400);
     expect(r.json()).toMatchObject({ status: 'COMPLETED', bolivares: 600 });
-    expect(await meow()).toBe(before + 400);
+    expect(await meow()).toBeCloseTo(before + 399.97, 8);
     expect(fake.moves - moves).toBe(1); // 绝不重发
   });
 
@@ -157,30 +158,40 @@ describe('Bolívares → Meow Coin', () => {
     const boss = auth(BOSS);
     const pending = (await app.inject({ method: 'GET', url: '/api/v1/panel/exchanges/pending', headers: boss })).json();
     expect(pending).toHaveLength(1);
-    expect(pending[0]).toMatchObject({ userId: USER, direction: 'IN', amount: '300', name: 'trader' });
+    expect(pending[0]).toMatchObject({ userId: USER, direction: 'IN', amount: '300', received: '299.97', name: 'trader' });
     const resolved = await app.inject({ method: 'POST', url: `/api/v1/panel/exchanges/${pending[0].id}/resolve`, headers: boss, payload: { applied: true } });
     expect(resolved.json()).toEqual({ id: pending[0].id, status: 'COMPLETED' });
-    expect(await meow()).toBe(before + 300);
+    expect(await meow()).toBeCloseTo(before + 299.97, 8);
     // 不能处理两次
     const again = await app.inject({ method: 'POST', url: `/api/v1/panel/exchanges/${pending[0].id}/resolve`, headers: boss, payload: { applied: true } });
     expect(again.statusCode).toBe(409);
-    expect(await meow()).toBe(before + 300);
+    expect(await meow()).toBeCloseTo(before + 299.97, 8);
     // 普通玩家看不到这个接口
     expect((await app.inject({ method: 'GET', url: '/api/v1/panel/exchanges/pending', headers: auth() })).statusCode).toBe(404);
   });
 });
 
 describe('Meow Coin → Bolívares', () => {
-  it('moves money 1:1 and only from the available balance', async () => {
+  it('takes the full amount in coins and pays whole bolívares minus the fee, only from the available balance', async () => {
     fake.balances.set(USER, 0n);
     const before = await meow();
     const r = await exchange('out', 500);
-    expect(r.json()).toMatchObject({ direction: 'OUT', status: 'COMPLETED', bolivares: 500 });
-    expect([await meow(), bolivares()]).toEqual([before - 500, 500]);
+    // 500 × 0.999931 = 499.9655 → Skylbot 只收整数 → 499
+    expect(r.json()).toMatchObject({ direction: 'OUT', status: 'COMPLETED', amount: '500', received: '499', bolivares: 499 });
+    expect(await meow()).toBeCloseTo(before - 500, 8);
+    expect(bolivares()).toBe(499);
 
-    const tooMuch = await exchange('out', before * 10);
+    const tooMuch = await exchange('out', Math.floor(before) * 10);
     expect([tooMuch.statusCode, tooMuch.json().error]).toEqual([409, 'error.insufficientFunds']);
-    expect(bolivares()).toBe(500);
+    expect(bolivares()).toBe(499);
+  });
+
+  it('refuses a cash-out that would pay less than 1 bolívar after the fee', async () => {
+    fake.balances.set(USER, 0n);
+    const [before, moves] = [await meow(), fake.moves];
+    const r = await exchange('out', 1); // 0.999931 → 0
+    expect([r.statusCode, r.json().error]).toEqual([400, 'error.exchangeTooSmall']);
+    expect([await meow(), bolivares(), fake.moves]).toEqual([before, 0, moves]);
   });
 
   it('refunds the coins when Skylbot fails before paying', async () => {

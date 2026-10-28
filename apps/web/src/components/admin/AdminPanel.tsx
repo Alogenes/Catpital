@@ -98,6 +98,8 @@ interface PendingExchange {
   name: string;
   direction: 'IN' | 'OUT';
   amount: string;
+  /** 扣手续费后应到账的数量：核对 Skylbot 余额时，兑回方向要按这个数对 */
+  received: string;
   error: string | null;
   createdAt: number;
 }
@@ -136,7 +138,9 @@ function ExchangesTab() {
           <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
             <span className="font-bold">{r.name}</span>
             <span className="font-mono text-[11px] text-ink-500">{r.userId}</span>
-            <span className="ml-auto font-mono text-base font-black">{fmt(r.amount, 0)}</span>
+            <span className="ml-auto font-mono text-base font-black">
+              {fmt(r.amount, 0)} → {fmt(r.received, r.direction === 'IN' ? 2 : 0)}
+            </span>
           </div>
           <div className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-ink-400">
             <span>{t(r.direction === 'IN' ? 'panel.exchange.in' : 'panel.exchange.out')}</span>

@@ -381,7 +381,8 @@
     "bankruptcyCooldown": "每天只能破产重开 1 次。您今天已经重生过了，还可以【兑换/充值】功能获取金钱，继续您的跨服大业！",
     "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
     "exchangeNotPending": "这笔兑换已经处理过了",
-    "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。"
+    "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。",
+    "exchangeTooSmall": "兑换数量太少：扣除手续费、舍去小数后到账不足 1 Bolívar"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -520,7 +521,7 @@
     "open": "充值 / 兑换",
     "tabIn": "充值 Meow Coin",
     "tabOut": "兑回 Bolívares",
-    "rateNote": "汇率固定 1 Bolívar = 1 Meow Coin。兑换计入外部资金，不影响收益率排行榜。",
+    "rateNote": "汇率 1:1，双向收取 {{rate}}% 手续费，小数直接舍去：Bolívares 只到整数，Meow Coin 保留 2 位小数。兑换计入外部资金，不影响收益率排行榜。",
     "disabled": "兑换服务暂未开放（服务器还没有接入 Skylbot）",
     "skylbotOffline": "暂时连不上 Skylbot，Bolívares 余额未知",
     "exchange": "兑换",
@@ -539,6 +540,8 @@
     "receive": "获得",
     "balance": "余额",
     "max": "全部",
-    "done": "兑换成功：+{{amount}} {{currency}}"
+    "done": "兑换成功：+{{amount}} {{currency}}",
+    "fee": "手续费 {{rate}}%",
+    "tooSmall": "数量太少，扣费后到账不足 1"
   }
 }

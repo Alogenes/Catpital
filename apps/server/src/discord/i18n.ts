@@ -34,7 +34,7 @@ const zh = {
     debt: '⚠️ 负债中：可以平仓，但不能开新仓',
     notFound: '你还没有进入过交易大厅，先用 `/launch` 开一局吧！',
     exchangeTitle: '💱 充值再战',
-    exchangeHint: '每天只能破产重开 1 次。没钱了？在交易大厅点「可用余额」，用 Skylbot 的 Bolívares 1:1 兑换 Meow Coin。',
+    exchangeHint: '每天只能破产重开 1 次。没钱了？在交易大厅点「可用余额」，用 Skylbot 的 Bolívares 1:1 兑换 Meow Coin（手续费 0.0069%）。',
   },
   leaderboard: {
     title: '🏆 {{period}} · {{board}}',
@@ -149,7 +149,7 @@ const en: typeof zh = {
     debt: '⚠️ In debt: you can close positions but not open new ones',
     notFound: "You haven't entered the trading floor yet — try `/launch`!",
     exchangeTitle: '💱 Top up and fight on',
-    exchangeHint: 'You can only go bankrupt once a day. Out of money? Click your balance on the trading floor to swap Skylbot Bolívares for Meow Coin, 1:1.',
+    exchangeHint: 'You can only go bankrupt once a day. Out of money? Click your balance on the trading floor to swap Skylbot Bolívares for Meow Coin, 1:1 (0.0069% fee).',
   },
   leaderboard: {
     title: '🏆 {{period}} · {{board}}',
@@ -263,7 +263,7 @@ const es: typeof zh = {
     debt: '⚠️ Endeudado: puedes cerrar posiciones, pero no abrir nuevas',
     notFound: 'Todavía no has entrado en el parqué: ¡prueba con `/launch`!',
     exchangeTitle: '💱 Recarga y sigue luchando',
-    exchangeHint: 'Solo puedes declararte en quiebra una vez al día. ¿Sin dinero? En el parqué pulsa tu saldo y cambia bolívares de Skylbot por Meow Coin, 1:1.',
+    exchangeHint: 'Solo puedes declararte en quiebra una vez al día. ¿Sin dinero? En el parqué pulsa tu saldo y cambia bolívares de Skylbot por Meow Coin, 1:1 (comisión del 0,0069 %).',
   },
   leaderboard: {
     title: '🏆 {{period}} · {{board}}',

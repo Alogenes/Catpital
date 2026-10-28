@@ -1,4 +1,4 @@
-import { D } from '@catpital/shared';
+import { D, EXCHANGE_FEE_RATE, exchangeQuote } from '@catpital/shared';
 import { type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { errorText } from '../../i18n';
@@ -11,8 +11,8 @@ import { Modal } from '../common/Modal';
 import { Bolivar, MeowCoin } from './art';
 
 /**
- * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meow Coin，1:1。
- * 一张简单的兑换表单：上面"支付"、下面"获得"，快捷数量 + 一个兑换按钮，结果用 toast 提示。
+ * 兑换商店：Skylbot 的 Bolívares ⇄ Catpital 的 Meow Coin，1:1，双向收 0.0069% 手续费，小数直接截断。
+ * 一张简单的兑换表单：上面"支付"、中间明示手续费、下面"实际到账"（与服务端共用 exchangeQuote），结果用 toast 提示。
  * 只用项目已有的 ink / candy 配色和 chip / arcade-btn，没有绝对定位的装饰，窄屏（Discord 活动窗口）也不会叠在一起。
  */
 
@@ -21,12 +21,13 @@ interface ExchangeState {
   rate: number;
   meow: string;
   bolivares: number | null;
-  history: Array<{ id: string; direction: 'IN' | 'OUT'; amount: string; status: string; createdAt: number }>;
+  history: Array<{ id: string; direction: 'IN' | 'OUT'; amount: string; received: string; status: string; createdAt: number }>;
 }
 
 interface ExchangeResult {
   status: 'PENDING' | 'COMPLETED' | 'FAILED';
   amount: string;
+  received: string;
   balance: string;
   bolivares: number | null;
 }
@@ -35,6 +36,10 @@ type Direction = 'in' | 'out';
 /** 与后端 EXCHANGE_MAX_AMOUNT 一致 */
 const MAX_AMOUNT = 10_000_000;
 const QUICK = [1_000, 5_000, 10_000, 50_000];
+/** 手续费百分比，如 "0.0069" */
+const FEE_PCT = EXCHANGE_FEE_RATE.mul(100).toFixed();
+/** 到账显示的小数位：Meow Coin 2 位，bolívares 只有整数 */
+const receivedDp = (direction: 'IN' | 'OUT') => (direction === 'IN' ? 2 : 0);
 
 const CURRENCY = {
   meow: { name: 'Meow Coin', Icon: MeowCoin, color: 'text-candy-sun' },
@@ -81,8 +86,12 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
   // 最多能兑多少：充值看 bolívares（拿不到就不拦，交给后端判断），兑回看可用 Meow Coin 的整数部分
   const max = Math.min(MAX_AMOUNT, tab === 'in' ? (bolivares ?? MAX_AMOUNT) : D(liveMeow).floor().toNumber());
   const n = /^\d{1,8}$/.test(amount) ? Number(amount) : 0;
+  const direction = tab === 'in' ? 'IN' : 'OUT';
+  const quote = exchangeQuote(direction, n);
   const enough = n <= max;
-  const canSubmit = available && n > 0 && enough && !busy;
+  // 兑回时扣费取整后可能到账 0（例如只兑 1 Meow Coin），后端会拒绝
+  const tooSmall = n > 0 && quote.received.lte(0);
+  const canSubmit = available && n > 0 && enough && !tooSmall && !busy;
 
   const submit = async () => {
     setBusy(true);
@@ -90,7 +99,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
       const r = await api.post<ExchangeResult>(`/exchange/${tab}`, { amount: String(n) });
       setAmount('');
       if (r.status === 'PENDING') toast('info', t('shop.pendingHint'));
-      else toast('success', t('shop.done', { amount: fmt(r.amount, 0), currency: to.name }));
+      else toast('success', t('shop.done', { amount: fmt(r.received, receivedDp(direction)), currency: to.name }));
       sound.play(r.status === 'PENDING' ? 'click' : 'win');
       setState((s) => (s ? { ...s, bolivares: r.bolivares ?? s.bolivares } : s));
       void load();
@@ -172,11 +181,21 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
           </button>
         </div>
 
-        <p className="my-2 text-center text-xs font-bold text-ink-400">↓ 1 : 1</p>
+        {/* 手续费：明文写出费率和这一笔扣多少 */}
+        <div className="my-2 flex items-center justify-between gap-2 px-1 text-xs font-bold text-ink-400" data-testid="shop-fee">
+          <span>
+            ↓ 1 : 1 · {t('shop.fee', { rate: FEE_PCT })}
+          </span>
+          <span className="font-mono text-ink-200">
+            −{fmt(quote.fee, 2)} {from.name}
+          </span>
+        </div>
 
-        {/* 获得 */}
+        {/* 实际到账 */}
         <Field label={t('shop.receive')} balance={tab === 'in' ? fmt(liveMeow) : bsText} currency={to}>
-          <span className="font-mono text-xl font-black text-ink-100">{n.toLocaleString('en-US')}</span>
+          <span className="font-mono text-xl font-black text-ink-100" data-testid="shop-received">
+            {fmt(quote.received, receivedDp(direction))}
+          </span>
         </Field>
 
         <button
@@ -185,7 +204,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
           className="arcade-btn mt-4 w-full border-[#c99a2e] bg-candy-sun py-2.5 text-ink-950"
           data-testid="shop-submit"
         >
-          {busy ? '…' : n > 0 && !enough ? t('shop.notEnough') : `⚡ ${t('shop.exchange')}`}
+          {busy ? '…' : n > 0 && !enough ? t('shop.notEnough') : tooSmall ? t('shop.tooSmall') : `⚡ ${t('shop.exchange')}`}
         </button>
 
         {/* 兑换记录 */}
@@ -202,8 +221,10 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
             ) : (
               state.history.map((h) => (
                 <li key={h.id} className="flex items-center gap-2 rounded-2xl bg-ink-850 px-3 py-2 text-sm">
-                  <span className="shrink-0 text-xs font-bold text-ink-400">{h.direction === 'IN' ? '→ Meow' : '→ Bs'}</span>
-                  <b className="font-mono">{fmt(h.amount, 0)}</b>
+                  <span className="shrink-0 font-mono text-xs">
+                    <b>{fmt(h.amount, 0)}</b> {h.direction === 'IN' ? 'Bs' : 'Meow'} → <b>{fmt(h.received, receivedDp(h.direction))}</b>{' '}
+                    {h.direction === 'IN' ? 'Meow' : 'Bs'}
+                  </span>
                   <span className="min-w-0 flex-1 truncate text-right text-[11px] text-ink-500">{new Date(h.createdAt).toLocaleString()}</span>
                   <span
                     className={`shrink-0 text-xs font-bold ${h.status === 'COMPLETED' ? 'text-candy-mint' : h.status === 'FAILED' ? 'text-blood' : 'text-candy-sun'}`}
@@ -215,7 +236,7 @@ export default function ExchangeShop({ open, onClose }: { open: boolean; onClose
             )}
           </ol>
         )}
-        <p className="mt-3 text-center text-[11px] text-ink-500">{t('shop.rateNote')}</p>
+        <p className="mt-3 text-center text-[11px] text-ink-500">{t('shop.rateNote', { rate: FEE_PCT })}</p>
       </div>
     </Modal>
   );
