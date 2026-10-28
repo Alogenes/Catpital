@@ -123,6 +123,12 @@ export default defineConfig(({ mode }) => {
           changeOrigin: true,
           rewrite: (p) => p.replace(/^\/\.proxy\/discord-cdn/, ''),
         },
+        // Portal 里没映射 /discord-cdn 时，Discord 把请求按 `/` 转来，路径是 /discord-cdn/...（同 nginx 兜底）
+        '/discord-cdn': {
+          target: 'https://cdn.discordapp.com',
+          changeOrigin: true,
+          rewrite: (p) => p.replace(/^\/discord-cdn/, ''),
+        },
         [apiBase]: { target: apiTarget, changeOrigin: true },
         [wsPath]: { target: apiTarget.replace(/^http/, 'ws'), ws: true },
       },

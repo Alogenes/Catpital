@@ -129,7 +129,8 @@ export class EventScheduler {
   async poll() {
     const now = this.clock();
     const due = await this.db.scheduledEvent.findMany({
-      where: { status: 'PENDING', triggerAt: { lte: now } },
+      // 暂停交易的市场：事件留在 PENDING，恢复后再触发（超过 MAX_LATENESS_MS 仍按过期取消）
+      where: { status: 'PENDING', triggerAt: { lte: now }, market: { status: 'ACTIVE' } },
       orderBy: { triggerAt: 'asc' },
       take: 20,
     });

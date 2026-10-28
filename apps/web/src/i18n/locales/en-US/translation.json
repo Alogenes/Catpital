@@ -117,7 +117,8 @@
     "tpsl": "TP / SL",
     "save": "Save",
     "clear": "Clear",
-    "amount": "Amount"
+    "amount": "Amount",
+    "frozen": "Trading is paused: this position is frozen — it will not be liquidated, and cannot be closed or changed for now"
   },
   "orders": {
     "title": "Open orders",

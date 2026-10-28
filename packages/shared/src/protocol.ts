@@ -7,6 +7,7 @@
  *   danmaku:<CODE>           同股市弹幕
  *   event:<CODE>             该市场的金融快讯
  *   broadcast                全服播报
+ *   markets                  市场状态变更（暂停 / 恢复、历史 K 线被清除）
  *   user                     私有频道（自动订阅，鉴权后生效）
  */
 
@@ -41,6 +42,13 @@ export interface CandlePayload {
   close: string;
   volume: string;
   closed: boolean;
+}
+
+export type MarketStatusCode = 'ACTIVE' | 'HALTED' | 'DELISTED';
+
+export interface MarketUpdatePayload {
+  market: string;
+  status: MarketStatusCode;
 }
 
 export interface DanmakuPayload {
@@ -143,6 +151,7 @@ export type ServerMessage =
   | { ch: `danmaku:${string}`; d: DanmakuPayload }
   | { ch: `event:${string}`; d: MarketEventPayload }
   | { ch: 'broadcast'; d: BroadcastPayload }
+  | { ch: 'markets'; d: MarketUpdatePayload }
   | { ch: 'user'; d: UserEvent }
   | { op: 'hello'; d: { serverTime: number } }
   | { op: 'authed'; d: { userId: string } }

@@ -134,7 +134,8 @@ export class RiskEngine {
 
   async onPrice(marketId: string, price: Decimal, now: Date, ctx: PriceContext = {}) {
     const market = this.markets.get(marketId);
-    if (!market) return;
+    // 暂停交易的市场：持仓冻结，不强平、不触发止盈止损和限价单
+    if (!market || market.status === 'HALTED') return;
     const keys = this.book(marketId).collect(price);
     if (keys.length === 0) return;
 

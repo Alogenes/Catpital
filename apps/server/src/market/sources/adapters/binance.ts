@@ -1,4 +1,5 @@
 import { D } from '@catpital/shared';
+import WebSocket from 'ws';
 import { parseLosslessJson } from '../../../lib/losslessJson.js';
 import type { FeedOptions, FeedQuote, LiveFeed } from './types.js';
 
