@@ -1,7 +1,7 @@
 /**
  * 免 Docker 本地开发：pnpm --filter @catpital/server dev:embedded
  *   - 在 apps/server/.pgdata 启动持久化的 embedded-postgres（端口 54320）
- *   - prisma migrate deploy + 导入种子市场
+ *   - prisma generate（git pull 后 schema 变了也不用手动生成）+ prisma migrate deploy + 导入种子市场
  *   - 启动 API（REDIS_URL 未设置时使用进程内总线）
  */
 import { execSync } from 'node:child_process';
@@ -55,6 +55,12 @@ if (process.env.REDIS_URL) {
 process.env.JWT_SECRET ??= 'dev-secret-change-me';
 process.env.DEV_LOGIN ??= '1';
 const cwd = fileURLToPath(new URL('..', import.meta.url));
+// 生成失败不致命（例如 Windows 上另一个进程正占用查询引擎），沿用已有的客户端继续启动
+try {
+  execSync('npx prisma generate', { stdio: 'inherit', cwd, env: process.env });
+} catch {
+  console.warn('[dev] prisma generate failed — continuing with the existing Prisma Client');
+}
 execSync('npx prisma migrate deploy', { stdio: 'inherit', cwd, env: process.env });
 execSync('npx tsx prisma/seed.ts', { stdio: 'inherit', cwd, env: process.env });
 

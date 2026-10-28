@@ -381,7 +381,7 @@
     "bankruptcyCooldown": "Solo puedes declararte en quiebra y volver a empezar una vez al día. Hoy ya has renacido, pero aún puedes usar Cambiar / Recargar para conseguir dinero y seguir conquistando el mercado.",
     "exchangeUnavailable": "Ahora mismo no se puede contactar con Skylbot; no se ha cobrado nada",
     "exchangeNotPending": "Este cambio ya se ha resuelto",
-    "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Ejecuta prisma generate y prisma migrate deploy en el servidor y reinicia el backend."
+    "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Reinicia el backend (pnpm dev:server y Docker la actualizan al arrancar); consulta el log del backend para más detalles."
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
@@ -520,23 +520,13 @@
     "open": "Recargar / cambiar",
     "tabIn": "Recargar Meuw Coin",
     "tabOut": "Volver a bolívares",
-    "subtitleIn": "Cambia tus bolívares de Skylbot por Meuw Coin, 1:1",
-    "subtitleOut": "Convierte Meuw Coin otra vez en bolívares de Skylbot, 1:1",
     "rateNote": "Cambio fijo: 1 bolívar = 1 Meuw Coin. Los cambios cuentan como fondos externos y no afectan a la clasificación por rentabilidad.",
     "disabled": "El cambio aún no está disponible (el servidor no está conectado a Skylbot)",
     "skylbotOffline": "Ahora mismo no se puede contactar con Skylbot; saldo en bolívares desconocido",
-    "custom": "Cantidad personalizada",
     "exchange": "Cambiar",
     "history": "Historial",
     "noHistory": "Todavía no hay cambios",
-    "confirmTitle": "Confirmar cambio",
-    "cost": "Coste",
-    "cancel": "Cancelar",
-    "confirm": "Confirmar",
-    "rewardTitle": "Has obtenido",
-    "pendingTitle": "Cambio en curso",
     "pendingHint": "Skylbot no ha respondido a tiempo y todavía no se puede confirmar este cambio. Un administrador lo revisará y se abonará o se devolverá; nunca se cobra dos veces.",
-    "tapToClose": "Toca en cualquier sitio para cerrar",
     "status": {
       "PENDING": "En revisión",
       "COMPLETED": "Completado",
@@ -544,6 +534,11 @@
     },
     "notEnough": "Saldo insuficiente",
     "loadFailed": "No se ha podido cargar el cambio ({{code}}). Si acabas de actualizar el código, reinicia el backend.",
-    "retry": "Reintentar"
+    "retry": "Reintentar",
+    "pay": "Pagas",
+    "receive": "Recibes",
+    "balance": "Saldo",
+    "max": "Máx.",
+    "done": "Cambio hecho: +{{amount}} {{currency}}"
   }
 }

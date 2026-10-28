@@ -381,7 +381,7 @@
     "bankruptcyCooldown": "每天只能破产重开 1 次。您今天已经重生过了，还可以【兑换/充值】功能获取金钱，继续您的跨服大业！",
     "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
     "exchangeNotPending": "这笔兑换已经处理过了",
-    "exchangeNotMigrated": "兑换功能的数据库还没升级：请在服务器上执行 prisma generate 和 prisma migrate deploy，然后重启后端。"
+    "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -520,23 +520,13 @@
     "open": "充值 / 兑换",
     "tabIn": "充值 Meuw Coin",
     "tabOut": "兑回 Bolívares",
-    "subtitleIn": "用 Skylbot 的 Bolívares 1:1 兑换 Meuw Coin",
-    "subtitleOut": "把 Meuw Coin 1:1 兑回 Skylbot 的 Bolívares",
     "rateNote": "汇率固定 1 Bolívar = 1 Meuw Coin。兑换计入外部资金，不影响收益率排行榜。",
     "disabled": "兑换服务暂未开放（服务器还没有接入 Skylbot）",
     "skylbotOffline": "暂时连不上 Skylbot，Bolívares 余额未知",
-    "custom": "自定义数量",
     "exchange": "兑换",
     "history": "兑换记录",
     "noHistory": "还没有兑换记录",
-    "confirmTitle": "确认兑换",
-    "cost": "消耗",
-    "cancel": "取消",
-    "confirm": "确认",
-    "rewardTitle": "获得物品",
-    "pendingTitle": "兑换处理中",
     "pendingHint": "Skylbot 没有及时响应，暂时无法确认这笔兑换。管理员核对后会自动到账或退回，不会重复扣款。",
-    "tapToClose": "点击任意处关闭",
     "status": {
       "PENDING": "待核对",
       "COMPLETED": "已到账",
@@ -544,6 +534,11 @@
     },
     "notEnough": "余额不足",
     "loadFailed": "兑换信息加载失败（{{code}}）。如果刚更新过代码，请重启后端。",
-    "retry": "重试"
+    "retry": "重试",
+    "pay": "支付",
+    "receive": "获得",
+    "balance": "余额",
+    "max": "全部",
+    "done": "兑换成功：+{{amount}} {{currency}}"
   }
 }

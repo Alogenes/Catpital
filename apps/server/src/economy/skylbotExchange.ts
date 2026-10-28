@@ -80,7 +80,7 @@ export class SkylbotExchange {
       if (err instanceof TradeError) {
         this.log.error(
           {},
-          'currency exchange table missing: run `pnpm --filter @catpital/server prisma:generate` and `pnpm --filter @catpital/server exec prisma migrate deploy`, then restart',
+          'currency exchange table missing: restart with `pnpm dev:server` (it regenerates the Prisma Client and migrates on start), or against your own database run `pnpm --filter @catpital/server prisma:generate` and `pnpm --filter @catpital/server prisma:migrate:deploy`, then restart',
         );
       } else {
         this.log.warn({ err: (err as Error).message }, 'currency exchange self-check failed');

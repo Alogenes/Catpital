@@ -381,7 +381,7 @@
     "bankruptcyCooldown": "You can only declare bankruptcy and start over once a day. You've already been reborn today, but you can still use Exchange / Top-up to get funds and keep conquering the market!",
     "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
     "exchangeNotPending": "This exchange has already been resolved",
-    "exchangeNotMigrated": "The exchange database has not been upgraded yet. Run prisma generate and prisma migrate deploy on the server, then restart the backend."
+    "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details."
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -520,23 +520,13 @@
     "open": "Top up / exchange",
     "tabIn": "Top up Meuw Coin",
     "tabOut": "Back to Bolívares",
-    "subtitleIn": "Swap your Skylbot Bolívares for Meuw Coin, 1:1",
-    "subtitleOut": "Turn Meuw Coin back into Skylbot Bolívares, 1:1",
     "rateNote": "Fixed rate: 1 Bolívar = 1 Meuw Coin. Exchanges count as external funds and do not affect the return leaderboard.",
     "disabled": "Exchange is not available yet (the server is not connected to Skylbot)",
     "skylbotOffline": "Cannot reach Skylbot right now; Bolívares balance unknown",
-    "custom": "Custom amount",
     "exchange": "Exchange",
     "history": "History",
     "noHistory": "No exchanges yet",
-    "confirmTitle": "Confirm exchange",
-    "cost": "Cost",
-    "cancel": "Cancel",
-    "confirm": "Confirm",
-    "rewardTitle": "Obtained",
-    "pendingTitle": "Exchange in progress",
     "pendingHint": "Skylbot didn't answer in time, so this exchange can't be confirmed yet. An admin will check it and it will be credited or refunded; you'll never be charged twice.",
-    "tapToClose": "Tap anywhere to close",
     "status": {
       "PENDING": "Under review",
       "COMPLETED": "Done",
@@ -544,6 +534,11 @@
     },
     "notEnough": "Not enough",
     "loadFailed": "Could not load the exchange ({{code}}). If you just updated the code, restart the backend.",
-    "retry": "Retry"
+    "retry": "Retry",
+    "pay": "You pay",
+    "receive": "You get",
+    "balance": "Balance",
+    "max": "Max",
+    "done": "Exchanged: +{{amount}} {{currency}}"
   }
 }
