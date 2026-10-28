@@ -21,6 +21,8 @@ export interface MeResponse {
   positions: PositionView[];
   orders: OrderView[];
   bankruptcyAvailable: boolean;
+  /** 破产冷却到期时间（毫秒时间戳）；不在冷却中为 null */
+  bankruptcyCooldownUntil: number | null;
 }
 
 interface SessionStore {
@@ -35,6 +37,7 @@ interface SessionStore {
   positions: Record<string, PositionView>;
   orders: OrderView[];
   bankruptcyAvailable: boolean;
+  bankruptcyCooldownUntil: number | null;
   /** 要展示的履历（破产后弹出） */
   resume: ResumeView | null;
   /**
@@ -65,6 +68,7 @@ export const useSession = create<SessionStore>()((set) => ({
   positions: {},
   orders: [],
   bankruptcyAvailable: false,
+  bankruptcyCooldownUntil: null,
   resume: null,
   settlement: null,
 
@@ -85,6 +89,7 @@ export const useSession = create<SessionStore>()((set) => ({
       positions: Object.fromEntries(me.positions.map((p) => [p.market, p])),
       orders: me.orders,
       bankruptcyAvailable: me.bankruptcyAvailable,
+      bankruptcyCooldownUntil: me.bankruptcyCooldownUntil ?? null,
     });
   },
   setWallet(balance, locked, generation) {

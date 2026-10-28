@@ -60,7 +60,7 @@ function useNotify() {
 
 export default function AdminPanel({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t } = useTranslation();
-  const [tab, setTab] = useState<'events' | 'markets' | 'users'>('events');
+  const [tab, setTab] = useState<'events' | 'markets' | 'users' | 'exchanges'>('events');
   return (
     <Modal open={open} onClose={onClose} className="!max-w-3xl">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-ink-800 bg-ink-900 px-5 py-3">
@@ -75,13 +75,85 @@ export default function AdminPanel({ open, onClose }: { open: boolean; onClose: 
           <button className={chipBtn(tab === 'users')} onClick={() => setTab('users')} data-testid="panel-tab-users">
             👥 {t('panel.tabs.users')}
           </button>
+          <button className={chipBtn(tab === 'exchanges')} onClick={() => setTab('exchanges')} data-testid="panel-tab-exchanges">
+            💱 {t('panel.tabs.exchanges')}
+          </button>
         </div>
         <button className="ml-auto text-ink-400 hover:text-ink-100" onClick={onClose} aria-label={t('settings.close')}>
           ✕
         </button>
       </div>
-      <div className="p-5">{tab === 'events' ? <EventsTab /> : tab === 'markets' ? <MarketsTab /> : <UsersTab />}</div>
+      <div className="p-5">{tab === 'events' ? <EventsTab /> : tab === 'markets' ? <MarketsTab /> : tab === 'exchanges' ? <ExchangesTab /> : <UsersTab />}</div>
     </Modal>
+  );
+}
+
+// =============================================================================
+// Skylbot 兑换核对：超时且余额对不上、系统无法自动判断的兑换
+// =============================================================================
+
+interface PendingExchange {
+  id: string;
+  userId: string;
+  name: string;
+  direction: 'IN' | 'OUT';
+  amount: string;
+  error: string | null;
+  createdAt: number;
+}
+
+function ExchangesTab() {
+  const { t } = useTranslation();
+  const notify = useNotify();
+  const toast = useFeed((s) => s.toast);
+  const [rows, setRows] = useState<PendingExchange[] | null>(null);
+  const [confirm, setConfirm] = useState<string | null>(null);
+  const load = useCallback(() => api.get<PendingExchange[]>('/panel/exchanges/pending').then(setRows).catch(notify), [notify]);
+  useEffect(() => {
+    void load();
+  }, [load]);
+
+  const resolve = async (id: string, applied: boolean) => {
+    const key = `${id}:${applied}`;
+    if (confirm !== key) return setConfirm(key);
+    try {
+      await api.post(`/panel/exchanges/${id}/resolve`, { applied });
+      toast('success', t('panel.exchange.done'));
+    } catch (err) {
+      notify(err);
+    } finally {
+      setConfirm(null);
+      void load();
+    }
+  };
+
+  return (
+    <div className="space-y-3" data-testid="panel-exchanges">
+      <p className="rounded-xl bg-candy-sky/10 px-3 py-2 text-xs text-candy-sky">ℹ {t('panel.exchange.hint')}</p>
+      {rows && rows.length === 0 && <p className="text-sm text-ink-400">{t('panel.exchange.none')}</p>}
+      {rows?.map((r) => (
+        <div key={r.id} className="rounded-2xl border border-ink-700 p-3 text-sm" data-testid={`panel-exchange-${r.id}`}>
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+            <span className="font-bold">{r.name}</span>
+            <span className="font-mono text-[11px] text-ink-500">{r.userId}</span>
+            <span className="ml-auto font-mono text-base font-black">{fmt(r.amount, 0)}</span>
+          </div>
+          <div className="mt-1 flex flex-wrap gap-x-3 text-[11px] text-ink-400">
+            <span>{t(r.direction === 'IN' ? 'panel.exchange.in' : 'panel.exchange.out')}</span>
+            <span className="font-mono">{new Date(r.createdAt).toLocaleString()}</span>
+            {r.error && <span className="font-mono text-ink-500">{r.error}</span>}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            <button className={`${btn} ${confirm === `${r.id}:true` ? 'bg-candy-mint text-ink-950' : 'bg-ink-800 text-candy-mint'}`} onClick={() => void resolve(r.id, true)} onBlur={() => setConfirm(null)}>
+              ✓ {confirm === `${r.id}:true` ? t('panel.exchange.confirm') : t('panel.exchange.applied')}
+            </button>
+            <button className={`${btn} ${confirm === `${r.id}:false` ? 'bg-blood text-white' : 'bg-ink-800 text-blood'}`} onClick={() => void resolve(r.id, false)} onBlur={() => setConfirm(null)}>
+              ✕ {confirm === `${r.id}:false` ? t('panel.exchange.confirm') : t('panel.exchange.notApplied')}
+            </button>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 }
 

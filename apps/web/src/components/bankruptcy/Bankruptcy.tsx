@@ -10,15 +10,58 @@ import { sound } from '../../lib/sound';
 import { useFeed } from '../../stores/feed';
 import { useSession } from '../../stores/session';
 import { Modal } from '../common/Modal';
+import { openShop } from '../shop/openShop';
+import type { MeResponse } from '../../stores/session';
 
 /** 总资产 <= 0 且无持仓无挂单时出现：申请个人破产 */
 export function BankruptcyPrompt() {
   const { t } = useTranslation();
   const available = useSession((s) => s.bankruptcyAvailable);
+  const cooldownUntil = useSession((s) => s.bankruptcyCooldownUntil);
+  const balance = useSession((s) => s.balance);
   const [confirming, setConfirming] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  if (!available) return null;
+  // 兑换充值 / 加钱之后余额变正，就不再是"破产"状态（服务端只在亏光时推送 available = true）
+  if (!available || D(balance).gt(0)) return null;
+
+  /** 冷却信息以服务端为准：破产成功或被冷却拦截后都重新拉一次 */
+  const refreshCooldown = () =>
+    api
+      .get<MeResponse>('/me')
+      .then((me) => useSession.setState({ bankruptcyCooldownUntil: me.bankruptcyCooldownUntil ?? null }))
+      .catch(() => {});
+
+  // 每天只能复活一次：冷却中改为引导去兑换充值
+  if (cooldownUntil && cooldownUntil > Date.now()) {
+    const remaining = Math.ceil((cooldownUntil - Date.now()) / 1000);
+    return (
+      <motion.section
+        initial={{ opacity: 0, y: -8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-candy-sun/60 bg-gradient-to-r from-candy-sun/20 via-ink-900 to-ink-900 p-3"
+        data-testid="bankruptcy-cooldown"
+      >
+        <div className="min-w-0">
+          <h3 className="font-bold text-candy-sun">⏳ {t('bankruptcy.cooldownTitle')}</h3>
+          <p className="mt-0.5 max-w-xl text-xs text-ink-300">{t('error.bankruptcyCooldown')}</p>
+          <p className="mt-1 font-mono text-[11px] text-ink-400">
+            {t('bankruptcy.cooldownLeft', { time: fmtDuration(remaining, t), at: new Date(cooldownUntil).toLocaleString() })}
+          </p>
+        </div>
+        <button
+          className="arcade-btn border-black/25 bg-candy-mint px-4 py-2 text-sm font-bold text-ink-950"
+          onClick={() => {
+            sound.play('click');
+            openShop();
+          }}
+          data-testid="bankruptcy-topup"
+        >
+          💱 {t('bankruptcy.topUp')}
+        </button>
+      </motion.section>
+    );
+  }
 
   const declare = async () => {
     setBusy(true);
@@ -28,8 +71,11 @@ export function BankruptcyPrompt() {
       useSession.getState().setBankruptcyAvailable(false);
       // WS 也会推 resume 事件；这里直接展示，避免依赖网络时序
       useSession.getState().showResume(resume);
+      void refreshCooldown();
     } catch (e) {
-      useFeed.getState().toast('error', errorText(e instanceof ApiError ? e.code : 'error.network'));
+      const code = e instanceof ApiError ? e.code : 'error.network';
+      if (code === 'error.bankruptcyCooldown') void refreshCooldown();
+      useFeed.getState().toast('error', errorText(code));
     } finally {
       setBusy(false);
       setConfirming(false);

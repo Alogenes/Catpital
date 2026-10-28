@@ -21,7 +21,8 @@ export async function main(opts: { afterShutdown?: () => Promise<void> } = {}) {
     warn: (o: unknown, m?: string) => (app ? app.log.warn(o, m) : console.warn(m, o)),
     error: (o: unknown, m?: string) => (app ? app.log.error(o, m) : console.error(m, o)),
   };
-  const core = createCore({ db, bus, economy: env, log });
+  const skylbot = env.SKYLBOT_API_URL ? { url: env.SKYLBOT_API_URL } : null;
+  const core = createCore({ db, bus, economy: env, log, skylbot });
   app = await buildServer(core, env);
 
   await core.init();

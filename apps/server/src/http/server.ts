@@ -13,6 +13,7 @@ import { PanelAccess } from '../admin/panelAccess.js';
 import { adminRoutes } from './routes/admin.js';
 import { authRoutes } from './routes/auth.js';
 import { economyRoutes } from './routes/economy.js';
+import { exchangeRoutes } from './routes/exchange.js';
 import { marketRoutes } from './routes/market.js';
 import { meRoutes } from './routes/me.js';
 import { panelRoutes } from './routes/panel.js';
@@ -82,6 +83,7 @@ export async function buildServer(core: Core, env: HttpEnv) {
       await api.register(marketRoutes(core), { prefix: '/markets' });
       await api.register(meRoutes(core, panel), { prefix: '/me' });
       await api.register(tradeRoutes(core));
+      await api.register(exchangeRoutes(core), { prefix: '/exchange' });
       await api.register(adminRoutes(core), { prefix: '/admin' });
       // 临时管理面板：白名单为空时根本不注册，与不存在的路由无法区分
       if (panel.enabled) await api.register(panelRoutes(core, panel), { prefix: '/panel' });

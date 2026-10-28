@@ -47,6 +47,8 @@ const schema = z.object({
    * 临时管理面板白名单："<Discord UID>:<用户名>,..."；留空 = 面板完全不存在
    */
   ADMIN_PANEL_USERS: z.string().default(''),
+  /** Skylbot（main.py）的 Flask 地址，如 http://127.0.0.1:5000；配置了才开放 Bolívares ⇄ Meuw Coin 兑换 */
+  SKYLBOT_API_URL: z.string().default(''),
   /** 榜单结算开关（多实例部署时只在一个实例开启） */
   LEADERBOARD_SETTLEMENT: z.enum(['0', '1']).default('1'),
   LEADERBOARD_REWARD_DAILY: decimalString.default('1000'),

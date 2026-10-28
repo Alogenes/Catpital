@@ -132,7 +132,8 @@ describe('玩家 A：合并 → 止损 → 100x 被事件跳空斩杀穿仓 → 
     expect(resume.liquidationCount).toBe(1);
     expect(resume.deficitCount).toBe(1);
     expect(s(resume.winRate)).toBe('0');
-    expect(resume.titles).toEqual(['title.speedrun', 'title.deficitKing', 'title.eventVictim']);
+    // 3 分钟内被 100 倍杠杆的事件跳空送走：秒游天地 + 极速升天客 + 穿仓之王
+    expect(resume.titles).toEqual(['title.lightningTour', 'title.rocketLaunch', 'title.deficitKing']);
 
     expect(await h.wallet(A)).toEqual({ balance: '5000', locked: '0' });
     const user = await h.db.user.findUniqueOrThrow({ where: { id: A } });

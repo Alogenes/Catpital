@@ -1,5 +1,6 @@
 import { D, ONE, ZERO } from '@catpital/shared';
 import { describe, expect, it } from 'vitest';
+import { NO_EXTRAS, peakInWindow } from '../src/bankruptcy/lifeExtras.js';
 import { FALLBACK_TITLE, type ResumeStats, evaluateTitles } from '../src/bankruptcy/resumeGenerator.js';
 import { KeyedQueue } from '../src/lib/keyedQueue.js';
 import { parseLosslessJson } from '../src/lib/losslessJson.js';
@@ -241,6 +242,7 @@ describe('KeyedQueue', () => {
 
 describe('evaluateTitles', () => {
   const base: ResumeStats = {
+    ...NO_EXTRAS,
     generation: 1,
     survivedSeconds: 86_400,
     startingBalance: D(10000),
@@ -272,6 +274,37 @@ describe('evaluateTitles', () => {
   it('picks the top three by priority', () => {
     expect(
       evaluateTitles({ ...base, survivedSeconds: 30, avgLeverage: D(88), eventLiquidationCount: 2, deficitCount: 3, longShare: D(1) }),
-    ).toEqual(['title.speedrun', 'title.deficitKing', 'title.eventVictim']);
+    ).toEqual(['title.lightningTour', 'title.deficitKing', 'title.eventVictim']);
+    // 3–10 分钟才是"十分钟速通"，不再和"秒游天地"重复
+    expect(evaluateTitles({ ...base, survivedSeconds: 300 })[0]).toBe('title.speedrun');
+  });
+
+  it('awards the new behaviour-based titles', () => {
+    const only = (patch: Partial<ResumeStats>) => evaluateTitles({ ...base, ...patch });
+    expect(only({ secondsSinceTopUp: 120 })).toEqual(['title.rechargeSpeedrun']);
+    expect(only({ secondsSinceTopUp: 3600 })).toEqual([FALLBACK_TITLE]);
+    expect(only({ peakOrders24h: 51 })).toEqual(['title.perpetualLeek']);
+    expect(only({ peakOrders24h: 50 })).toEqual([FALLBACK_TITLE]);
+    expect(only({ maxLiquidatedLeverage: D(150) })).toEqual(['title.rocketLaunch']);
+    expect(only({ maxLiquidatedLeverage: D(99) })).toEqual([FALLBACK_TITLE]);
+    expect(only({ stubbornDeficits: 1 })).toEqual(['title.diamondHandsBroken']);
+    expect(only({ totalTopUp: D(50_000) })).toEqual(['title.rechargeWhale']);
+    expect(only({ revengeTrades: 3 })).toEqual(['title.revengeTrader']);
+    expect(only({ marginAdds: 5 })).toEqual(['title.marginDonor']);
+    expect(only({ marginAdds: 5, liquidationCount: 0 })).toEqual([FALLBACK_TITLE]);
+    expect(only({ positionCount: 10, stopLossCount: 0, liquidationCount: 3 })).toEqual(['title.nakedTrader']);
+    expect(only({ positionCount: 10, stopLossCount: 1, liquidationCount: 3 })).toEqual([FALLBACK_TITLE]);
+    expect(only({ positionCount: 15, distinctMarkets: 1 })).toEqual(['title.loyalist']);
+    expect(only({ positionCount: 15, distinctMarkets: 2 })).toEqual([FALLBACK_TITLE]);
+  });
+});
+
+describe('peakInWindow', () => {
+  it('finds the busiest 24 hours', () => {
+    const h = 3_600_000;
+    expect(peakInWindow([], 24 * h)).toBe(0);
+    expect(peakInWindow([0, 1, 2], 24 * h)).toBe(3);
+    // 前两单在第 0 小时、第三单在第 24 小时整（已经出了窗口）、后面三单挤在第 30 小时
+    expect(peakInWindow([0, 1, 24 * h, 30 * h, 30 * h + 1, 30 * h + 2], 24 * h)).toBe(4);
   });
 });

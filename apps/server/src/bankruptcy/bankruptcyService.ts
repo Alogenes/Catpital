@@ -6,11 +6,15 @@ import { fromDb, toDb, toDbOpt, wire } from '../lib/dec.js';
 import { getActiveLife } from '../trading/lifeStats.js';
 import { TradeError } from '../trading/types.js';
 import { lockWallet, postLedger } from '../trading/wallet.js';
+import { collectLifeExtras } from './lifeExtras.js';
 import { evaluateTitles, serializeStats, statsFromLife } from './resumeGenerator.js';
+
+/** 破产冷却：距离上一次破产不满 24 小时不能再破产（"每天只能复活 1 次"），这期间只能靠兑换充值再战 */
+export const BANKRUPTCY_COOLDOWN_MS = 24 * 3600 * 1000;
 
 /**
  * 个人破产清算：
- *   1. 校验：无持仓、无挂单、余额 <= dust
+ *   1. 校验：无持仓、无挂单、余额 <= dust、距离上次破产已满 24 小时
  *   2. 汇总"这一世"的 Life 统计 → 生成《股市人生履历》+ 称号
  *   3. 旧世代记账：抹平负债（+W）/ 没收 dust（−dust）→ 余额归零，Life 结束
  *   4. 新世代：generation + 1，发放救济金（+R）
@@ -38,6 +42,14 @@ export class BankruptcyService {
     });
   }
 
+  /** 下一次可以破产的时间；不在冷却中时为 null */
+  async cooldownUntil(userId: string): Promise<Date | null> {
+    const last = await this.db.bankruptcyResume.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } });
+    if (!last) return null;
+    const until = new Date(last.createdAt.getTime() + BANKRUPTCY_COOLDOWN_MS);
+    return until > this.clock() ? until : null;
+  }
+
   async declare(userId: string): Promise<BankruptcyResume> {
     const now = this.clock();
     const result = await this.db.$transaction(async (tx) => {
@@ -53,11 +65,15 @@ export class BankruptcyService {
         dustThreshold: this.economy.BANKRUPTCY_DUST_THRESHOLD,
       });
       if (!eligible) throw new TradeError('error.bankruptcyNotEligible', 409);
+      // 每天只能复活一次：在事务里检查（同一时刻连点两次也只会成功一次，钱包行锁保证串行）
+      const last = await tx.bankruptcyResume.findFirst({ where: { userId }, orderBy: { createdAt: 'desc' }, select: { createdAt: true } });
+      if (last && now.getTime() - last.createdAt.getTime() < BANKRUPTCY_COOLDOWN_MS) throw new TradeError('error.bankruptcyCooldown', 429);
 
       const life = await getActiveLife(tx, userId);
       const settle = bankruptcySettlement(wallet.balance, this.economy.BANKRUPTCY_RELIEF);
       const eventLiquidations = await tx.liquidation.count({ where: { lifeId: life.id, scheduledEventId: { not: null } } });
-      const stats = statsFromLife(life, wallet.balance, now, eventLiquidations);
+      const extras = await collectLifeExtras(tx, life.id, now);
+      const stats = statsFromLife(life, wallet.balance, now, eventLiquidations, extras);
       const titles = evaluateTitles(stats);
 
       // ---- 旧世代：抹债 / 没收 dust → 余额归零 ----

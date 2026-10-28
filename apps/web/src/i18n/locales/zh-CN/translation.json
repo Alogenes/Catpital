@@ -179,7 +179,10 @@
     "relief": "救济金",
     "rebirth": "东山再起",
     "copyLink": "复制战绩",
-    "copied": "已复制"
+    "copied": "已复制",
+    "cooldownTitle": "轮回通道冷却中",
+    "cooldownLeft": "还要等 {{time}}（{{at}} 之后可再次破产）",
+    "topUp": "去兑换充值"
   },
   "title": {
     "didNothing": {
@@ -249,6 +252,46 @@
     "leek": {
       "name": "韭菜",
       "desc": "平平无奇地被割了"
+    },
+    "lightningTour": {
+      "name": "⚡ 秒游天地",
+      "desc": "复活后 3 分钟内又破产"
+    },
+    "rechargeSpeedrun": {
+      "name": "💸 光速打工仔",
+      "desc": "兑换充值后不到 10 分钟就亏光"
+    },
+    "perpetualLeek": {
+      "name": "🤡 永动机韭菜",
+      "desc": "24 小时内下单超过 50 次，依然破产"
+    },
+    "rocketLaunch": {
+      "name": "🚀 极速升天客",
+      "desc": "开 100 倍以上杠杆被强平"
+    },
+    "diamondHandsBroken": {
+      "name": "💎 钻石手骨折",
+      "desc": "亏损的仓位死扛 10 分钟以上，直到穿仓"
+    },
+    "rechargeWhale": {
+      "name": "💳 氪金战神",
+      "desc": "这一世充值 5 万以上，还是破产了"
+    },
+    "revengeTrader": {
+      "name": "😤 上头赌徒",
+      "desc": "3 次以上刚被强平 1 分钟内又下单"
+    },
+    "marginDonor": {
+      "name": "🩹 补仓接盘侠",
+      "desc": "追加保证金 5 次以上，最后还是被强平"
+    },
+    "nakedTrader": {
+      "name": "🩲 裸奔勇士",
+      "desc": "开过 10 个以上仓位从不设止损，被强平 3 次以上"
+    },
+    "loyalist": {
+      "name": "💘 一生只爱一只股",
+      "desc": "15 个以上仓位全押在同一个市场"
     }
   },
   "settings": {
@@ -330,7 +373,13 @@
     "replayedNonce": "重复的请求（nonce 已使用）",
     "badJson": "请求体不是合法 JSON",
     "unknown": "未知错误（{{code}}）",
-    "userExists": "该玩家已存在"
+    "userExists": "该玩家已存在",
+    "exchangeDisabled": "兑换服务未开放",
+    "exchangeInsufficient": "Bolívares 不够",
+    "exchangeRejected": "Skylbot 拒绝了这次兑换，已原路退回",
+    "bankruptcyCooldown": "⏳ 轮回通道正在冷却中！每天只能破产重开 1 次。您今天已经重生过了，请使用【兑换/充值】功能获取金钱，继续您的跨服大业！",
+    "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
+    "exchangeNotPending": "这笔兑换已经处理过了"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -377,7 +426,8 @@
     "tabs": {
       "events": "事件",
       "users": "用户",
-      "markets": "市场"
+      "markets": "市场",
+      "exchanges": "兑换核对"
     },
     "status": {
       "PENDING": "待触发",
@@ -451,6 +501,44 @@
       "clear": "清除",
       "clearConfirm": "再点一次确认（不可恢复）",
       "cleared": "{{code}}：已删除 {{candles}} 根 K 线、{{news}} 条快讯"
+    },
+    "exchange": {
+      "hint": "这里是 Skylbot 超时、余额又对不上，系统没法自动判断的兑换。请先在 Skylbot 里查这个玩家的 Bolívares 有没有变动，再选择处理方式。",
+      "in": "充值：Bolívares → Meuw Coin",
+      "out": "兑回：Meuw Coin → Bolívares",
+      "applied": "钱已动（补发 / 完成）",
+      "notApplied": "钱没动（作废 / 退回）",
+      "confirm": "再点一次确认",
+      "none": "没有待核对的兑换",
+      "done": "已处理"
+    }
+  },
+  "shop": {
+    "title": "商店",
+    "open": "充值 / 兑换",
+    "tabIn": "充值 Meuw Coin",
+    "tabOut": "兑回 Bolívares",
+    "subtitleIn": "用 Skylbot 的 Bolívares 1:1 兑换 Meuw Coin",
+    "subtitleOut": "把 Meuw Coin 1:1 兑回 Skylbot 的 Bolívares",
+    "rateNote": "汇率固定 1 Bolívar = 1 Meuw Coin。兑换计入外部资金，不影响收益率排行榜。",
+    "disabled": "兑换服务暂未开放（服务器还没有接入 Skylbot）",
+    "skylbotOffline": "暂时连不上 Skylbot，Bolívares 余额未知",
+    "custom": "自定义数量",
+    "exchange": "兑换",
+    "history": "兑换记录",
+    "noHistory": "还没有兑换记录",
+    "confirmTitle": "确认兑换",
+    "cost": "消耗",
+    "cancel": "取消",
+    "confirm": "确认",
+    "rewardTitle": "获得物品",
+    "pendingTitle": "兑换处理中",
+    "pendingHint": "Skylbot 没有及时响应，暂时无法确认这笔兑换。管理员核对后会自动到账或退回，不会重复扣款。",
+    "tapToClose": "点击任意处关闭",
+    "status": {
+      "PENDING": "待核对",
+      "COMPLETED": "已到账",
+      "FAILED": "失败"
     }
   }
 }

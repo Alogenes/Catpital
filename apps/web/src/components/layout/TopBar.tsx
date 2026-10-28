@@ -10,10 +10,13 @@ import { useSession } from '../../stores/session';
 import { ResumeHistoryModal } from '../bankruptcy/ResumeHistoryModal';
 import { LeaderboardModal } from '../leaderboard/LeaderboardModal';
 import { Avatar } from '../common/Avatar';
+import { OPEN_SHOP_EVENT } from '../shop/openShop';
 import { WalletPill } from './WalletPill';
 
 // 管理面板单独打包，只有白名单用户点开时才下载
 const AdminPanel = lazy(() => import('../admin/AdminPanel'));
+// 兑换商店同样按需加载
+const ExchangeShop = lazy(() => import('../shop/ExchangeShop'));
 
 export function TopBar({ onSettings }: { onSettings: () => void }) {
   const { t } = useTranslation();
@@ -24,7 +27,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   const positions = useSession((s) => s.positions);
   const prices = useMarkets((s) => s.prices);
   const [ws, setWs] = useState<WsStatus>('connecting');
-  const [modal, setModal] = useState<null | 'leaderboard' | 'history' | 'panel'>(null);
+  const [modal, setModal] = useState<null | 'leaderboard' | 'history' | 'panel' | 'shop'>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   // 点菜单外任意处关闭（header 有 backdrop-filter，内部 fixed 遮罩只能盖住 header，所以用文档级监听）
@@ -37,6 +40,12 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
     return () => document.removeEventListener('pointerdown', onDown);
   }, [menuOpen]);
   useEffect(() => realtime.onStatus(setWs), []);
+  // 其它地方（破产冷却提示等）可以通过事件打开兑换商店
+  useEffect(() => {
+    const onOpen = () => setModal('shop');
+    window.addEventListener(OPEN_SHOP_EVENT, onOpen);
+    return () => window.removeEventListener(OPEN_SHOP_EVENT, onOpen);
+  }, []);
 
   // 净值实时按最新价计算（同后端公式：B + locked + Σ(M + uPnL)）
   const nw = useMemo(
@@ -57,7 +66,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   // 去抖后的净值：吸收持仓/钱包事件到达先后造成的瞬时偏差
   const nwSettled = useSettledValue(nw.toDecimalPlaces(2).toFixed());
   const inDebt = D(balance).lt(0);
-  const open = (m: 'leaderboard' | 'history' | 'panel') => {
+  const open = (m: 'leaderboard' | 'history' | 'panel' | 'shop') => {
     sound.play('click');
     setModal(m);
   };
@@ -95,16 +104,28 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
 
       <div className="flex min-w-0 flex-1 items-center justify-end gap-1.5 md:flex-none md:gap-2.5">
         <WalletPill icon="💰" label={t('wallet.netWorth')} value={nwSettled} mode="netWorth" glow="sun" danger={D(nwSettled).lte(0)} testId="net-worth" />
-        <WalletPill
-          icon="🪙"
-          label={t('wallet.balance')}
-          value={D(balance).toDecimalPlaces(2).toFixed()}
-          mode="balance"
-          glow="grape"
-          danger={inDebt}
-          badge={inDebt ? t('wallet.debt') : undefined}
-          testId="balance"
-        />
+        {/* 点击可用余额 → 兑换商店（像网游的"+"充值按钮） */}
+        <button
+          type="button"
+          onClick={() => open('shop')}
+          className="group relative min-w-0 rounded-xl text-left md:rounded-2xl"
+          title={t('shop.open')}
+          data-testid="open-shop"
+        >
+          <WalletPill
+            icon="🪙"
+            label={t('wallet.balance')}
+            value={D(balance).toDecimalPlaces(2).toFixed()}
+            mode="balance"
+            glow="grape"
+            danger={inDebt}
+            badge={inDebt ? t('wallet.debt') : undefined}
+            testId="balance"
+          />
+          <span className="absolute -right-1.5 -top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 border-ink-950 bg-candy-mint text-sm font-black leading-none text-ink-950 transition-transform group-hover:scale-110 md:h-6 md:w-6">
+            +
+          </span>
+        </button>
         {D(locked).gt(0) && <span className="chip hidden font-mono md:inline-flex">🔒 {D(locked).toFixed(2)}</span>}
         {user && (
           <div className="hidden items-center gap-2 rounded-full bg-ink-850 py-1 pl-1 pr-3 xl:flex">
@@ -182,6 +203,11 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
 
       <LeaderboardModal open={modal === 'leaderboard'} onClose={() => setModal(null)} />
       <ResumeHistoryModal open={modal === 'history'} onClose={() => setModal(null)} />
+      {modal === 'shop' && (
+        <Suspense fallback={null}>
+          <ExchangeShop open onClose={() => setModal(null)} />
+        </Suspense>
+      )}
       {user?.panel && modal === 'panel' && (
         <Suspense fallback={null}>
           <AdminPanel open onClose={() => setModal(null)} />

@@ -14,12 +14,13 @@ export const meRoutes =
     /** 首屏聚合：用户、钱包、净值、全部持仓、挂单、破产资格 */
     app.get('/', async (req) => {
       const userId = req.user.sub;
-      const [user, wallet, positions, orders, life] = await Promise.all([
+      const [user, wallet, positions, orders, life, cooldown] = await Promise.all([
         core.db.user.findUniqueOrThrow({ where: { id: userId } }),
         core.db.wallet.findUniqueOrThrow({ where: { userId } }),
         core.db.position.findMany({ where: { userId, status: 'OPEN' }, include: { market: { select: { code: true } } } }),
         core.db.order.findMany({ where: { userId, status: 'PENDING' }, include: { market: { select: { code: true } } } }),
         core.db.life.findFirst({ where: { userId, status: 'ACTIVE' } }),
+        core.bankruptcy.cooldownUntil(userId),
       ]);
       const balance = fromDb(wallet.balance);
       const locked = fromDb(wallet.locked);
@@ -72,6 +73,8 @@ export const meRoutes =
           pendingOrderCount: orders.length,
           dustThreshold: core.economy.BANKRUPTCY_DUST_THRESHOLD,
         }),
+        /** 破产冷却到期时间（毫秒时间戳）；不在冷却中为 null */
+        bankruptcyCooldownUntil: cooldown?.getTime() ?? null,
       };
     });
 

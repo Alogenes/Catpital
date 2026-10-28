@@ -179,7 +179,10 @@
     "relief": "Ayuda recibida",
     "rebirth": "Volver a empezar",
     "copyLink": "Copiar resumen",
-    "copied": "Copiado"
+    "copied": "Copiado",
+    "cooldownTitle": "Reencarnación en espera",
+    "cooldownLeft": "Disponible de nuevo en {{time}} ({{at}})",
+    "topUp": "Recargar ahora"
   },
   "title": {
     "didNothing": {
@@ -249,6 +252,46 @@
     "leek": {
       "name": "Pringado",
       "desc": "Le esquilaron, nada especial"
+    },
+    "lightningTour": {
+      "name": "⚡ Visto y no visto",
+      "desc": "Otra vez en quiebra a los 3 minutos de resucitar"
+    },
+    "rechargeSpeedrun": {
+      "name": "💸 Currito exprés",
+      "desc": "Perdió una recarga en menos de 10 minutos"
+    },
+    "perpetualLeek": {
+      "name": "🤡 Pringado de movimiento perpetuo",
+      "desc": "Más de 50 órdenes en 24 horas y aun así en quiebra"
+    },
+    "rocketLaunch": {
+      "name": "🚀 Ascensión exprés",
+      "desc": "Liquidado con un apalancamiento de 100x o más"
+    },
+    "diamondHandsBroken": {
+      "name": "💎 Manos de diamante rotas",
+      "desc": "Aguantó una posición perdedora más de 10 minutos hasta quedar en negativo"
+    },
+    "rechargeWhale": {
+      "name": "💳 Señor de las recargas",
+      "desc": "Recargó más de 50.000 en esta vida y aun así quebró"
+    },
+    "revengeTrader": {
+      "name": "😤 Ludópata calentón",
+      "desc": "Volvió a operar al minuto de una liquidación, 3 veces o más"
+    },
+    "marginDonor": {
+      "name": "🩹 Alimentador de márgenes",
+      "desc": "Añadió margen 5 veces o más y lo liquidaron igual"
+    },
+    "nakedTrader": {
+      "name": "🩲 Operador en pelotas",
+      "desc": "Más de 10 posiciones, nunca un stop loss, 3 liquidaciones o más"
+    },
+    "loyalist": {
+      "name": "💘 Romántico de un solo valor",
+      "desc": "Más de 15 posiciones, todas en el mismo mercado"
     }
   },
   "settings": {
@@ -330,7 +373,13 @@
     "replayedNonce": "Petición repetida (el nonce ya se ha usado)",
     "badJson": "El cuerpo de la petición no es JSON válido",
     "userExists": "Ese jugador ya existe",
-    "unknown": "Error desconocido ({{code}})"
+    "unknown": "Error desconocido ({{code}})",
+    "exchangeDisabled": "El cambio de moneda no está disponible",
+    "exchangeInsufficient": "No tienes suficientes bolívares",
+    "exchangeRejected": "Skylbot ha rechazado el cambio; no se ha cobrado nada",
+    "bankruptcyCooldown": "⏳ ¡El portal de reencarnación se está enfriando! Solo puedes declararte en quiebra una vez al día. Hoy ya has renacido: usa Cambiar / Recargar para conseguir dinero y seguir conquistando el mercado.",
+    "exchangeUnavailable": "Ahora mismo no se puede contactar con Skylbot; no se ha cobrado nada",
+    "exchangeNotPending": "Este cambio ya se ha resuelto"
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
@@ -377,7 +426,8 @@
     "tabs": {
       "events": "Eventos",
       "users": "Usuarios",
-      "markets": "Mercados"
+      "markets": "Mercados",
+      "exchanges": "Cambios"
     },
     "status": {
       "PENDING": "Pendiente",
@@ -451,6 +501,44 @@
       "clear": "Borrar",
       "clearConfirm": "Vuelve a pulsar para confirmar (irreversible)",
       "cleared": "{{code}}: se han borrado {{candles}} velas y {{news}} noticias"
+    },
+    "exchange": {
+      "hint": "Cambios en los que Skylbot no respondió a tiempo y el saldo no cuadra, así que el sistema no pudo decidir solo. Revisa primero los bolívares del jugador en Skylbot y luego elige qué hacer.",
+      "in": "Recarga: bolívares → Meuw Coin",
+      "out": "Retirada: Meuw Coin → bolívares",
+      "applied": "El dinero se movió (abonar / completar)",
+      "notApplied": "El dinero no se movió (anular / devolver)",
+      "confirm": "Vuelve a pulsar para confirmar",
+      "none": "No hay nada que revisar",
+      "done": "Resuelto"
+    }
+  },
+  "shop": {
+    "title": "Tienda",
+    "open": "Recargar / cambiar",
+    "tabIn": "Recargar Meuw Coin",
+    "tabOut": "Volver a bolívares",
+    "subtitleIn": "Cambia tus bolívares de Skylbot por Meuw Coin, 1:1",
+    "subtitleOut": "Convierte Meuw Coin otra vez en bolívares de Skylbot, 1:1",
+    "rateNote": "Cambio fijo: 1 bolívar = 1 Meuw Coin. Los cambios cuentan como fondos externos y no afectan a la clasificación por rentabilidad.",
+    "disabled": "El cambio aún no está disponible (el servidor no está conectado a Skylbot)",
+    "skylbotOffline": "Ahora mismo no se puede contactar con Skylbot; saldo en bolívares desconocido",
+    "custom": "Cantidad personalizada",
+    "exchange": "Cambiar",
+    "history": "Historial",
+    "noHistory": "Todavía no hay cambios",
+    "confirmTitle": "Confirmar cambio",
+    "cost": "Coste",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "rewardTitle": "Has obtenido",
+    "pendingTitle": "Cambio en curso",
+    "pendingHint": "Skylbot no ha respondido a tiempo y todavía no se puede confirmar este cambio. Un administrador lo revisará y se abonará o se devolverá; nunca se cobra dos veces.",
+    "tapToClose": "Toca en cualquier sitio para cerrar",
+    "status": {
+      "PENDING": "En revisión",
+      "COMPLETED": "Completado",
+      "FAILED": "Fallido"
     }
   }
 }

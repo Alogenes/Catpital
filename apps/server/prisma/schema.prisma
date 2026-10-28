@@ -184,6 +184,7 @@ model User {
   liquidations  Liquidation[]
   resumes       BankruptcyResume[]
   transfers     ExternalTransfer[]
+  exchanges     CurrencyExchange[]
   periodStats   LeaderboardPeriodStat[]
   snapshots     LeaderboardSnapshot[]
   createdEvents ScheduledEvent[]
@@ -770,4 +771,40 @@ model ApiNonce {
 
   @@index([createdAt])
   @@map("api_nonces")
+}
+
+// -----------------------------------------------------------------------------
+// 与 Skylbot 的 1:1 货币兑换（Bolívares ⇄ Meuw Coin），由 Catpital 发起
+// -----------------------------------------------------------------------------
+
+enum ExchangeDirection {
+  IN // Bolívares → Meuw Coin（充值）
+  OUT // Meuw Coin → Bolívares（兑回）
+}
+
+enum ExchangeStatus {
+  PENDING // 已发起，Skylbot 结果未知（超时 / 断线），由后台对账重试
+  COMPLETED
+  FAILED // 明确失败（余额不足等）；OUT 方向已把扣掉的 Meuw Coin 退回
+}
+
+model CurrencyExchange {
+  /// 同时作为发给 Skylbot 的 ref：同一笔兑换重试多少次，Skylbot 只会动一次钱
+  id            String            @id @default(cuid())
+  userId        String
+  direction     ExchangeDirection
+  amount        Decimal           @db.Decimal(36, 8)
+  status        ExchangeStatus    @default(PENDING)
+  /// Skylbot 返回的兑换后 bolívares 余额
+  remoteBalance Decimal?          @db.Decimal(36, 8)
+  error         String?
+  attempts      Int               @default(1)
+  createdAt     DateTime          @default(now())
+  completedAt   DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+  @@map("currency_exchanges")
 }

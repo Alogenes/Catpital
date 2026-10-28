@@ -179,7 +179,10 @@
     "relief": "Relief funds",
     "rebirth": "Rise again",
     "copyLink": "Copy summary",
-    "copied": "Copied"
+    "copied": "Copied",
+    "cooldownTitle": "Reincarnation on cooldown",
+    "cooldownLeft": "Available again in {{time}} ({{at}})",
+    "topUp": "Top up now"
   },
   "title": {
     "didNothing": {
@@ -249,6 +252,46 @@
     "leek": {
       "name": "Bagholder",
       "desc": "Got harvested, nothing special"
+    },
+    "lightningTour": {
+      "name": "⚡ Blink-and-Gone",
+      "desc": "Bankrupt again within 3 minutes of respawning"
+    },
+    "rechargeSpeedrun": {
+      "name": "💸 Paycheck Speedrunner",
+      "desc": "Lost a fresh top-up in under 10 minutes"
+    },
+    "perpetualLeek": {
+      "name": "🤡 Perpetual-Motion Bagholder",
+      "desc": "Placed over 50 orders in 24 hours and still went broke"
+    },
+    "rocketLaunch": {
+      "name": "🚀 Express Ascension",
+      "desc": "Liquidated at 100x leverage or more"
+    },
+    "diamondHandsBroken": {
+      "name": "💎 Broken Diamond Hands",
+      "desc": "Held a losing position for 10+ minutes until it went negative"
+    },
+    "rechargeWhale": {
+      "name": "💳 Top-Up Warlord",
+      "desc": "Topped up 50,000+ this life and still went broke"
+    },
+    "revengeTrader": {
+      "name": "😤 Tilted Gambler",
+      "desc": "Back in within a minute of a liquidation, 3+ times"
+    },
+    "marginDonor": {
+      "name": "🩹 Margin Feeder",
+      "desc": "Added margin 5+ times and got liquidated anyway"
+    },
+    "nakedTrader": {
+      "name": "🩲 Naked Trader",
+      "desc": "10+ positions, never a stop loss, 3+ liquidations"
+    },
+    "loyalist": {
+      "name": "💘 One-Stock Romantic",
+      "desc": "15+ positions, all in the same market"
     }
   },
   "settings": {
@@ -330,7 +373,13 @@
     "replayedNonce": "Replayed request (nonce already used)",
     "badJson": "Request body is not valid JSON",
     "unknown": "Unknown error ({{code}})",
-    "userExists": "That player already exists"
+    "userExists": "That player already exists",
+    "exchangeDisabled": "Currency exchange is not available",
+    "exchangeInsufficient": "Not enough Bolívares",
+    "exchangeRejected": "Skylbot rejected the exchange; nothing was charged",
+    "bankruptcyCooldown": "⏳ The reincarnation portal is cooling down! You can only declare bankruptcy once a day. You've already been reborn today — use Exchange / Top-up to get funds and keep conquering the market!",
+    "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
+    "exchangeNotPending": "This exchange has already been resolved"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -377,7 +426,8 @@
     "tabs": {
       "events": "Events",
       "users": "Users",
-      "markets": "Markets"
+      "markets": "Markets",
+      "exchanges": "Exchanges"
     },
     "status": {
       "PENDING": "Pending",
@@ -451,6 +501,44 @@
       "clear": "Clear",
       "clearConfirm": "Click again to confirm (irreversible)",
       "cleared": "{{code}}: deleted {{candles}} candles and {{news}} news items"
+    },
+    "exchange": {
+      "hint": "Exchanges where Skylbot timed out and the balance didn't add up, so the system couldn't decide on its own. Check the player's Bolívares in Skylbot first, then pick an outcome.",
+      "in": "Top-up: Bolívares → Meuw Coin",
+      "out": "Cash-out: Meuw Coin → Bolívares",
+      "applied": "Money moved (credit / complete)",
+      "notApplied": "Money didn't move (cancel / refund)",
+      "confirm": "Click again to confirm",
+      "none": "Nothing to review",
+      "done": "Resolved"
+    }
+  },
+  "shop": {
+    "title": "Shop",
+    "open": "Top up / exchange",
+    "tabIn": "Top up Meuw Coin",
+    "tabOut": "Back to Bolívares",
+    "subtitleIn": "Swap your Skylbot Bolívares for Meuw Coin, 1:1",
+    "subtitleOut": "Turn Meuw Coin back into Skylbot Bolívares, 1:1",
+    "rateNote": "Fixed rate: 1 Bolívar = 1 Meuw Coin. Exchanges count as external funds and do not affect the return leaderboard.",
+    "disabled": "Exchange is not available yet (the server is not connected to Skylbot)",
+    "skylbotOffline": "Cannot reach Skylbot right now; Bolívares balance unknown",
+    "custom": "Custom amount",
+    "exchange": "Exchange",
+    "history": "History",
+    "noHistory": "No exchanges yet",
+    "confirmTitle": "Confirm exchange",
+    "cost": "Cost",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "rewardTitle": "Obtained",
+    "pendingTitle": "Exchange in progress",
+    "pendingHint": "Skylbot didn't answer in time, so this exchange can't be confirmed yet. An admin will check it and it will be credited or refunded; you'll never be charged twice.",
+    "tapToClose": "Tap anywhere to close",
+    "status": {
+      "PENDING": "Under review",
+      "COMPLETED": "Done",
+      "FAILED": "Failed"
     }
   }
 }

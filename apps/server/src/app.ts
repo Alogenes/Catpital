@@ -5,6 +5,8 @@ import { Notifier } from './broadcast/notifier.js';
 import type { EconomyConfig } from './config/env.js';
 import type { Bus } from './infra/bus.js';
 import { EconomyService } from './economy/economyService.js';
+import { SkylbotClient, type SkylbotConfig } from './economy/skylbotClient.js';
+import { SkylbotExchange } from './economy/skylbotExchange.js';
 import { LeaderboardService } from './leaderboard/leaderboardService.js';
 import { LeaderboardSettlement } from './leaderboard/settlement.js';
 import { KeyedQueue } from './lib/keyedQueue.js';
@@ -28,13 +30,15 @@ export interface CoreOptions {
   economy: EconomyConfig;
   log: Logger;
   clock?: () => Date;
+  /** 与 Skylbot 的货币兑换；不传 = 关闭 */
+  skylbot?: SkylbotConfig | SkylbotClient | null;
 }
 
 /**
  * 组合根：按依赖顺序装配全部核心服务（不含 HTTP / WS）。
  * main.ts 与集成测试共用，保证测试跑的就是生产装配。
  */
-export function createCore({ db, bus, economy, log, clock = () => new Date() }: CoreOptions) {
+export function createCore({ db, bus, economy, log, clock = () => new Date(), skylbot = null }: CoreOptions) {
   const queue = new KeyedQueue();
   const notifier = new Notifier(bus, db);
   const markets = new MarketRegistry(db, queue, notifier, log, clock);
@@ -64,6 +68,14 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
   );
   /** 临时管理面板：用户管理 */
   const admin = new AdminService(db, users, markets, risk, notifier, clock);
+  /** Skylbot bolívares ⇄ Meuw Coin 兑换 */
+  const exchange = new SkylbotExchange(
+    db,
+    notifier,
+    skylbot instanceof SkylbotClient ? skylbot : skylbot ? new SkylbotClient(skylbot) : null,
+    log,
+    clock,
+  );
   let baselineTimer: NodeJS.Timeout | null = null;
 
   return {
@@ -84,6 +96,7 @@ export function createCore({ db, bus, economy, log, clock = () => new Date() }: 
     bank,
     settlement,
     admin,
+    exchange,
     /** 加载市场与风控索引（不启动定时器） */
     async init() {
       await markets.load();

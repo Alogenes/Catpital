@@ -76,6 +76,8 @@ export interface WalletCardData {
   /** 轮回天赋：榜单限定称号 key（badge.*）+ 历世破产称号 key（title.*），已去重 */
   badges: string[];
   pastTitles: string[];
+  /** 服务器接入了 Skylbot 兑换时显示「充值再战」提示 */
+  exchangeEnabled?: boolean;
 }
 
 export function walletEmbed(locale: BotLocale, d: WalletCardData) {
@@ -94,6 +96,7 @@ export function walletEmbed(locale: BotLocale, d: WalletCardData) {
   if (D(d.locked).gt(0)) embed.addFields({ name: t.locked, value: money(d.locked), inline: true });
   embed.addFields({ name: t.talents, value: talents.length ? talents.slice(0, 12).join('\n') : t.noTalents });
   if (inDebt) embed.setDescription(t.debt);
+  if (d.exchangeEnabled) embed.addFields({ name: t.exchangeTitle, value: t.exchangeHint });
   return embed;
 }
 

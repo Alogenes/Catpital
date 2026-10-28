@@ -125,6 +125,17 @@ export const panelRoutes =
       return result;
     });
 
+    // ---------------------------------------------------------------- Skylbot 兑换核对
+    /** 结果不确定（Skylbot 超时且余额对不上）的兑换，等管理员到 Skylbot 核对后处理 */
+    app.get('/exchanges/pending', async () => core.exchange.listPending());
+
+    app.post<{ Params: { id: string } }>('/exchanges/:id/resolve', async (req) => {
+      const b = z.object({ applied: z.boolean() }).parse(req.body);
+      const r = await core.exchange.resolve(req.params.id, b.applied);
+      req.log.info({ admin: req.user.sub, ...r, applied: b.applied }, 'admin resolved skylbot exchange');
+      return r;
+    });
+
     // ---------------------------------------------------------------- 用户
     app.get('/users', async (req) => {
       const q = z.object({ q: z.string().trim().max(64).default('') }).parse(req.query);

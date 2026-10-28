@@ -185,6 +185,7 @@ async function wallet(core: Core, ctx: CommandContext): Promise<Reply> {
     positions,
     badges,
     pastTitles,
+    exchangeEnabled: core.exchange.enabled,
   });
   return { embeds: [embed], ephemeral };
 }
