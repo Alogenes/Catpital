@@ -70,7 +70,7 @@
     "tier": {
       "safe": "🌱 Tranqui",
       "spicy": "⚡ Picante",
-      "degen": "🔥 DEGEN"
+      "degen": "🔥 VICIOSO"
     },
     "amount": "Margen a invertir",
     "amountHint": "comisiones incluidas",
@@ -93,7 +93,7 @@
       "long": "🚀 Largo en {{code}} · {{lev}}x",
       "short": "📉 Corto en {{code}} · {{lev}}x"
     },
-    "highLevWarn": "¡Modo DEGEN! Un hueco de precio puede llevarse más que tu margen y comerse tu saldo",
+    "highLevWarn": "¡Modo VICIOSO! Un hueco de precio puede llevarse más que tu margen y comerse tu saldo",
     "impactPump": "Ballena dispara +{{pct}} %",
     "impactDump": "Ballena hunde -{{pct}} %"
   },
@@ -407,7 +407,10 @@
     "unranked": "Sin clasificar",
     "ineligible": "Necesitas ≥ {{min}} al inicio del periodo para clasificar",
     "resetsAt": "El periodo termina {{time}}",
-    "formulaHint": "Sin contar ingresos ni ayudas, mínimo inicial {{min}}"
+    "formulaHint": "Sin contar ingresos ni ayudas, mínimo inicial {{min}}",
+    "prev": "Anterior",
+    "next": "Siguiente",
+    "page": "Página {{page}} / {{total}} · {{count}} jugadores"
   },
   "history": {
     "title": "Vidas pasadas",
@@ -543,5 +546,27 @@
     "done": "Cambio hecho: +{{amount}} {{currency}}",
     "fee": "Comisión {{rate}} %",
     "tooSmall": "Muy poco: llega menos de 1 tras la comisión"
+  },
+  "profile": {
+    "open": "Ver perfil del jugador",
+    "joined": "Se unió el {{date}}",
+    "axes": {
+      "profitability": "Rentabilidad",
+      "risk": "Riesgo",
+      "activity": "Actividad",
+      "survival": "Supervivencia",
+      "chat": "Charla"
+    },
+    "winRate": "Acierto {{pct}} % · {{n}} operaciones cerradas",
+    "noTrades": "Aún no ha cerrado operaciones",
+    "avgLeverage": "Apalancamiento medio {{x}}x · {{n}} posiciones",
+    "noPositions": "Aún no ha abierto posiciones",
+    "tradesPerDay": "{{x}} operaciones al día · {{n}} en total",
+    "survival": "Vive {{time}} de media · {{n}} quiebras",
+    "survivalAlive": "Nunca ha quebrado · lleva {{time}} vivo",
+    "danmakuPerDay": "{{x}} mensajes al día · {{n}} en total",
+    "hours": "{{n}} h",
+    "days": "{{n}} días",
+    "note": "Cuenta todas las vidas; puntuación 0–100, cuesta más subir cuanto más alta"
   }
 }

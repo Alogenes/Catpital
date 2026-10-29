@@ -6,8 +6,10 @@ import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 
 /** 市场吉祥物（未知代码按类型兜底） */
-const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙', NVDA: '🎮' };
-export const mascotOf = (code: string, kind?: string) => MASCOT[code] ?? (kind === 'CRYPTO' ? '💎' : '📈');
+const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙', EURUSD: '💶' };
+export const mascotOf = (code: string, kind?: string) => MASCOT[code] ?? (kind === 'CRYPTO' ? '💎' : kind === 'FOREX' ? '💱' : '📈');
+/** 展示用代码：外汇对加斜杠（EURUSD → EUR/USD）；接口、URL 里仍用不带斜杠的代码 */
+export const codeLabel = (code: string, kind?: string) => (kind === 'FOREX' && code.length === 6 ? `${code.slice(0, 3)}/${code.slice(3)}` : code);
 
 /** 市场切换卡片：吉祥物、最新价、涨跌幅、是否持仓 */
 export function MarketTabs() {
@@ -39,7 +41,7 @@ export function MarketTabs() {
             } ${closed ? 'opacity-60' : ''}`}
           >
             <span>{mascotOf(m.code, m.kind)}</span>
-            {m.code}
+            {codeLabel(m.code, m.kind)}
             {positions[m.code] && <span className={`h-1.5 w-1.5 rounded-full ${positions[m.code]!.side === 'LONG' ? 'bg-up' : 'bg-down'}`} />}
             <span className={`font-mono text-[10px] ${change.gte(0) ? 'text-up' : 'text-down'}`}>{fmtPct(change, 1)}</span>
           </button>
@@ -69,7 +71,7 @@ export function MarketTabs() {
             <span className={`text-2xl ${active ? 'animate-bob' : ''}`}>{mascotOf(m.code, m.kind)}</span>
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1 text-sm font-extrabold">
-                {m.code}
+                {codeLabel(m.code, m.kind)}
                 {pos && <span className={`h-2 w-2 rounded-full ${pos.side === 'LONG' ? 'bg-up' : 'bg-down'}`} title={pos.side} />}
                 {closed && <span className="text-[10px]">💤</span>}
               </span>

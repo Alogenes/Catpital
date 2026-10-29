@@ -159,44 +159,53 @@
     "sortOrder": 4
   },
   {
-    "code": "NVDA",
-    "name": "英伟达（实时）",
+    "code": "EURUSD",
+    "name": "欧元/美元（实时）",
     "nameI18n": {
-      "zh-CN": "英伟达（实时）",
-      "en-US": "NVIDIA (Live)",
-      "es-ES": "NVIDIA (en vivo)"
+      "zh-CN": "欧元/美元（实时）",
+      "en-US": "Euro / US Dollar (Live)",
+      "es-ES": "Euro / dólar estadounidense (en vivo)"
     },
-    "kind": "STOCK",
+    "kind": "FOREX",
     "dataSource": "LIVE_API",
     "adapterKey": "yahoo",
-    "adapterSymbol": "NVDA",
+    "adapterSymbol": "EURUSD=X",
     "status": "ACTIVE",
     "tradingHours": {
       "timezone": "America/New_York",
       "sessions": [
         {
           "days": [
+            7,
             1,
             2,
             3,
-            4,
-            5
+            4
           ],
-          "open": "09:30",
-          "close": "16:00"
+          "open": "17:00",
+          "close": "17:00"
         }
       ]
     },
     "tickIntervalMs": 1000,
-    "tickSize": "0.01",
-    "lotSize": "0.01",
+    "tickSize": "0.00001",
+    "lotSize": "1",
     "minNotional": "10",
-    "maxLeverage": "20",
-    "maintenanceMarginRate": "0.01",
-    "makerFeeRate": "0.0003",
-    "takerFeeRate": "0.001",
+    "maxLeverage": "100",
+    "maintenanceMarginRate": "0.004",
+    "makerFeeRate": "0.00002",
+    "takerFeeRate": "0.00005",
     "liquidationFeeRate": "0.002",
-    "initialPrice": "210.96",
-    "sortOrder": 5
+    "initialPrice": "1.12000",
+    "sortOrder": 5,
+    "engine": {
+      "drift": "0",
+      "volatility": "0.08",
+      "jumpIntensity": "0",
+      "baseVolume": "1000000",
+      "volumeVolCoupling": "1",
+      "timeScale": "10",
+      "priceFloor": "0.5"
+    }
   }
 ]

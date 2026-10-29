@@ -7,7 +7,7 @@ import { decimalsOf, fmt, fmtPct, fmtSigned, parseDec, sanitizeDecimalInput } fr
 import { useFeed } from '../../stores/feed';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
-import { mascotOf } from '../layout/MarketTabs';
+import { codeLabel, mascotOf } from '../layout/MarketTabs';
 
 async function act(fn: () => Promise<unknown>, okText?: string) {
   try {
@@ -47,7 +47,7 @@ function PositionRow({ p }: { p: PositionView }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="text-xl">{mascotOf(p.market, market?.kind)}</span>
-          <span className="font-extrabold">{p.market}</span>
+          <span className="font-extrabold">{codeLabel(p.market, market?.kind)}</span>
           <span className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white ${p.side === 'LONG' ? 'bg-up' : 'bg-down'}`}>
             {p.side === 'LONG' ? '📈' : '📉'} {t(`position.${p.side}`)}
           </span>

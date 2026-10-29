@@ -19,6 +19,7 @@ import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 import { useSettings } from '../../stores/settings';
 import { useTradePreview } from '../../stores/tradePreview';
+import { codeLabel } from '../layout/MarketTabs';
 
 type Side = 'BUY' | 'SELL';
 
@@ -148,7 +149,7 @@ export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; l
 <>
       <header className="flex items-center justify-between">
         <h2 className="text-base font-extrabold">⚡ {t('order.title')}</h2>
-        <span className="chip font-mono">{market.code}</span>
+        <span className="chip font-mono">{codeLabel(market.code, market.kind)}</span>
       </header>
 
 </>  );

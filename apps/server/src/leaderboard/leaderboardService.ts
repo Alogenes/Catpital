@@ -19,7 +19,13 @@ export interface BoardResult {
   board: LeaderboardBoard;
   periodEnd: number;
   minCapital: string;
+  /** 当前页的条目（第 page 页，每页 pageSize 条） */
   entries: BoardEntry[];
+  page: number;
+  pageSize: number;
+  /** 上榜总人数 */
+  total: number;
+  totalPages: number;
   /** 查看者自己的名次（不在前 N 名时也返回）；收益率榜不满足门槛时 rank = null */
   me: { rank: number | null; value: string | null; eligible: boolean } | null;
   updatedAt: number;
@@ -110,7 +116,8 @@ export class LeaderboardService {
     }
   }
 
-  async board(period: LeaderboardPeriod, board: LeaderboardBoard, viewerId?: string, limit = 20): Promise<BoardResult> {
+  /** page 从 1 开始；超出范围时夹到最后一页 */
+  async board(period: LeaderboardPeriod, board: LeaderboardBoard, viewerId?: string, limit = 20, page = 1): Promise<BoardResult> {
     const cacheKey = `${period}:${board}`;
     const hit = this.cache.get(cacheKey);
     let computed = hit && this.clock().getTime() - hit.at < CACHE_MS ? hit.computed : null;
@@ -118,7 +125,7 @@ export class LeaderboardService {
       computed = await this.compute(period, board);
       this.cache.set(cacheKey, { at: this.clock().getTime(), computed });
     }
-    return this.withViewer(computed, viewerId, limit);
+    return this.withViewer(computed, viewerId, limit, page);
   }
 
   /** 清空缓存（测试用） */
@@ -185,6 +192,10 @@ export class LeaderboardService {
         periodEnd: w.end.getTime(),
         minCapital: wire(this.minCapital),
         entries,
+        page: 1,
+        pageSize: entries.length,
+        total: entries.length,
+        totalPages: 1,
         me: null,
         updatedAt: now.getTime(),
       },
@@ -192,11 +203,18 @@ export class LeaderboardService {
     };
   }
 
-  private withViewer({ result: base, ineligible }: Computed, viewerId: string | undefined, limit: number): BoardResult {
+  private withViewer({ result: base, ineligible }: Computed, viewerId: string | undefined, limit: number, page: number): BoardResult {
     const mine = viewerId ? base.entries.find((e) => e.userId === viewerId) : undefined;
+    const total = base.entries.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const current = Math.min(Math.max(1, page), totalPages);
     return {
       ...base,
-      entries: base.entries.slice(0, limit),
+      entries: base.entries.slice((current - 1) * limit, current * limit),
+      page: current,
+      pageSize: limit,
+      total,
+      totalPages,
       me: viewerId
         ? mine
           ? { rank: mine.rank, value: mine.value, eligible: true }

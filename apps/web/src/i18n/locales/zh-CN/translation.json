@@ -407,7 +407,10 @@
     "unranked": "未上榜",
     "ineligible": "期初本金需 ≥ {{min}} 才能上榜",
     "resetsAt": "本期结束于 {{time}}",
-    "formulaHint": "已剔除充值/救济金等外部资金，期初本金 ≥ {{min}}"
+    "formulaHint": "已剔除充值/救济金等外部资金，期初本金 ≥ {{min}}",
+    "prev": "上一页",
+    "next": "下一页",
+    "page": "第 {{page}} / {{total}} 页 · 共 {{count}} 人"
   },
   "history": {
     "title": "人生履历",
@@ -543,5 +546,27 @@
     "done": "兑换成功：+{{amount}} {{currency}}",
     "fee": "手续费 {{rate}}%",
     "tooSmall": "数量太少，扣费后到账不足 1"
+  },
+  "profile": {
+    "open": "查看玩家主页",
+    "joined": "{{date}} 加入",
+    "axes": {
+      "profitability": "盈利能力",
+      "risk": "风险偏好",
+      "activity": "活跃度",
+      "survival": "生存力",
+      "chat": "话痨度"
+    },
+    "winRate": "胜率 {{pct}}% · 共平仓 {{n}} 笔",
+    "noTrades": "还没平过仓",
+    "avgLeverage": "平均杠杆 {{x}}x · 开过 {{n}} 个仓位",
+    "noPositions": "还没开过仓",
+    "tradesPerDay": "日均 {{x}} 笔 · 共 {{n}} 笔",
+    "survival": "平均每世活 {{time}} · 破产 {{n}} 次",
+    "survivalAlive": "从没破产过 · 已经活了 {{time}}",
+    "danmakuPerDay": "日均 {{x}} 条弹幕 · 共 {{n}} 条",
+    "hours": "{{n}} 小时",
+    "days": "{{n}} 天",
+    "note": "统计全部轮回；分数 0–100，越往上越难涨"
   }
 }

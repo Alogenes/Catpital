@@ -6,7 +6,7 @@ import { decimalsOf, fmt, fmtPct } from '../../lib/format';
 import { focusMarket } from '../../realtime/bridge';
 import { useMarkets } from '../../stores/markets';
 import { type ChartType, type Interval, useSettings } from '../../stores/settings';
-import { mascotOf } from '../layout/MarketTabs';
+import { codeLabel, mascotOf } from '../layout/MarketTabs';
 import { DanmakuInput } from '../social/DanmakuInput';
 import { DanmakuLayer } from './DanmakuLayer';
 import { PriceChart } from './PriceChart';
@@ -33,7 +33,7 @@ export function PriceTicker({ market }: { market: MarketInfo }) {
       <span className="flex items-center gap-1.5">
         <span className="text-xl md:text-2xl">{mascotOf(market.code, market.kind)}</span>
         <span className="leading-tight">
-          <span className="block text-base font-black tracking-wide">{market.code}</span>
+          <span className="block text-base font-black tracking-wide">{codeLabel(market.code, market.kind)}</span>
           <span className="hidden text-[11px] text-ink-400 md:block">{name}</span>
         </span>
       </span>

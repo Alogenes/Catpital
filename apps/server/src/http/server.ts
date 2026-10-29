@@ -17,6 +17,7 @@ import { exchangeRoutes } from './routes/exchange.js';
 import { marketRoutes } from './routes/market.js';
 import { meRoutes } from './routes/me.js';
 import { panelRoutes } from './routes/panel.js';
+import { profileRoutes } from './routes/profile.js';
 import { tradeRoutes } from './routes/trade.js';
 
 declare module '@fastify/jwt' {
@@ -84,6 +85,7 @@ export async function buildServer(core: Core, env: HttpEnv) {
       await api.register(meRoutes(core, panel), { prefix: '/me' });
       await api.register(tradeRoutes(core));
       await api.register(exchangeRoutes(core), { prefix: '/exchange' });
+      await api.register(profileRoutes(core), { prefix: '/users' });
       await api.register(adminRoutes(core), { prefix: '/admin' });
       // 临时管理面板：白名单为空时根本不注册，与不存在的路由无法区分
       if (panel.enabled) await api.register(panelRoutes(core, panel), { prefix: '/panel' });

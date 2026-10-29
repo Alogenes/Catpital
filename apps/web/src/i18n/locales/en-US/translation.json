@@ -407,7 +407,10 @@
     "unranked": "Not ranked",
     "ineligible": "Need ≥ {{min}} at period start to rank",
     "resetsAt": "Period ends {{time}}",
-    "formulaHint": "Deposits & relief funds excluded, min. start {{min}}"
+    "formulaHint": "Deposits & relief funds excluded, min. start {{min}}",
+    "prev": "Prev",
+    "next": "Next",
+    "page": "Page {{page}} / {{total}} · {{count}} players"
   },
   "history": {
     "title": "Past lives",
@@ -543,5 +546,27 @@
     "done": "Exchanged: +{{amount}} {{currency}}",
     "fee": "Fee {{rate}}%",
     "tooSmall": "Too small: less than 1 after the fee"
+  },
+  "profile": {
+    "open": "View player profile",
+    "joined": "Joined {{date}}",
+    "axes": {
+      "profitability": "Profitability",
+      "risk": "Risk appetite",
+      "activity": "Activity",
+      "survival": "Survivability",
+      "chat": "Chattiness"
+    },
+    "winRate": "Win rate {{pct}}% · {{n}} closed trades",
+    "noTrades": "No closed trades yet",
+    "avgLeverage": "Avg leverage {{x}}x · {{n}} positions",
+    "noPositions": "No positions yet",
+    "tradesPerDay": "{{x}} trades a day · {{n}} total",
+    "survival": "Lives {{time}} on average · {{n}} bankruptcies",
+    "survivalAlive": "Never bankrupt · alive for {{time}}",
+    "danmakuPerDay": "{{x}} chat messages a day · {{n}} total",
+    "hours": "{{n}} h",
+    "days": "{{n}} days",
+    "note": "All lives counted; scores 0–100, harder to raise the higher they get"
   }
 }

@@ -290,6 +290,40 @@ export class OrderService {
     });
   }
 
+  /**
+   * 下架市场（系统操作，如 NVDA 换成 EUR/USD）：撤掉全部挂单退回冻结资金，全部持仓按最新价平仓，最后标记 DELISTED。
+   * 不受交易时段 / 暂停限制。幂等：市场已下架（启动时不会加载）就返回 null。
+   */
+  async retireMarket(code: string) {
+    const m = this.markets.byCode(code);
+    if (!m) return null;
+    const pending = await this.db.order.findMany({ where: { marketId: m.id, status: 'PENDING' }, select: { id: true, userId: true } });
+    for (const o of pending) await this.cancelOrder(o.userId, o.id);
+    return this.queue.run(m.id, async () => {
+      const now = this.clock();
+      const price = this.markets.price(m.id) ?? fromDb((await this.db.market.findUniqueOrThrow({ where: { id: m.id } })).lastPrice);
+      const positions = await this.db.position.findMany({ where: { marketId: m.id, status: 'OPEN' } });
+      for (const pos of positions) {
+        const out = await this.executor.executeFill({
+          userId: pos.userId,
+          market: m,
+          side: pos.side === 'LONG' ? 'SELL' : 'BUY',
+          quantity: fromDb(pos.quantity),
+          price,
+          leverage: ONE,
+          reduceOnly: true,
+          liquidity: 'TAKER',
+          source: 'USER',
+          now,
+          enforceMinNotional: false,
+        });
+        await this.risk.afterFill(out, m);
+      }
+      await this.db.market.update({ where: { id: m.id }, data: { status: 'DELISTED' } });
+      return { marketId: m.id, code: m.code, price: price.toFixed(), cancelledOrders: pending.length, closedPositions: positions.length };
+    });
+  }
+
   /** 设置 / 修改 / 清除止盈止损（undefined = 不变，null = 清除） */
   async setTpSl(userId: string, marketCode: string, tp: Decimal | null | undefined, sl: Decimal | null | undefined) {
     const m = this.market(marketCode);

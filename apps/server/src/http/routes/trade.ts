@@ -75,13 +75,14 @@ export const tradeRoutes =
       return rows.map(resumeView);
     });
 
-    /** 实时榜单（当前周期）。带登录态时额外返回查看者自己的名次 */
+    /** 实时榜单（当前周期），分页（page 从 1 开始，limit 为每页条数）。带登录态时额外返回查看者自己的名次 */
     app.get('/leaderboard', async (req) => {
       const q = z
         .object({
           period: z.enum(['DAILY', 'WEEKLY', 'MONTHLY']).default('DAILY'),
           board: z.enum(['RETURN_PCT', 'NET_WORTH']).default('RETURN_PCT'),
           limit: z.coerce.number().int().min(1).max(100).default(20),
+          page: z.coerce.number().int().min(1).default(1),
         })
         .parse(req.query);
       let viewer: string | undefined;
@@ -92,7 +93,7 @@ export const tradeRoutes =
           /* 未登录也能看榜 */
         }
       }
-      return core.leaderboard.board(q.period, q.board, viewer, q.limit);
+      return core.leaderboard.board(q.period, q.board, viewer, q.limit, q.page);
     });
 
     /** 最近的全服播报（前端跑马灯首屏数据；之后由 WS broadcast 频道实时追加） */

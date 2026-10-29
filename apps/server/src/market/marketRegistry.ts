@@ -257,4 +257,13 @@ export class MarketRegistry {
   async stopAll() {
     await Promise.all([...this.engines.values()].map((e) => e.stop()));
   }
+
+  /** 下架后从内存目录移除：引擎停掉，按代码 / id 都查不到 */
+  async unregister(marketId: string) {
+    await this.engines.get(marketId)?.stop();
+    const snap = this.snapshots.get(marketId);
+    if (snap) this.codes.delete(snap.code.toUpperCase());
+    this.snapshots.delete(marketId);
+    this.engines.delete(marketId);
+  }
 }

@@ -8,7 +8,7 @@ export const marketSeedSchema = z.object({
   code: z.string().regex(/^[A-Z0-9_-]{1,32}$/),
   name: z.string(),
   nameI18n: z.record(z.string()).default({}),
-  kind: z.enum(['STOCK', 'CRYPTO']),
+  kind: z.enum(['STOCK', 'CRYPTO', 'FOREX']),
   dataSource: z.enum(['PROCEDURAL', 'LIVE_API']).default('PROCEDURAL'),
   status: z.enum(['ACTIVE', 'HALTED', 'DELISTED']).default('ACTIVE'),
   adapterKey: z.string().optional(),

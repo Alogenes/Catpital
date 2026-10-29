@@ -45,7 +45,7 @@ export interface MarketInfo {
   code: string;
   name: string;
   nameI18n: Record<string, string>;
-  kind: 'STOCK' | 'CRYPTO';
+  kind: 'STOCK' | 'CRYPTO' | 'FOREX';
   dataSource: 'PROCEDURAL' | 'LIVE_API';
   /** 外部行情市场：live = 真实报价，fallback = 外部源不可用、临时模拟；程序随机市场为 null */
   feed?: 'live' | 'fallback' | null;
@@ -119,8 +119,30 @@ export interface LeaderboardResponse {
   periodEnd: number;
   minCapital: string;
   entries: Array<{ rank: number; userId: string; name: string; avatarHash: string | null; generation: number; value: string }>;
+  page: number;
+  pageSize: number;
+  total: number;
+  totalPages: number;
   me: { rank: number | null; value: string | null; eligible: boolean } | null;
   updatedAt: number;
+}
+
+/** 玩家主页：五维雷达图（0–100 分）+ 原始数据，见服务端 users/playerProfile.ts */
+export interface PlayerProfile {
+  user: { id: string; name: string; avatarHash: string | null; generation: number; joinedAt: number };
+  scores: { profitability: number; risk: number; activity: number; survival: number; chat: number };
+  raw: {
+    winRate: number | null;
+    closedTrades: number;
+    avgLeverage: number | null;
+    positions: number;
+    tradesPerDay: number;
+    trades: number;
+    survivalHours: number;
+    bankruptcies: number;
+    danmakuPerDay: number;
+    danmaku: number;
+  };
 }
 
 export interface CandleRow {

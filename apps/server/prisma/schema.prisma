@@ -27,6 +27,7 @@ datasource db {
 enum MarketKind {
   STOCK
   CRYPTO
+  FOREX // 外汇（如 EUR/USD）
 }
 
 enum MarketDataSource {

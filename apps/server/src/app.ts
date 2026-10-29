@@ -24,6 +24,9 @@ export type Logger = {
   error: (obj: unknown, msg?: string) => void;
 };
 
+/** 已下架的市场：启动时平掉残留持仓、退回挂单后标记 DELISTED（NVDA 已换成 EURUSD） */
+export const RETIRED_MARKETS = ['NVDA'];
+
 export interface CoreOptions {
   db: PrismaClient;
   bus: Bus;
@@ -80,6 +83,8 @@ export function createCore({ db, bus, economy, log, clock = () => new Date(), sk
 
   return {
     db,
+    /** 统一时钟：测试里可控，HTTP 路由取“现在”也用它 */
+    clock,
     bus,
     economy,
     queue,
@@ -101,6 +106,12 @@ export function createCore({ db, bus, economy, log, clock = () => new Date(), sk
     async init() {
       await markets.load();
       await risk.load();
+      for (const code of RETIRED_MARKETS) {
+        const retired = await orders.retireMarket(code);
+        if (!retired) continue;
+        await markets.unregister(retired.marketId);
+        log.info(retired, 'market retired');
+      }
       await events.restoreOverrides();
       await leaderboard.ensureBaselines();
       await exchange.selfCheck();
