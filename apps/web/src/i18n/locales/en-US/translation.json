@@ -576,15 +576,15 @@
   },
   "picker": {
     "title": "Markets",
-    "hint": "Tap a market to add or remove it; {{min}}–{{max}} of them show in the top bar",
+    "hint": "Tap to add or remove; {{min}}–{{max}} markets show in the top bar",
     "full": "You can pick at most {{max}}; remove one first",
     "reset": "Reset",
     "save": "Save",
-    "order": "Top bar order (‹ › to move)",
+    "order": "Top bar (hold ⠿ to drag, tap to remove)",
     "last": "Keep at least 1 market",
-    "left": "Move earlier",
-    "right": "Move later",
-    "page": "Page {{page}} / {{total}}"
+    "page": "Page {{page}} / {{total}}",
+    "more": "More markets (tap to add)",
+    "allIn": "Every market is already in the top bar"
   },
   "feed": {
     "title": "Last 24 hours",

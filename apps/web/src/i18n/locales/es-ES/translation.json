@@ -576,15 +576,15 @@
   },
   "picker": {
     "title": "Mercados",
-    "hint": "Toca un mercado para añadirlo o quitarlo; de {{min}} a {{max}} aparecen en la barra superior",
+    "hint": "Toca para añadir o quitar; de {{min}} a {{max}} mercados aparecen en la barra superior",
     "full": "Máximo {{max}}; quita uno primero",
     "reset": "Restablecer",
     "save": "Guardar",
-    "order": "Orden de la barra (‹ › para mover)",
+    "order": "Barra superior (mantén ⠿ para arrastrar, toca para quitar)",
     "last": "Deja al menos 1 mercado",
-    "left": "Mover antes",
-    "right": "Mover después",
-    "page": "Página {{page}} / {{total}}"
+    "page": "Página {{page}} / {{total}}",
+    "more": "Más mercados (toca para añadir)",
+    "allIn": "Todos los mercados ya están en la barra superior"
   },
   "feed": {
     "title": "Últimas 24 horas",
