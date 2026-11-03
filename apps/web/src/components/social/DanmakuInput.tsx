@@ -1,14 +1,14 @@
 import { DANMAKU_MAX_LENGTH } from '@catpital/shared';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sound } from '../../lib/sound';
 import { realtime } from '../../lib/ws';
 import { useSettings } from '../../stores/settings';
+import { DanmakuHistory } from './DanmakuHistory';
 
-/** 一键快捷弹幕：emoji 按钮，点击直接发射对应短语（文案在语言包 danmaku.quick.*） */
+/** 一键快捷弹幕：emoji 按钮，点击直接发射对应短语（文案在语言包 danmaku.quick.*）；最后一个位置是 📜 弹幕记录 */
 const QUICK = [
   ['rocket', '🚀'],
-  ['diamond', '💎'],
   ['meow', '🐱'],
   ['rekt', '🩸'],
   ['clown', '🤡'],
@@ -25,10 +25,12 @@ export function DanmakuInput({ market }: { market: string }) {
   const [, force] = useState(0);
   const timer = useRef<ReturnType<typeof setTimeout>>();
   const enabled = useSettings((s) => s.danmaku);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const update = useSettings((s) => s.update);
   const cooling = coolUntil > Date.now();
 
   useEffect(() => () => clearTimeout(timer.current), []);
+  const closeHistory = useCallback(() => setHistoryOpen(false), []);
 
   const fire = (raw: string): boolean => {
     const v = raw.trim();
@@ -70,6 +72,19 @@ export function DanmakuInput({ market }: { market: string }) {
             {emoji}
           </button>
         ))}
+        {/* 📜 最近 2 小时的弹幕记录（侧栏） */}
+        <button
+          type="button"
+          title={t('danmaku.history')}
+          onClick={() => {
+            sound.play('click');
+            setHistoryOpen(true);
+          }}
+          className="flex h-8 w-8 items-center justify-center rounded-full border border-candy-grape/50 bg-candy-grape/15 text-base shadow-[0_0_10px_-3px_#a77bff] transition-transform hover:-translate-y-0.5 hover:bg-candy-grape/25 active:scale-90"
+          data-testid="danmaku-history-open"
+        >
+          📜
+        </button>
       </div>
       <input
         value={text}
@@ -93,6 +108,7 @@ export function DanmakuInput({ market }: { market: string }) {
           style={{ animation: `cooldown ${COOLDOWN_MS}ms linear forwards` }}
         />
       )}
+      <DanmakuHistory market={market} open={historyOpen} onClose={closeHistory} />
     </form>
   );
 }

@@ -1,6 +1,8 @@
-import { NEWS_RETENTION_MS, maxSafeLeverage } from '@catpital/shared';
+import { type DanmakuPayload, NEWS_RETENTION_MS, maxSafeLeverage } from '@catpital/shared';
 import type { FastifyPluginAsync } from 'fastify';
+import { z } from 'zod';
 import type { Core } from '../../app.js';
+import { DANMAKU_HISTORY_CAP } from '../../broadcast/notifier.js';
 import { fromDb, wire, wireOpt } from '../../lib/dec.js';
 import { isMarketOpen } from '../../lib/tradingHours.js';
 import { TradeError } from '../../trading/types.js';
@@ -116,10 +118,18 @@ export const marketRoutes =
       }));
     });
 
+    /**
+     * 弹幕：默认最近 50 条（K 线上飘的那层用）；带 hours 时返回最近 hours 小时内的全部（弹幕历史侧栏用，最多 1 千条）。
+     * 都按时间从旧到新。
+     */
     app.get<{ Params: { code: string } }>('/:code/danmaku', async (req) => {
       const m = core.markets.byCode(req.params.code);
       if (!m) throw new TradeError('error.marketNotFound', 404);
-      const raw = await core.bus.range(`danmaku:${m.code}`, 50);
-      return raw.map((r) => JSON.parse(r) as unknown).reverse();
+      const { hours } = z.object({ hours: z.coerce.number().int().min(1).max(24).optional() }).parse(req.query);
+      const raw = await core.bus.range(`danmaku:${m.code}`, hours ? DANMAKU_HISTORY_CAP : 50);
+      const list = raw.map((r) => JSON.parse(r) as DanmakuPayload).reverse();
+      if (!hours) return list;
+      const since = core.clock().getTime() - hours * 3_600_000;
+      return list.filter((d) => d.ts >= since);
     });
   };

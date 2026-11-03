@@ -6,6 +6,7 @@ import type {
   HistoryResetPayload,
   MarketEventPayload,
   MarketUpdatePayload,
+  ReactionUpdate,
   TickPayload,
   UserEvent,
 } from '@catpital/shared';
@@ -13,6 +14,9 @@ import type { PrismaClient } from '@prisma/client';
 import type { Bus } from '../infra/bus.js';
 import { wire } from '../lib/dec.js';
 import type { WalletState } from '../trading/wallet.js';
+
+/** 每个市场保留的弹幕条数：够“最近 2 小时弹幕记录”用（弹幕有冷却，2 小时很难超过这个数） */
+export const DANMAKU_HISTORY_CAP = 1000;
 
 /**
  * 统一出口：所有推给前端 / Discord Bot 的消息都经过这里。
@@ -49,7 +53,12 @@ export class Notifier {
 
   danmaku(d: DanmakuPayload) {
     this.bus.publish('ws', { msg: { ch: `danmaku:${d.market}`, d } });
-    void this.bus.pushCapped(`danmaku:${d.market}`, JSON.stringify(d), 100);
+    void this.bus.pushCapped(`danmaku:${d.market}`, JSON.stringify(d), DANMAKU_HISTORY_CAP);
+  }
+
+  /** 播报的 👍 / 👎 有变化：推给正开着 24 小时动态的人 */
+  reactions(d: ReactionUpdate) {
+    this.bus.publish('ws', { msg: { ch: 'reactions', d } });
   }
 
   user(userId: string, d: UserEvent) {

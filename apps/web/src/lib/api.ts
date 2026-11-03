@@ -130,7 +130,7 @@ export interface LeaderboardResponse {
 /** 玩家主页：五维雷达图（0–100 分）+ 原始数据，见服务端 users/playerProfile.ts */
 export interface PlayerProfile {
   user: { id: string; name: string; avatarHash: string | null; generation: number; joinedAt: number };
-  scores: { profitability: number; risk: number; activity: number; survival: number; chat: number };
+  scores: { profitability: number; risk: number; activity: number; survival: number; champion: number };
   raw: {
     winRate: number | null;
     closedTrades: number;
@@ -140,8 +140,7 @@ export interface PlayerProfile {
     trades: number;
     survivalHours: number;
     bankruptcies: number;
-    danmakuPerDay: number;
-    danmaku: number;
+    championships: { daily: number; weekly: number; monthly: number };
   };
 }
 

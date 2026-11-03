@@ -54,7 +54,15 @@ export function UserProfileModal({ userId, onClose }: { userId: string | null; o
           score: data.scores.survival,
           detail: t(data.raw.bankruptcies ? 'profile.survival' : 'profile.survivalAlive', { time: span(data.raw.survivalHours, t), n: data.raw.bankruptcies }),
         },
-        { key: 'chat', icon: '💬', score: data.scores.chat, detail: t('profile.danmakuPerDay', { x: data.raw.danmakuPerDay, n: data.raw.danmaku }) },
+        {
+          key: 'champion',
+          icon: '👑',
+          score: data.scores.champion,
+          detail:
+            data.raw.championships.daily + data.raw.championships.weekly + data.raw.championships.monthly === 0
+              ? t('profile.noTitles')
+              : t('profile.championships', data.raw.championships),
+        },
       ]
     : [];
 

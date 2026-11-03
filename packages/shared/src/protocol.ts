@@ -86,6 +86,24 @@ export interface BroadcastPayload {
   ts: number;
 }
 
+/** 一条播报的 👍 / 👎 汇总；users 为最近评价过的人（最新在前，最多 REACTION_AVATARS 个） */
+export interface ReactionSummary {
+  up: number;
+  down: number;
+  users: Array<{ id: string; name: string; avatarHash: string | null; value: 1 | -1 }>;
+}
+export const REACTION_AVATARS = 8;
+
+/** reactions 频道：有人评价后推送最新汇总（不含“我投的票”） */
+export interface ReactionUpdate extends ReactionSummary {
+  broadcastId: string;
+}
+
+/** 24 小时动态里的一条：播报 + 评价汇总 + 查看者自己投的票（0 = 没投） */
+export interface FeedItem extends BroadcastPayload {
+  reactions: ReactionSummary & { mine: 1 | -1 | 0 };
+}
+
 export interface PositionView {
   id: string;
   market: string;
@@ -151,6 +169,7 @@ export type ServerMessage =
   | { ch: `danmaku:${string}`; d: DanmakuPayload }
   | { ch: `event:${string}`; d: MarketEventPayload }
   | { ch: 'broadcast'; d: BroadcastPayload }
+  | { ch: 'reactions'; d: ReactionUpdate }
   | { ch: 'markets'; d: MarketUpdatePayload }
   | { ch: 'user'; d: UserEvent }
   | { op: 'hello'; d: { serverTime: number } }

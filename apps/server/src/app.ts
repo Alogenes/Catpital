@@ -2,6 +2,7 @@ import { PrismaClient } from '@prisma/client';
 import { BankruptcyService } from './bankruptcy/bankruptcyService.js';
 import { AdminService } from './admin/adminService.js';
 import { Notifier } from './broadcast/notifier.js';
+import { BroadcastReactions } from './broadcast/reactions.js';
 import type { EconomyConfig } from './config/env.js';
 import type { Bus } from './infra/bus.js';
 import { EconomyService } from './economy/economyService.js';
@@ -85,6 +86,8 @@ export function createCore({ db, bus, economy, log, clock = () => new Date(), sk
     db,
     /** 统一时钟：测试里可控，HTTP 路由取“现在”也用它 */
     clock,
+    /** 全服播报的 👍 / 👎 */
+    reactions: new BroadcastReactions(db, notifier),
     bus,
     economy,
     queue,

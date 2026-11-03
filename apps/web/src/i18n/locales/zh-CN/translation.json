@@ -18,7 +18,8 @@
     "leaderboard": "排行榜",
     "history": "人生履历",
     "menu": "菜单",
-    "admin": "管理"
+    "admin": "管理",
+    "markets": "市场"
   },
   "wallet": {
     "balance": "可用余额",
@@ -153,12 +154,14 @@
     "off": "弹幕已关闭",
     "quick": {
       "rocket": "🚀 冲冲冲！",
-      "diamond": "💎 拿住别慌",
       "meow": "🐱 喵喵喵~",
       "rekt": "🩸 我爆了…",
       "clown": "🤡 小丑竟是我自己",
       "party": "🎉 起飞啦！"
-    }
+    },
+    "history": "弹幕记录",
+    "historyHint": "最近 {{hours}} 小时",
+    "historyEmpty": "最近 {{hours}} 小时还没人发弹幕"
   },
   "bankruptcy": {
     "available": "你的总资产已归零",
@@ -382,7 +385,8 @@
     "exchangeUnavailable": "暂时连不上 Skylbot，请稍后再试（没有扣钱）",
     "exchangeNotPending": "这笔兑换已经处理过了",
     "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。",
-    "exchangeTooSmall": "兑换数量太少：扣除手续费、舍去小数后到账不足 1 Bolívar"
+    "exchangeTooSmall": "兑换数量太少：扣除手续费、舍去小数后到账不足 1 Bolívar",
+    "broadcastNotFound": "这条动态不存在了"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -555,7 +559,7 @@
       "risk": "风险偏好",
       "activity": "活跃度",
       "survival": "生存力",
-      "chat": "话痨度"
+      "champion": "冠军荣誉"
     },
     "winRate": "胜率 {{pct}}% · 共平仓 {{n}} 笔",
     "noTrades": "还没平过仓",
@@ -564,9 +568,23 @@
     "tradesPerDay": "日均 {{x}} 笔 · 共 {{n}} 笔",
     "survival": "平均每世活 {{time}} · 破产 {{n}} 次",
     "survivalAlive": "从没破产过 · 已经活了 {{time}}",
-    "danmakuPerDay": "日均 {{x}} 条弹幕 · 共 {{n}} 条",
     "hours": "{{n}} 小时",
     "days": "{{n}} 天",
-    "note": "统计全部轮回；分数 0–100，越往上越难涨"
+    "note": "统计全部轮回；分数 0–100，越往上越难涨",
+    "championships": "日冠 {{daily}} · 周冠 {{weekly}} · 月冠 {{monthly}}",
+    "noTitles": "还没拿过收益率榜冠军"
+  },
+  "picker": {
+    "title": "市场",
+    "hint": "选 {{min}}–{{max}} 个显示在顶部行情栏；按住左边的 ⠿ 拖动排序",
+    "full": "最多只能选 {{max}} 个，先取消一个再选",
+    "reset": "恢复默认",
+    "save": "保存"
+  },
+  "feed": {
+    "title": "24 小时动态",
+    "hint": "最近 24 小时的全服战报 · 👍 / 👎 再点一次撤回",
+    "empty": "这 24 小时还很平静 · 等待第一位勇者 🐾",
+    "open": "查看 24 小时动态"
   }
 }

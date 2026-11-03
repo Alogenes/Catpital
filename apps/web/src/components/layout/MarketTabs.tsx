@@ -4,6 +4,8 @@ import { decimalsOf, fmt, fmtPct } from '../../lib/format';
 import { sound } from '../../lib/sound';
 import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
+import { useSettings } from '../../stores/settings';
+import { visibleMarkets } from '../../lib/marketPicks';
 
 /** 市场吉祥物（未知代码按类型兜底） */
 const MASCOT: Record<string, string> = { MEOW: '🐱', WOOF: '🐶', FIH: '🐟', BTC: '🪙', EURUSD: '💶' };
@@ -19,12 +21,15 @@ export function MarketTabs() {
   const prices = useMarkets((s) => s.prices);
   const select = useMarkets((s) => s.select);
   const positions = useSession((s) => s.positions);
+  // 只显示玩家在「📊 市场」里选的（最多 5 个，按玩家排的顺序）
+  const picked = useSettings((s) => s.markets);
+  const shown = visibleMarkets(list, picked);
 
   return (
     <>
     {/* 手机端：横向滑动的小胶囊 */}
     <nav className="hide-scrollbar flex w-full min-w-0 shrink-0 flex-nowrap gap-1.5 overflow-x-auto overscroll-x-contain px-0.5 py-0.5 [touch-action:pan-x] md:hidden" data-testid="market-pills">
-      {list.map((m) => {
+      {shown.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);
         const active = m.code === selected;
@@ -49,7 +54,7 @@ export function MarketTabs() {
       })}
     </nav>
     <nav className="hide-scrollbar hidden min-w-0 max-w-full shrink flex-nowrap gap-2 overflow-x-auto overscroll-x-contain px-0.5 pb-1.5 pt-1 md:flex" data-testid="market-tabs">
-      {list.map((m) => {
+      {shown.map((m) => {
         const price = prices[m.code]?.price ?? m.price;
         const change = D(price).minus(m.initialPrice).div(m.initialPrice);
         const active = m.code === selected;

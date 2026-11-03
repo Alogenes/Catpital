@@ -9,6 +9,7 @@ import { useMarkets } from '../../stores/markets';
 import { useSession } from '../../stores/session';
 import { ResumeHistoryModal } from '../bankruptcy/ResumeHistoryModal';
 import { LeaderboardModal } from '../leaderboard/LeaderboardModal';
+import { MarketPickerModal } from './MarketPickerModal';
 import { Avatar } from '../common/Avatar';
 import { OPEN_SHOP_EVENT } from '../shop/openShop';
 import { WalletPill } from './WalletPill';
@@ -27,7 +28,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   const positions = useSession((s) => s.positions);
   const prices = useMarkets((s) => s.prices);
   const [ws, setWs] = useState<WsStatus>('connecting');
-  const [modal, setModal] = useState<null | 'leaderboard' | 'history' | 'panel' | 'shop'>(null);
+  const [modal, setModal] = useState<null | 'leaderboard' | 'history' | 'markets' | 'panel' | 'shop'>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   // 点菜单外任意处关闭（header 有 backdrop-filter，内部 fixed 遮罩只能盖住 header，所以用文档级监听）
@@ -66,7 +67,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
   // 去抖后的净值：吸收持仓/钱包事件到达先后造成的瞬时偏差
   const nwSettled = useSettledValue(nw.toDecimalPlaces(2).toFixed());
   const inDebt = D(balance).lt(0);
-  const open = (m: 'leaderboard' | 'history' | 'panel' | 'shop') => {
+  const open = (m: 'leaderboard' | 'history' | 'markets' | 'panel' | 'shop') => {
     sound.play('click');
     setModal(m);
   };
@@ -94,6 +95,9 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
         </button>
         <button className={navBtn} onClick={() => open('history')} data-testid="open-history">
           📜 <span className="hidden xl:inline">{t('nav.history')}</span>
+        </button>
+        <button className={navBtn} onClick={() => open('markets')} data-testid="open-markets">
+          📊 <span className="hidden xl:inline">{t('nav.markets')}</span>
         </button>
         {user?.panel && (
           <button className={navBtn} onClick={() => open('panel')} data-testid="open-panel">
@@ -182,6 +186,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
               {[
                 ['🏆', t('nav.leaderboard'), () => open('leaderboard')],
                 ['📜', t('nav.history'), () => open('history')],
+                ['📊', t('nav.markets'), () => open('markets')],
                 ['⚙️', t('settings.title'), onSettings],
                 ...(user?.panel ? [['🛠', t('nav.admin'), () => open('panel')]] : []),
               ].map(([icon, label, action]) => (
@@ -203,6 +208,7 @@ export function TopBar({ onSettings }: { onSettings: () => void }) {
 
       <LeaderboardModal open={modal === 'leaderboard'} onClose={() => setModal(null)} />
       <ResumeHistoryModal open={modal === 'history'} onClose={() => setModal(null)} />
+      <MarketPickerModal open={modal === 'markets'} onClose={() => setModal(null)} />
       {modal === 'shop' && (
         <Suspense fallback={null}>
           <ExchangeShop open onClose={() => setModal(null)} />

@@ -18,7 +18,8 @@
     "leaderboard": "Clasificación",
     "history": "Vidas pasadas",
     "menu": "Menú",
-    "admin": "Panel"
+    "admin": "Panel",
+    "markets": "Mercados"
   },
   "wallet": {
     "balance": "Disponible",
@@ -153,12 +154,14 @@
     "off": "Los comentarios flotantes están desactivados",
     "quick": {
       "rocket": "🚀 ¡A la luna!",
-      "diamond": "💎 Patitas de diamante",
       "meow": "🐱 ¡Miau miau!",
       "rekt": "🩸 Me han reventado…",
       "clown": "🤡 El payaso era yo",
       "party": "🎉 ¡Estamos volando!"
-    }
+    },
+    "history": "Historial del chat",
+    "historyHint": "últimas {{hours}} horas",
+    "historyEmpty": "Nadie ha escrito en las últimas {{hours}} horas"
   },
   "bankruptcy": {
     "available": "Tu patrimonio ha llegado a cero",
@@ -382,7 +385,8 @@
     "exchangeUnavailable": "Ahora mismo no se puede contactar con Skylbot; no se ha cobrado nada",
     "exchangeNotPending": "Este cambio ya se ha resuelto",
     "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Reinicia el backend (pnpm dev:server y Docker la actualizan al arrancar); consulta el log del backend para más detalles.",
-    "exchangeTooSmall": "Cantidad demasiado pequeña: tras la comisión y el redondeo llega menos de 1 bolívar"
+    "exchangeTooSmall": "Cantidad demasiado pequeña: tras la comisión y el redondeo llega menos de 1 bolívar",
+    "broadcastNotFound": "Este reporte ya no existe"
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
@@ -555,7 +559,7 @@
       "risk": "Riesgo",
       "activity": "Actividad",
       "survival": "Supervivencia",
-      "chat": "Charla"
+      "champion": "Campeón"
     },
     "winRate": "Acierto {{pct}} % · {{n}} operaciones cerradas",
     "noTrades": "Aún no ha cerrado operaciones",
@@ -564,9 +568,23 @@
     "tradesPerDay": "{{x}} operaciones al día · {{n}} en total",
     "survival": "Vive {{time}} de media · {{n}} quiebras",
     "survivalAlive": "Nunca ha quebrado · lleva {{time}} vivo",
-    "danmakuPerDay": "{{x}} mensajes al día · {{n}} en total",
     "hours": "{{n}} h",
     "days": "{{n}} días",
-    "note": "Cuenta todas las vidas; puntuación 0–100, cuesta más subir cuanto más alta"
+    "note": "Cuenta todas las vidas; puntuación 0–100, cuesta más subir cuanto más alta",
+    "championships": "Títulos: {{daily}} diarios · {{weekly}} semanales · {{monthly}} mensuales",
+    "noTitles": "Aún sin títulos de rentabilidad"
+  },
+  "picker": {
+    "title": "Mercados",
+    "hint": "Elige de {{min}} a {{max}} mercados para la barra superior; mantén ⠿ a la izquierda y arrastra para ordenar",
+    "full": "Máximo {{max}}; desmarca uno primero",
+    "reset": "Restablecer",
+    "save": "Guardar"
+  },
+  "feed": {
+    "title": "Últimas 24 horas",
+    "hint": "Reportes de todo el servidor de las últimas 24 horas · vuelve a pulsar 👍 / 👎 para quitarlo",
+    "empty": "Todo tranquilo estas 24 horas · esperando al primer gato valiente 🐾",
+    "open": "Ver las últimas 24 horas"
   }
 }

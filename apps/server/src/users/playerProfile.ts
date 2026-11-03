@@ -7,9 +7,12 @@ import { TradeError } from '../trading/types.js';
  *   risk          风险偏好：开过的仓位的平均杠杆
  *   activity      活跃度：  日均成交笔数（玩家自己下的单，不含止盈止损 / 强平）
  *   survival      生存力：  每一世的平均存活时间（从没破产过就按当前这一世已经活了多久）
- *   chat          话痨度：  日均弹幕条数
+ *   champion      冠军荣誉：收益率榜（日 / 周 / 月）结算时拿第 1 且收益为正的次数，按 日 1 · 周 3 · 月 10 折算积分
  * 每一维换算成 0–100 分：胜率直接用百分比，其它用饱和曲线 100·x / (x + k)，x = k 时 50 分，越往上越难涨，没有硬顶。
  */
+
+/** 冠军积分：周冠、月冠更难拿，分量更重 */
+const CHAMPION_POINTS = { DAILY: 1, WEEKLY: 3, MONTHLY: 10 } as const;
 
 const DAY_MS = 86_400_000;
 const HOUR_MS = 3_600_000;
@@ -21,7 +24,7 @@ const round = (x: number, dp: number) => Math.round(x * 10 ** dp) / 10 ** dp;
 export interface PlayerProfile {
   user: { id: string; name: string; avatarHash: string | null; generation: number; joinedAt: number };
   /** 0–100 分 */
-  scores: { profitability: number; risk: number; activity: number; survival: number; chat: number };
+  scores: { profitability: number; risk: number; activity: number; survival: number; champion: number };
   /** 换算前的原始数据，展示在雷达图旁边 */
   raw: {
     /** 胜率 0–1；没平过仓为 null */
@@ -34,8 +37,8 @@ export interface PlayerProfile {
     trades: number;
     survivalHours: number;
     bankruptcies: number;
-    danmakuPerDay: number;
-    danmaku: number;
+    /** 收益率榜冠军次数 */
+    championships: { daily: number; weekly: number; monthly: number };
   };
 }
 
@@ -46,17 +49,22 @@ export async function playerProfile(db: PrismaClient, userId: string, now: Date)
   });
   if (!user) throw new TradeError('error.userNotFound', 404);
 
-  const [lives, leverage, trades] = await Promise.all([
-    db.life.findMany({ where: { userId }, select: { startedAt: true, endedAt: true, closedTradeCount: true, winCount: true, danmakuCount: true } }),
+  const [lives, leverage, trades, titles] = await Promise.all([
+    db.life.findMany({ where: { userId }, select: { startedAt: true, endedAt: true, closedTradeCount: true, winCount: true } }),
     db.position.aggregate({ where: { userId }, _avg: { leverage: true }, _count: { _all: true } }),
     db.order.count({ where: { userId, source: 'USER', status: 'FILLED' } }),
+    // 与结算播报的冠军口径一致：收益率榜第 1 名且收益为正
+    db.leaderboardSnapshot.groupBy({
+      by: ['period'],
+      where: { userId, board: 'RETURN_PCT', rank: 1, value: { gt: 0 } },
+      _count: { _all: true },
+    }),
   ]);
 
   // 注册不满一天按一天算，避免刚进来的新人日均数据虚高
   const days = Math.max(1, (now.getTime() - user.createdAt.getTime()) / DAY_MS);
   const closedTrades = lives.reduce((n, l) => n + l.closedTradeCount, 0);
   const wins = lives.reduce((n, l) => n + l.winCount, 0);
-  const danmaku = lives.reduce((n, l) => n + l.danmakuCount, 0);
   const ended = lives.filter((l) => l.endedAt);
   const spans = (ended.length ? ended : lives).map((l) => ((l.endedAt ?? now).getTime() - l.startedAt.getTime()) / HOUR_MS);
   const survivalHours = spans.length ? spans.reduce((a, b) => a + b, 0) / spans.length : 0;
@@ -64,7 +72,10 @@ export async function playerProfile(db: PrismaClient, userId: string, now: Date)
   const winRate = closedTrades ? wins / closedTrades : null;
   const avgLeverage = leverage._avg.leverage ? Number(leverage._avg.leverage) : null;
   const tradesPerDay = trades / days;
-  const danmakuPerDay = danmaku / days;
+  const championships = { daily: 0, weekly: 0, monthly: 0 };
+  for (const t of titles) championships[t.period === 'DAILY' ? 'daily' : t.period === 'WEEKLY' ? 'weekly' : 'monthly'] = t._count._all;
+  const championPoints =
+    championships.daily * CHAMPION_POINTS.DAILY + championships.weekly * CHAMPION_POINTS.WEEKLY + championships.monthly * CHAMPION_POINTS.MONTHLY;
 
   return {
     user: { id: user.id, name: user.globalName ?? user.username, avatarHash: user.avatarHash, generation: user.generation, joinedAt: user.createdAt.getTime() },
@@ -75,7 +86,8 @@ export async function playerProfile(db: PrismaClient, userId: string, now: Date)
       activity: saturate(tradesPerDay, 10),
       // 平均活 3 天 = 50 分
       survival: saturate(survivalHours, 72),
-      chat: saturate(danmakuPerDay, 10),
+      // 5 分（例如 5 个日冠，或 1 周冠 + 2 日冠）= 50 分；一个月冠就有 67 分
+      champion: saturate(championPoints, 5),
     },
     raw: {
       winRate: winRate === null ? null : round(winRate, 4),
@@ -86,8 +98,7 @@ export async function playerProfile(db: PrismaClient, userId: string, now: Date)
       trades,
       survivalHours: round(survivalHours, 1),
       bankruptcies: ended.length,
-      danmakuPerDay: round(danmakuPerDay, 2),
-      danmaku,
+      championships,
     },
   };
 }

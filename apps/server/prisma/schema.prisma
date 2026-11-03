@@ -186,6 +186,7 @@ model User {
   resumes       BankruptcyResume[]
   transfers     ExternalTransfer[]
   exchanges     CurrencyExchange[]
+  reactions     BroadcastReaction[]
   periodStats   LeaderboardPeriodStat[]
   snapshots     LeaderboardSnapshot[]
   createdEvents ScheduledEvent[]
@@ -688,8 +689,26 @@ model Broadcast {
   discordMessageId String?
   createdAt        DateTime      @default(now())
 
+  reactions BroadcastReaction[]
+
   @@index([createdAt])
   @@map("broadcasts")
+}
+
+/// 全服播报的 👍 / 👎：每人每条一票，再点同一个取消，点另一个改票
+model BroadcastReaction {
+  broadcastId String
+  userId      String
+  /// 1 = 👍，-1 = 👎
+  value       Int
+  updatedAt   DateTime @updatedAt
+
+  broadcast Broadcast @relation(fields: [broadcastId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([broadcastId, userId])
+  @@index([broadcastId, updatedAt])
+  @@map("broadcast_reactions")
 }
 
 model GuildConfig {

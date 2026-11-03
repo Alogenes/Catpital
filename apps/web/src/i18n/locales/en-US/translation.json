@@ -18,7 +18,8 @@
     "leaderboard": "Leaderboard",
     "history": "Past lives",
     "menu": "Menu",
-    "admin": "Panel"
+    "admin": "Panel",
+    "markets": "Markets"
   },
   "wallet": {
     "balance": "Available",
@@ -153,12 +154,14 @@
     "off": "Bullet chat is off",
     "quick": {
       "rocket": "🚀 To the moon!",
-      "diamond": "💎 Diamond paws",
       "meow": "🐱 Meow meow~",
       "rekt": "🩸 I got rekt…",
       "clown": "🤡 The clown was me",
       "party": "🎉 We are flying!"
-    }
+    },
+    "history": "Chat history",
+    "historyHint": "last {{hours}} hours",
+    "historyEmpty": "No messages in the last {{hours}} hours"
   },
   "bankruptcy": {
     "available": "Your net worth has hit zero",
@@ -382,7 +385,8 @@
     "exchangeUnavailable": "Cannot reach Skylbot right now; nothing was charged",
     "exchangeNotPending": "This exchange has already been resolved",
     "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details.",
-    "exchangeTooSmall": "Amount too small: less than 1 Bolívar arrives after the fee and rounding down"
+    "exchangeTooSmall": "Amount too small: less than 1 Bolívar arrives after the fee and rounding down",
+    "broadcastNotFound": "This report no longer exists"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -555,7 +559,7 @@
       "risk": "Risk appetite",
       "activity": "Activity",
       "survival": "Survivability",
-      "chat": "Chattiness"
+      "champion": "Champion"
     },
     "winRate": "Win rate {{pct}}% · {{n}} closed trades",
     "noTrades": "No closed trades yet",
@@ -564,9 +568,23 @@
     "tradesPerDay": "{{x}} trades a day · {{n}} total",
     "survival": "Lives {{time}} on average · {{n}} bankruptcies",
     "survivalAlive": "Never bankrupt · alive for {{time}}",
-    "danmakuPerDay": "{{x}} chat messages a day · {{n}} total",
     "hours": "{{n}} h",
     "days": "{{n}} days",
-    "note": "All lives counted; scores 0–100, harder to raise the higher they get"
+    "note": "All lives counted; scores 0–100, harder to raise the higher they get",
+    "championships": "Daily {{daily}} · Weekly {{weekly}} · Monthly {{monthly}} titles",
+    "noTitles": "No return-board titles yet"
+  },
+  "picker": {
+    "title": "Markets",
+    "hint": "Pick {{min}}–{{max}} markets for the top bar; hold ⠿ on the left and drag to reorder",
+    "full": "You can pick at most {{max}}; untick one first",
+    "reset": "Reset",
+    "save": "Save"
+  },
+  "feed": {
+    "title": "Last 24 hours",
+    "hint": "Server-wide reports from the last 24 hours · tap 👍 / 👎 again to undo",
+    "empty": "All quiet for the last 24 hours · waiting for the first brave cat 🐾",
+    "open": "Open the 24-hour feed"
   }
 }

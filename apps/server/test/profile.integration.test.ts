@@ -42,27 +42,37 @@ describe('leaderboard paging', () => {
 });
 
 describe('player profile', () => {
-  it('scores the five dimensions from trades, lives and chat', async () => {
+  it('scores the five dimensions from trades, lives and return-board titles', async () => {
     // alice：10x 开多 → 涨了平仓（1 笔盈利），共 2 笔成交
     await h.core.orders.placeOrder(A, { market: 'TEST', side: 'BUY', type: 'MARKET', quantity: D(10), leverage: D(10) });
     await h.tick('110');
     await h.core.orders.closePosition(A, 'TEST');
-    await h.db.life.updateMany({ where: { userId: A }, data: { danmakuCount: 10 } });
+    // 冠军：2 个日冠 + 1 个周冠 = 5 分；收益为负的第 1 名、富豪榜第 1 名都不算
+    const title = (period: 'DAILY' | 'WEEKLY' | 'MONTHLY', periodKey: string, board: 'RETURN_PCT' | 'NET_WORTH', value: string) => ({ period, periodKey, board, rank: 1, userId: A, value });
+    await h.db.leaderboardSnapshot.createMany({
+      data: [
+        title('DAILY', '2026-10-01', 'RETURN_PCT', '12.5'),
+        title('DAILY', '2026-10-02', 'RETURN_PCT', '3'),
+        title('WEEKLY', '2026-W40', 'RETURN_PCT', '20'),
+        title('DAILY', '2026-10-03', 'RETURN_PCT', '-1'),
+        title('MONTHLY', '2026-09', 'NET_WORTH', '50000'),
+      ],
+    });
 
     const r = await app.inject({ method: 'GET', url: `/api/v1/users/${A}/profile`, headers: auth(B) });
     expect(r.statusCode).toBe(200);
     const p = r.json();
     expect(p.user).toMatchObject({ id: A, name: 'alice', generation: 1 });
-    expect(p.raw).toMatchObject({ winRate: 1, closedTrades: 1, avgLeverage: 10, positions: 1, trades: 2, bankruptcies: 0, danmaku: 10 });
-    // 胜率 100%；平均 10x = 50 分；注册不满一天按一天：日均 2 笔、10 条弹幕
-    expect(p.scores).toMatchObject({ profitability: 100, risk: 50, activity: saturate(2, 10), chat: saturate(10, 10) });
+    expect(p.raw).toMatchObject({ winRate: 1, closedTrades: 1, avgLeverage: 10, positions: 1, trades: 2, bankruptcies: 0, championships: { daily: 2, weekly: 1, monthly: 0 } });
+    // 胜率 100%；平均 10x = 50 分；注册不满一天按一天：日均 2 笔；冠军积分 5 = 50 分
+    expect(p.scores).toMatchObject({ profitability: 100, risk: 50, activity: saturate(2, 10), champion: 50 });
     for (const v of Object.values(p.scores as Record<string, number>)) expect(v).toBeGreaterThanOrEqual(0);
   });
 
   it('shows zeros for a player who has done nothing yet, and 404 for an unknown id', async () => {
     const p = (await app.inject({ method: 'GET', url: `/api/v1/users/${B}/profile`, headers: auth() })).json();
-    expect(p.raw).toMatchObject({ winRate: null, avgLeverage: null, trades: 0, danmaku: 0 });
-    expect(p.scores).toMatchObject({ profitability: 0, risk: 0, activity: 0, chat: 0 });
+    expect(p.raw).toMatchObject({ winRate: null, avgLeverage: null, trades: 0, championships: { daily: 0, weekly: 0, monthly: 0 } });
+    expect(p.scores).toMatchObject({ profitability: 0, risk: 0, activity: 0, champion: 0 });
     const missing = await app.inject({ method: 'GET', url: '/api/v1/users/999999999999999999/profile', headers: auth() });
     expect([missing.statusCode, missing.json().error]).toEqual([404, 'error.userNotFound']);
     expect((await app.inject({ method: 'GET', url: `/api/v1/users/${A}/profile` })).statusCode).toBe(401);

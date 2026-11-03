@@ -23,6 +23,8 @@ export const userSettingsSchema = z.object({
   /** 解除杠杆限制（最高 200x，受各市场安全上限约束） */
   degenUnlock: z.boolean().optional(),
   volume: z.number().int().min(0).max(100).optional(),
+  /** 顶部行情栏显示哪些市场、按什么顺序：1–5 个市场代码 */
+  markets: z.array(z.string().regex(/^[A-Z0-9_-]{1,32}$/)).min(1).max(5).optional(),
 });
 export type UserSettings = z.infer<typeof userSettingsSchema>;
 

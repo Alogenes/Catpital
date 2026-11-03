@@ -3,6 +3,7 @@ import type { BankruptcyResume, Order } from '@prisma/client';
 import type { FastifyPluginAsync } from 'fastify';
 import { z } from 'zod';
 import type { Core } from '../../app.js';
+import { broadcastView } from '../../broadcast/reactions.js';
 import { fromDb, wire, wireOpt } from '../../lib/dec.js';
 import { TradeError, toPositionView } from '../../trading/types.js';
 import { closeBody, marginBody, placeOrderBody, tpslBody } from '../schemas.js';
@@ -100,18 +101,7 @@ export const tradeRoutes =
     app.get('/broadcasts', async (req): Promise<BroadcastPayload[]> => {
       const { limit } = z.object({ limit: z.coerce.number().int().min(1).max(50).default(20) }).parse(req.query);
       const rows = await core.db.broadcast.findMany({ orderBy: { createdAt: 'desc' }, take: limit });
-      return rows.map((r) => {
-        const p = r.payload as { i18nKey: string; vars: Record<string, string | number> };
-        return {
-          id: r.id,
-          kind: r.kind,
-          i18nKey: p.i18nKey,
-          vars: p.vars,
-          userId: r.userId ?? undefined,
-          market: r.marketId ? core.markets.get(r.marketId)?.code : undefined,
-          ts: r.createdAt.getTime(),
-        };
-      });
+      return rows.map((r) => broadcastView(r, (id) => core.markets.get(id)?.code));
     });
 
     await app.register(async (authed) => {

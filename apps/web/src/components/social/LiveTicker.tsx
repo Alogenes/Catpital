@@ -1,10 +1,12 @@
 import type { BroadcastPayload } from '@catpital/shared';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { sound } from '../../lib/sound';
 import { useFeed } from '../../stores/feed';
 import { useBroadcastText } from './BroadcastBanner';
+import { FeedModal } from './FeedModal';
 
-const KIND_STYLE: Record<BroadcastPayload['kind'], string> = {
+export const KIND_STYLE: Record<BroadcastPayload['kind'], string> = {
   BIG_WIN: 'text-candy-sun',
   LIQUIDATION: 'text-candy-peach',
   DEFICIT: 'text-blood',
@@ -19,11 +21,12 @@ const MAX_AGE_MS = 60 * 60 * 1000;
 /** 同时滚动的条数上限（只保留最新的几条，避免一圈太长、新消息要等很久才出现） */
 const MAX_ITEMS = 8;
 
-/** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停。新的在最前，出现新战报时从头滚动 */
+/** 顶部右侧：全服战报 + 金融快讯 跑马灯，悬停暂停。新的在最前，出现新战报时从头滚动；点一下打开 24 小时动态 */
 export function LiveTicker() {
   const { t } = useTranslation();
   const history = useFeed((s) => s.history);
   const text = useBroadcastText();
+  const [feedOpen, setFeedOpen] = useState(false);
 
   // 定时刷新"现在"，让过期的战报自己退场
   const [now, setNow] = useState(() => Date.now());
@@ -42,7 +45,19 @@ export function LiveTicker() {
   const duration = Math.max(25, chars * 0.32);
 
   return (
-    <section className="bento flex h-[30px] w-full min-w-0 shrink-0 items-center md:w-auto md:flex-1 lg:min-w-[280px] gap-2 overflow-hidden rounded-2xl px-2 py-0 md:h-auto md:gap-3 md:rounded-3xl md:px-3 md:py-2" data-testid="live-ticker">
+    <>
+    <section
+      role="button"
+      tabIndex={0}
+      title={t('feed.open')}
+      onClick={() => {
+        sound.play('click');
+        setFeedOpen(true);
+      }}
+      onKeyDown={(e) => (e.key === 'Enter' || e.key === ' ') && setFeedOpen(true)}
+      className="bento group flex h-[30px] w-full min-w-0 shrink-0 cursor-pointer items-center md:w-auto md:flex-1 lg:min-w-[280px] gap-2 overflow-hidden rounded-2xl px-2 py-0 transition-colors hover:border-candy-pink/50 md:h-auto md:gap-3 md:rounded-3xl md:px-3 md:py-2"
+      data-testid="live-ticker"
+    >
       <span className="flex shrink-0 items-center gap-1.5 rounded-full bg-candy-pink/15 px-1.5 py-0.5 text-[10px] font-extrabold text-candy-pink md:px-2.5 md:py-1 md:text-xs">
         <span className="relative flex h-2 w-2">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-candy-pink opacity-75" />
@@ -71,6 +86,11 @@ export function LiveTicker() {
           </div>
         )}
       </div>
+      <span className="hidden shrink-0 rounded-full bg-ink-800 px-2 py-0.5 text-[10px] font-black text-ink-300 transition-colors group-hover:bg-candy-pink/20 group-hover:text-candy-pink md:inline">
+        24h ›
+      </span>
     </section>
+    <FeedModal open={feedOpen} onClose={() => setFeedOpen(false)} />
+    </>
   );
 }
