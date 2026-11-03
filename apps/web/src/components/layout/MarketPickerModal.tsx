@@ -1,5 +1,4 @@
 import { D } from '@catpital/shared';
-import { Reorder, useDragControls } from 'framer-motion';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import type { MarketInfo } from '../../lib/api';
@@ -11,10 +10,15 @@ import { useSettings } from '../../stores/settings';
 import { Modal } from '../common/Modal';
 import { codeLabel, mascotOf } from './MarketTabs';
 
+/** 每页显示几个市场（以后市场多了靠翻页） */
+const PAGE_SIZE = 6;
+
 /**
  * 📊 市场：自选顶部行情栏显示哪些市场、什么顺序。
- * 勾选 1–5 个；按住左边的把手上下拖动排序（只有勾选的会显示，顺序就是行情栏的顺序）。
- * 保存后写进设置（本机 localStorage + 登录后同步到账号）。
+ *   - 点市场那一行本身就是选中 / 取消（1–5 个），选中的行左边显示它在行情栏里的序号
+ *   - 上方「行情栏顺序」一排小胶囊，用 ‹ › 左右挪动调整顺序（新选的排在最后）
+ *   - 市场列表分页，每页 6 个
+ * 样式沿用行情栏卡片的选中 / 未选中外观；保存后写进设置（本机 + 登录后同步到账号）。
  */
 export function MarketPickerModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { t, i18n } = useTranslation();
@@ -22,37 +26,51 @@ export function MarketPickerModal({ open, onClose }: { open: boolean; onClose: (
   const prices = useMarkets((s) => s.prices);
   const selected = useMarkets((s) => s.selected);
   const select = useMarkets((s) => s.select);
-  const saved = useSettings((s) => s.markets);
   const update = useSettings((s) => s.update);
 
-  /** 全部市场的排列顺序（勾选的排在前面） */
-  const [order, setOrder] = useState<string[]>([]);
-  const [checked, setChecked] = useState<Set<string>>(new Set());
+  /** 已选市场，按行情栏顺序 */
+  const [picked, setPicked] = useState<string[]>([]);
+  const [page, setPage] = useState(1);
+  /** 点了满额 / 最后一个时的提示 */
+  const [warn, setWarn] = useState<'full' | 'last' | null>(null);
 
-  // 每次打开都从当前生效的配置开始
+  // 每次打开都从当前生效的配置开始。只在打开那一刻读取：市场列表在后台刷新（状态 / 开休市变化）时不能把正在改的选择冲掉
   useEffect(() => {
     if (!open) return;
-    const shown = visibleMarkets(list, saved).map((m) => m.code);
-    setOrder([...shown, ...list.map((m) => m.code).filter((c) => !shown.includes(c))]);
-    setChecked(new Set(shown));
-  }, [open, list, saved]);
+    setPicked(visibleMarkets(useMarkets.getState().list, useSettings.getState().markets).map((m) => m.code));
+    setPage(1);
+    setWarn(null);
+  }, [open]);
 
-  const count = checked.size;
+  const pages = Math.max(1, Math.ceil(list.length / PAGE_SIZE));
+  const current = Math.min(page, pages);
+  const pageItems = list.slice((current - 1) * PAGE_SIZE, current * PAGE_SIZE);
+  const byCode = new Map(list.map((m) => [m.code, m]));
+
   const toggle = (code: string) => {
-    const next = new Set(checked);
-    if (next.has(code)) {
-      if (next.size <= MIN_PICKED_MARKETS) return;
-      next.delete(code);
+    if (picked.includes(code)) {
+      if (picked.length <= MIN_PICKED_MARKETS) return void (setWarn('last'), sound.play('error'));
+      setPicked(picked.filter((c) => c !== code));
     } else {
-      if (next.size >= MAX_PICKED_MARKETS) return;
-      next.add(code);
+      if (picked.length >= MAX_PICKED_MARKETS) return void (setWarn('full'), sound.play('error'));
+      setPicked([...picked, code]);
     }
+    setWarn(null);
     sound.play('click');
-    setChecked(next);
+  };
+
+  /** 在行情栏顺序里左右挪一格 */
+  const move = (code: string, dir: -1 | 1) => {
+    const i = picked.indexOf(code);
+    const j = i + dir;
+    if (i < 0 || j < 0 || j >= picked.length) return;
+    const next = [...picked];
+    [next[i], next[j]] = [next[j]!, next[i]!];
+    setPicked(next);
+    sound.play('click');
   };
 
   const save = () => {
-    const picked = order.filter((c) => checked.has(c));
     update({ markets: picked });
     // 当前看的市场被隐藏了，就切到行情栏第一个
     if (!selected || !picked.includes(selected)) select(picked[0]!);
@@ -61,52 +79,98 @@ export function MarketPickerModal({ open, onClose }: { open: boolean; onClose: (
   };
 
   const reset = () => {
-    const defaults = list.slice(0, MAX_PICKED_MARKETS).map((m) => m.code);
-    setOrder([...defaults, ...list.map((m) => m.code).filter((c) => !defaults.includes(c))]);
-    setChecked(new Set(defaults));
+    setPicked(list.slice(0, MAX_PICKED_MARKETS).map((m) => m.code));
+    setWarn(null);
     sound.play('click');
   };
 
-  const byCode = new Map(list.map((m) => [m.code, m]));
-
   return (
     <Modal open={open} onClose={onClose}>
-      <div className="select-none p-5" data-testid="market-picker">
+      <div className="select-none p-4 sm:p-5" data-testid="market-picker">
         <div className="mb-1 flex items-center gap-2">
           <h2 className="mr-auto text-lg font-black">📊 {t('picker.title')}</h2>
-          <span
-            className={`rounded-full px-2.5 py-0.5 font-mono text-xs font-black ${count >= MAX_PICKED_MARKETS ? 'bg-candy-sun/20 text-candy-sun' : 'bg-candy-grape/20 text-candy-grape'}`}
-            data-testid="picker-count"
-          >
-            {count} / {MAX_PICKED_MARKETS}
+          <span className="rounded-full bg-ink-800 px-2.5 py-0.5 font-mono text-xs font-black text-candy-sun" data-testid="picker-count">
+            {picked.length} / {MAX_PICKED_MARKETS}
           </span>
           <button className="chip" onClick={onClose} aria-label={t('settings.close')}>
             ✕
           </button>
         </div>
-        <p className="mb-4 text-xs text-ink-400">{t('picker.hint', { max: MAX_PICKED_MARKETS, min: MIN_PICKED_MARKETS })}</p>
+        <p className="mb-3 text-xs text-ink-400">{t('picker.hint', { max: MAX_PICKED_MARKETS, min: MIN_PICKED_MARKETS })}</p>
 
-        <Reorder.Group axis="y" values={order} onReorder={setOrder} className="space-y-2" data-testid="picker-list">
-          {order.map((code) => {
+        {/* 行情栏顺序：已选的小胶囊，‹ › 调整先后 */}
+        <p className="mb-1.5 text-[11px] font-bold text-ink-400">{t('picker.order')}</p>
+        <div className="mb-3 flex flex-wrap gap-1.5" data-testid="picker-order">
+          {picked.map((code, i) => {
             const m = byCode.get(code);
             if (!m) return null;
             return (
-              <PickerRow
+              <span
                 key={code}
-                market={m}
-                name={m.nameI18n[i18n.language] ?? m.name}
-                price={prices[code]?.price ?? m.price}
-                checked={checked.has(code)}
-                locked={checked.has(code) ? count <= MIN_PICKED_MARKETS : count >= MAX_PICKED_MARKETS}
-                onToggle={() => toggle(code)}
-              />
+                className="flex items-center gap-0.5 rounded-full border-2 border-candy-grape bg-candy-grape/20 py-0.5 pl-1 pr-1 text-xs font-extrabold text-ink-100"
+                data-testid={`picker-chip-${code}`}
+              >
+                <button
+                  type="button"
+                  className="rounded-full px-1 text-ink-300 hover:text-ink-100 disabled:opacity-30"
+                  disabled={i === 0}
+                  onClick={() => move(code, -1)}
+                  aria-label={t('picker.left')}
+                >
+                  ‹
+                </button>
+                <span className="font-mono text-[10px] text-candy-sun">{i + 1}</span>
+                <span>{mascotOf(m.code, m.kind)}</span>
+                <span>{codeLabel(m.code, m.kind)}</span>
+                <button
+                  type="button"
+                  className="rounded-full px-1 text-ink-300 hover:text-ink-100 disabled:opacity-30"
+                  disabled={i === picked.length - 1}
+                  onClick={() => move(code, 1)}
+                  aria-label={t('picker.right')}
+                >
+                  ›
+                </button>
+              </span>
             );
           })}
-        </Reorder.Group>
+        </div>
 
-        {count >= MAX_PICKED_MARKETS && list.length > MAX_PICKED_MARKETS && (
-          <p className="mt-3 text-center text-[11px] font-bold text-candy-sun">⚠ {t('picker.full', { max: MAX_PICKED_MARKETS })}</p>
+        {/* 全部市场：点整行选中 / 取消 */}
+        <ul className="space-y-2" data-testid="picker-list">
+          {pageItems.map((m) => {
+            const order = picked.indexOf(m.code);
+            return (
+              <li key={m.code}>
+                <PickerRow
+                  market={m}
+                  name={m.nameI18n[i18n.language] ?? m.name}
+                  price={prices[m.code]?.price ?? m.price}
+                  order={order}
+                  dimmed={order < 0 && picked.length >= MAX_PICKED_MARKETS}
+                  onClick={() => toggle(m.code)}
+                />
+              </li>
+            );
+          })}
+        </ul>
+
+        {warn && (
+          <p className="mt-2 text-center text-[11px] font-bold text-candy-sun" data-testid="picker-warn">
+            ⚠ {t(warn === 'full' ? 'picker.full' : 'picker.last', { max: MAX_PICKED_MARKETS })}
+          </p>
         )}
+
+        {/* 翻页 */}
+        <div className="mt-3 flex items-center justify-between gap-2" data-testid="picker-pager">
+          <button className="chip" disabled={current <= 1} onClick={() => setPage(current - 1)} data-testid="picker-prev">
+            ‹ {t('leaderboard.prev')}
+          </button>
+          <span className="text-xs font-bold text-ink-400">{t('picker.page', { page: current, total: pages })}</span>
+          <button className="chip" disabled={current >= pages} onClick={() => setPage(current + 1)} data-testid="picker-next">
+            {t('leaderboard.next')} ›
+          </button>
+        </div>
 
         <div className="mt-4 grid grid-cols-[auto_1fr] gap-2">
           <button className="arcade-btn border-ink-950/60 bg-ink-800 px-4 py-2.5 text-sm text-ink-300" onClick={reset} data-testid="picker-reset">
@@ -121,70 +185,58 @@ export function MarketPickerModal({ open, onClose }: { open: boolean; onClose: (
   );
 }
 
-/** 一行市场：拖动把手 + 吉祥物 / 代码 / 名称 / 现价 + 勾选开关 */
+/**
+ * 一行市场（整行就是按钮）：序号徽章 / 吉祥物 / 代码 + 名称 / 现价 + 涨跌。
+ * 外观与顶部行情栏卡片一致：选中 = 紫框 + 立体投影，未选 = 暗框。窄屏时名称截断，不会把内容挤出框。
+ */
 function PickerRow({
   market: m,
   name,
   price,
-  checked,
-  locked,
-  onToggle,
+  order,
+  dimmed,
+  onClick,
 }: {
   market: MarketInfo;
   name: string;
   price: string;
-  checked: boolean;
-  /** 不能再改：已勾选的是最后一个，或未勾选的但已经选满 */
-  locked: boolean;
-  onToggle: () => void;
+  /** 在行情栏里的位置（从 0 开始）；-1 = 没选 */
+  order: number;
+  /** 已选满，这一行暂时选不了 */
+  dimmed: boolean;
+  onClick: () => void;
 }) {
-  const controls = useDragControls();
+  const checked = order >= 0;
   const change = D(price).minus(m.initialPrice).div(m.initialPrice);
   return (
-    <Reorder.Item
-      value={m.code}
-      dragListener={false}
-      dragControls={controls}
-      className={`flex items-center gap-3 rounded-2xl border-2 px-2 py-2 transition-colors ${
-        checked ? 'border-candy-grape/70 bg-candy-grape/10 shadow-[0_0_18px_-6px_#a77bff]' : 'border-ink-700/70 bg-ink-850/80'
-      }`}
-      whileDrag={{ scale: 1.03, boxShadow: '0 10px 24px -8px rgba(167,123,255,0.6)' }}
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={checked}
+      className={`flex w-full items-center gap-2.5 overflow-hidden rounded-2xl border-2 px-2.5 py-2 text-left transition-all ${
+        checked
+          ? '-translate-y-0.5 border-candy-grape bg-candy-grape/15 shadow-[0_5px_0_0_#6b4bc4]'
+          : 'border-ink-700/70 bg-ink-900/85 shadow-[0_4px_0_0_rgba(10,6,22,0.6)] hover:border-ink-500'
+      } ${dimmed ? 'opacity-60' : ''}`}
       data-testid={`picker-row-${m.code}`}
     >
-      {/* 拖动把手：按住才拖，手机上不影响列表滚动 */}
-      <button
-        type="button"
-        className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-lg text-ink-500 hover:bg-ink-800 hover:text-ink-200 active:cursor-grabbing"
-        onPointerDown={(e) => controls.start(e)}
-        aria-label="drag"
+      {/* 序号徽章：选中显示它是第几个，没选是空圈 */}
+      <span
+        className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full border-2 font-mono text-[11px] font-black ${
+          checked ? 'border-candy-grape bg-candy-grape text-white' : 'border-ink-700 text-ink-500'
+        }`}
       >
-        ⠿
-      </button>
-      <span className="text-2xl">{mascotOf(m.code, m.kind)}</span>
+        {checked ? order + 1 : ''}
+      </span>
+      <span className="shrink-0 text-2xl">{mascotOf(m.code, m.kind)}</span>
       <span className="min-w-0 flex-1 leading-tight">
-        <span className="block text-sm font-extrabold">{codeLabel(m.code, m.kind)}</span>
+        <span className="block truncate text-sm font-extrabold">{codeLabel(m.code, m.kind)}</span>
         <span className="block truncate text-[11px] text-ink-400">{name}</span>
       </span>
-      <span className="text-right font-mono text-xs tabular-nums">
+      <span className="shrink-0 text-right font-mono text-xs tabular-nums">
         <span className="block text-ink-200">{fmt(price, Math.min(decimalsOf(m.tickSize), 4))}</span>
         <span className={change.gte(0) ? 'text-up' : 'text-down'}>{fmtPct(change, 1)}</span>
       </span>
-      {/* 勾选开关 */}
-      <button
-        type="button"
-        role="switch"
-        aria-checked={checked}
-        disabled={locked}
-        onClick={onToggle}
-        className={`relative h-7 w-12 shrink-0 rounded-full border-2 transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
-          checked ? 'border-candy-grape bg-candy-grape/40' : 'border-ink-700 bg-ink-900'
-        }`}
-        data-testid={`picker-toggle-${m.code}`}
-      >
-        <span
-          className={`absolute top-0.5 h-5 w-5 rounded-full transition-all ${checked ? 'left-[22px] bg-white shadow-[0_0_10px_#a77bff]' : 'left-0.5 bg-ink-500'}`}
-        />
-      </button>
-    </Reorder.Item>
+    </button>
   );
 }
