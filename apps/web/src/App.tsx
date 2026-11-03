@@ -22,6 +22,17 @@ import { useMarkets, useSelectedMarket } from './stores/markets';
 import { type MeResponse, useSession } from './stores/session';
 import { type Settings, useSettings } from './stores/settings';
 
+/** Discord SDK 抛出的是 { code, message } 普通对象，不是 Error */
+function errorReason(e: unknown): string {
+  if (e instanceof ApiError) return e.code;
+  if (e instanceof Error) return e.message;
+  if (e && typeof e === 'object' && 'message' in e) return String((e as { message: unknown }).message);
+  return String(e);
+}
+
+// StrictMode 下 effect 会执行两次；嵌入模式的登录只能跑一次（重复 authorize 会被 Discord 拒绝）
+let embeddedLoginStarted = false;
+
 async function finishLogin(auth: AuthResult) {
   setToken(auth.token);
   const [markets, me] = await Promise.all([api.get<MarketInfo[]>('/markets'), api.get<MeResponse>('/me')]);
@@ -48,14 +59,16 @@ export default function App() {
       try {
         await finishLogin(await fn());
       } catch (e) {
-        setStatus('error', e instanceof ApiError ? e.code : e instanceof Error ? e.message : String(e));
+        setStatus('error', errorReason(e));
       }
     },
     [setStatus],
   );
 
   useEffect(() => {
-    if (embedded) void login(authenticateWithDiscord);
+    if (!embedded || embeddedLoginStarted) return;
+    embeddedLoginStarted = true;
+    void login(authenticateWithDiscord);
   }, [embedded, login]);
 
   // 浏览器自动播放策略：首次交互后解锁音频
