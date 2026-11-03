@@ -46,3 +46,6 @@ Thumbs.db
 !.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
+
+# Local Claude configuration
+.claude/
