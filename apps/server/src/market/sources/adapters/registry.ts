@@ -1,4 +1,5 @@
 import { BinanceFeed } from './binance.js';
+import { FinnhubFeed } from './finnhub.js';
 import { AlphaVantageFeed, YahooFeed } from './polling.js';
 import type { FeedOptions, LiveFeed } from './types.js';
 
@@ -6,6 +7,7 @@ type FeedFactory = (opts: FeedOptions) => LiveFeed;
 
 const factories = new Map<string, FeedFactory>([
   ['binance', (o) => new BinanceFeed(o)],
+  ['finnhub', (o) => new FinnhubFeed({ ...o, apiKey: o.apiKey ?? process.env.FINNHUB_API_KEY })],
   ['yahoo', (o) => new YahooFeed(o)],
   ['alphavantage', (o) => new AlphaVantageFeed({ ...o, apiKey: o.apiKey ?? process.env.ALPHAVANTAGE_API_KEY })],
 ]);

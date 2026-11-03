@@ -168,8 +168,8 @@
     },
     "kind": "FOREX",
     "dataSource": "LIVE_API",
-    "adapterKey": "yahoo",
-    "adapterSymbol": "EURUSD=X",
+    "adapterKey": "finnhub",
+    "adapterSymbol": "OANDA:EUR_USD",
     "status": "ACTIVE",
     "tradingHours": {
       "timezone": "America/New_York",
