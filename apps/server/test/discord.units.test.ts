@@ -1,5 +1,6 @@
 import type { BroadcastPayload } from '@catpital/shared';
 import { describe, expect, it } from 'vitest';
+import { AUDIENCE_CACHE_MS, channelAudience } from '../src/discord/audience.js';
 import { COLORS, LAUNCH_BUTTON_ID, broadcastEmbed, launchCard, leaderboardEmbed, walletEmbed } from '../src/discord/embeds.js';
 import { money, pct } from '../src/discord/format.js';
 import { parseDelay, parseJump } from '../src/discord/parse.js';
@@ -144,5 +145,55 @@ describe('command cards', () => {
     expect(e.title).toBe('🏆 Daily · Return %');
     expect(e.description).toBe('🥇 <@1> · **+12.50%**\n🥈 <@2> · **-3.00%**');
     expect(e.fields![0]!.value).toBe('Start-of-period capital below 1,000; not ranked by return');
+  });
+});
+
+describe('channel audience', () => {
+  const CH = '900000000000000001';
+  const IN = '100000000000000001';
+  const OUTSIDER = '100000000000000002';
+  const HIDDEN = '100000000000000003';
+  /** 假的 discord.js：IN 在服务器且能看频道；HIDDEN 在服务器但没有查看权限；其它人不在服务器（10007） */
+  const fakeClient = (calls: { n: number }, fail = false) => ({
+    channels: {
+      async fetch() {
+        calls.n++;
+        if (fail) throw new Error('503 Service Unavailable');
+        return {
+          isDMBased: () => false,
+          guild: {
+            members: {
+              async fetch(id: string) {
+                if (id === IN || id === HIDDEN) return { id };
+                throw Object.assign(new Error('Unknown Member'), { code: 10007 });
+              },
+            },
+          },
+          permissionsFor: (m: { id: string }) => ({ has: () => m.id === IN }),
+        };
+      },
+    },
+  });
+  const quiet = { warn: () => {} };
+
+  it('only members who can view the channel see it, and answers are cached for 5 minutes', async () => {
+    const calls = { n: 0 };
+    let now = 0;
+    const canSee = channelAudience(fakeClient(calls), quiet, () => now);
+    expect([await canSee(CH, IN), await canSee(CH, OUTSIDER), await canSee(CH, HIDDEN)]).toEqual([true, false, false]);
+    expect(calls.n).toBe(3);
+    await canSee(CH, OUTSIDER);
+    expect(calls.n).toBe(3); // 命中缓存
+    now += AUDIENCE_CACHE_MS;
+    await canSee(CH, OUTSIDER);
+    expect(calls.n).toBe(4); // 过期后重新查
+  });
+
+  it('treats an API failure as not visible and does not cache it', async () => {
+    const calls = { n: 0 };
+    const canSee = channelAudience(fakeClient(calls, true), quiet);
+    expect(await canSee(CH, IN)).toBe(false);
+    expect(await canSee(CH, IN)).toBe(false);
+    expect(calls.n).toBe(2);
   });
 });

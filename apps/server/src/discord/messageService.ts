@@ -2,6 +2,7 @@ import type { BroadcastKind } from '@catpital/shared';
 import type { MessageCreateOptions } from 'discord.js';
 import type { Core } from '../app.js';
 import type { BotEnvelope } from '../infra/bus.js';
+import type { AudienceCheck } from './audience.js';
 import { fromDb, wire } from '../lib/dec.js';
 import { type BroadcastExtras, broadcastEmbed } from './embeds.js';
 import { type BotLocale, botLocaleOf } from './i18n.js';
@@ -21,7 +22,7 @@ export const DISCORD_BROADCAST_KINDS: ReadonlySet<BroadcastKind> = new Set<Broad
   'DEFICIT',
 ]);
 
-type Logger = { warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: string) => void };
+type Logger = { info?: (o: unknown, m?: string) => void; warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: string) => void };
 
 /**
  * 频道自动播报：订阅总线 `bot` topic，只把 DISCORD_BROADCAST_KINDS 里的类型
@@ -30,6 +31,8 @@ type Logger = { warn: (o: unknown, m?: string) => void; error: (o: unknown, m?: 
  *   - 开关：GuildConfig.broadcastToggles，如 { "WHALE": false } 关闭大单播报
  *   - 发送串行排队；单个频道失败（无权限/被删）只记日志，不影响其它频道
  *   - 卡片里的 @玩家 不会真的 ping 人，只有"本期股神"会提醒获奖者本人
+ *   - 和某个玩家有关的播报（带 userId），只发到这个玩家看得到的频道：他不在那个服务器、或没有查看该频道的权限，
+ *     就跳过这个频道（opts.canSee）。网页上的横幅 / 跑马灯 / 24 小时动态不受影响
  */
 export class BroadcastMessenger {
   private chain: Promise<void> = Promise.resolve();
@@ -38,7 +41,12 @@ export class BroadcastMessenger {
   constructor(
     private readonly core: Core,
     private readonly send: ChannelSender,
-    private readonly opts: { defaultChannelId?: string; defaultLocale: BotLocale },
+    private readonly opts: {
+      defaultChannelId?: string;
+      defaultLocale: BotLocale;
+      /** 玩家能否看到频道；不传 = 不检查（测试） */
+      canSee?: AudienceCheck;
+    },
     private readonly log: Logger,
   ) {}
 
@@ -75,6 +83,10 @@ export class BroadcastMessenger {
     if (!targets.length) return;
     const extras = await this.extras(broadcast, resumeId);
     for (const { channelId, locale } of targets) {
+      if (broadcast.userId && this.opts.canSee && !(await this.opts.canSee(channelId, broadcast.userId))) {
+        this.log.info?.({ channelId, kind: broadcast.kind, userId: broadcast.userId }, 'player cannot see this channel; skipped');
+        continue;
+      }
       const embed = broadcastEmbed(locale, broadcast, this.localizedExtras(extras, locale));
       if (!embed) continue;
       try {

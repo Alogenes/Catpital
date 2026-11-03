@@ -10,6 +10,7 @@ import {
 } from 'discord.js';
 import type { Core } from '../app.js';
 import { type CommandContext, autocompleteMarkets, handleCommand } from './commands.js';
+import { channelAudience } from './audience.js';
 import { LAUNCH_BUTTON_ID } from './embeds.js';
 import { type BotLocale, botLocaleOf as localeOf, pack } from './i18n.js';
 import { BroadcastMessenger } from './messageService.js';
@@ -72,7 +73,8 @@ export async function startDiscordBot(core: Core, opts: BotOptions, log: Logger)
       if (!channel?.isSendable()) throw new Error(`channel ${channelId} is not sendable`);
       await channel.send(payload);
     },
-    { defaultChannelId: opts.defaultChannelId, defaultLocale: opts.defaultLocale },
+    // 和玩家有关的播报只发到他所在、并且看得到的频道
+    { defaultChannelId: opts.defaultChannelId, defaultLocale: opts.defaultLocale, canSee: channelAudience(client, log) },
     log,
   );
 

@@ -147,6 +147,24 @@ describe('频道播报', () => {
     expect(sent).toEqual(['🚀 巨鲸出没！']);
   });
 
+  it('skips player posts in channels the player cannot see, but still posts market news', async () => {
+    const VISIBLE = '800000000000000011';
+    const sent: string[] = [];
+    const messenger = new BroadcastMessenger(
+      h.core,
+      async (_channelId, payload) => void sent.push((payload.embeds![0] as { toJSON(): { title?: string } }).toJSON().title ?? ''),
+      { defaultLocale: 'zh-CN', canSee: async (_channelId, userId) => userId === VISIBLE },
+      { warn: () => {}, error: (o: unknown) => console.error(o) },
+    );
+    const big = (userId: string) => ({ id: userId, kind: 'BIG_WIN' as const, i18nKey: 'broadcast.bigWin', vars: { market: 'TEST', pnl: '50000', roe: '250', user: userId }, userId, ts: Date.now() });
+    await messenger.handle({ broadcast: big(VISIBLE) });
+    await messenger.handle({ broadcast: big('800000000000000012') });
+    await messenger.handle({
+      broadcast: { id: 'n1', kind: 'MARKET_EVENT', i18nKey: 'broadcast.marketEvent', vars: { market: 'TEST', headline: '猫粮涨价', gapPct: '5', priceBefore: '100', priceAfter: '105' }, ts: Date.now() },
+    });
+    expect(sent).toEqual(['🚀 巨鲸出没！', '猫粮涨价']);
+  });
+
   it('per-guild toggles can mute a kind', async () => {
     await h.db.guildConfig.update({ where: { guildId: GUILD }, data: { broadcastToggles: { DEFICIT: false } } });
     const messenger = new BroadcastMessenger(h.core, async () => {}, { defaultLocale: 'zh-CN' }, { warn: () => {}, error: () => {} });
