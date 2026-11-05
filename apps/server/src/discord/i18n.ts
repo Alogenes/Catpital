@@ -43,7 +43,7 @@ const zh = {
     empty: '榜单还空着，快去当第一！',
     me: '你的名次',
     unranked: '未上榜',
-    ineligible: '期初本金不足 {{min}}，暂不参与收益率榜',
+    ineligible: '本期平均本金不足 {{min}}，暂不参与收益率榜',
     footer: '{{key}} · 结束于 {{end}} · 收益率已剔除充值 / 救济金等外部资金',
   },
   admin: {
@@ -158,7 +158,7 @@ const en: typeof zh = {
     empty: 'Nobody here yet — go claim #1!',
     me: 'Your rank',
     unranked: 'Not ranked',
-    ineligible: 'Start-of-period capital below {{min}}; not ranked by return',
+    ineligible: 'Average capital this period below {{min}}; not ranked by return',
     footer: '{{key}} · ends {{end}} · returns exclude deposits & relief funds',
   },
   admin: {
@@ -272,7 +272,7 @@ const es: typeof zh = {
     empty: 'Aquí no hay nadie todavía: ¡ve a por el número uno!',
     me: 'Tu puesto',
     unranked: 'Sin clasificar',
-    ineligible: 'Capital inicial del periodo inferior a {{min}}: no clasificas por rentabilidad',
+    ineligible: 'Capital medio del periodo inferior a {{min}}: no clasificas por rentabilidad',
     footer: '{{key}} · termina {{end}} · la rentabilidad no cuenta ingresos ni ayudas',
   },
   admin: {

@@ -12,9 +12,9 @@ import { D, type Decimal, ZERO, roundNeutral } from '../decimal.js';
 //   w_i   (T1 − t_i) / (T1 − T0)        资金在周期内"在场"的时间占比，∈ [0, 1]
 //
 //   上榜资格（防小资金刷榜）：
-//     V0 >= MIN_CAPITAL                 期初本金门槛（需求原文）
-//     且 V0 + F_w >= MIN_CAPITAL        平均投入资本门槛（防"期初 0、期末临时充值"绕过）
-//   分母 <= 0 时一律不上榜。
+//     V0 + F_w >= MIN_CAPITAL           周期内按在场时间加权的平均本金门槛
+//   只看平均本金、不看期初：期初破产 / 刚把钱兑出去的人，领了救济金或充值后照样能上榜（救济金、充值只算本金，不算收益）；
+//   而"1 块钱起步刷收益率"和"最后一刻才充值"都因为平均本金不够被挡在外面。分母 <= 0 时一律不上榜。
 //
 //   时间以毫秒整数（bigint）计算，权重本身用 Decimal，不经过浮点。
 // -----------------------------------------------------------------------------
@@ -60,7 +60,7 @@ export function periodReturn(input: PeriodReturnInput): PeriodReturnResult {
     Fw = Fw.plus(f.amount.mul(flowWeight(f.at, periodStart, periodEnd)));
   }
   const denominator = V0.plus(Fw);
-  const eligible = V0.gte(minCapital) && denominator.gte(minCapital) && denominator.gt(0);
+  const eligible = denominator.gte(minCapital) && denominator.gt(0);
   const returnPct = eligible ? roundNeutral(V1.minus(V0.plus(F)).div(denominator).mul(100)) : null;
   return { netExternalFlow: F, weightedExternalFlow: Fw, denominator, returnPct, eligible };
 }

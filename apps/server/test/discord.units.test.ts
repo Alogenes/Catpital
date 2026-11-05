@@ -144,7 +144,7 @@ describe('command cards', () => {
     ).toJSON();
     expect(e.title).toBe('🏆 Daily · Return %');
     expect(e.description).toBe('🥇 <@1> · **+12.50%**\n🥈 <@2> · **-3.00%**');
-    expect(e.fields![0]!.value).toBe('Start-of-period capital below 1,000; not ranked by return');
+    expect(e.fields![0]!.value).toBe('Average capital this period below 1,000; not ranked by return');
   });
 });
 

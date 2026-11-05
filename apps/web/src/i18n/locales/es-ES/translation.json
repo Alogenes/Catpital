@@ -96,7 +96,11 @@
     },
     "highLevWarn": "¡Modo VICIOSO! Un hueco de precio puede llevarse más que tu margen y comerse tu saldo",
     "impactPump": "Ballena dispara +{{pct}} %",
-    "impactDump": "Ballena hunde -{{pct}} %"
+    "impactDump": "Ballena hunde -{{pct}} %",
+    "slippage": "Deslizamiento por tamaño {{pct}} %",
+    "tierBlocked": "Posición demasiado grande: máx. {{max}}x",
+    "tierHint": "A más tamaño, menos apalancamiento: serían ≈ {{size}}; con este importe el máximo es {{max}}x",
+    "tierFix": "Usar {{lev}}x"
   },
   "position": {
     "title": "Posiciones",
@@ -386,7 +390,8 @@
     "exchangeNotPending": "Este cambio ya se ha resuelto",
     "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Reinicia el backend (pnpm dev:server y Docker la actualizan al arrancar); consulta el log del backend para más detalles.",
     "exchangeTooSmall": "Cantidad demasiado pequeña: tras la comisión y el redondeo llega menos de 1 bolívar",
-    "broadcastNotFound": "Este reporte ya no existe"
+    "broadcastNotFound": "Este reporte ya no existe",
+    "leverageTier": "A más tamaño, menos apalancamiento: es demasiado para una posición tan grande. Baja el apalancamiento o el importe"
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
@@ -409,9 +414,9 @@
     "empty": "Aquí no hay nadie todavía · ve a por el número uno 🐾",
     "me": "Tú",
     "unranked": "Sin clasificar",
-    "ineligible": "Necesitas ≥ {{min}} al inicio del periodo para clasificar",
+    "ineligible": "Necesitas un capital medio ≥ {{min}} en el periodo para clasificar",
     "resetsAt": "El periodo termina {{time}}",
-    "formulaHint": "Sin contar ingresos ni ayudas, mínimo inicial {{min}}",
+    "formulaHint": "Sin depósitos ni ayudas; capital medio mínimo {{min}}",
     "prev": "Anterior",
     "next": "Siguiente",
     "page": "Página {{page}} / {{total}} · {{count}} jugadores"

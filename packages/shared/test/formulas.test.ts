@@ -183,6 +183,16 @@ describe('公式 4：防刷收益率 (Modified Dietz)', () => {
     expect(r.eligible).toBe(false);
     expect(r.returnPct).toBeNull();
   });
+
+  it('a player who starts the period broke still ranks once enough capital has been in play long enough', () => {
+    const relief = (at: string) =>
+      periodReturn({ startNetWorth: D(0), endNetWorth: D(10000), periodStart: start, periodEnd: end, flows: [{ amount: D(5000), at: new Date(at) }], minCapital: D(1000) });
+    // 02:00 领到 5000：加权本金 5000 × 22/24 ≈ 4583 ≥ 1000 → 上榜，救济金只算本金
+    const early = relief('2026-10-16T02:00:00Z');
+    expect([early.eligible, s(early.returnPct!)]).toEqual([true, '109.09090909']);
+    // 23:00 才领到：加权本金 5000 × 1/24 ≈ 208 < 1000 → 不上榜
+    expect(relief('2026-10-16T23:00:00Z').eligible).toBe(false);
+  });
 });
 
 describe('大单冲击 & 解锁杠杆', () => {

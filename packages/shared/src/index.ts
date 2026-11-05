@@ -5,3 +5,4 @@ export * from './math/returns.js';
 export * from './protocol.js';
 export * from './math/impact.js';
 export * from './math/exchange.js';
+export * from './math/whale.js';

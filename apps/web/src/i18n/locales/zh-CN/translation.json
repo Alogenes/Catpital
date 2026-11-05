@@ -96,7 +96,11 @@
     },
     "highLevWarn": "赌狗模式！跳空行情下亏损可能超过保证金并倒扣本金",
     "impactPump": "大单拉盘 +{{pct}}%",
-    "impactDump": "大单砸盘 -{{pct}}%"
+    "impactDump": "大单砸盘 -{{pct}}%",
+    "slippage": "大资金滑点 {{pct}}%",
+    "tierBlocked": "仓位太大：最多 {{max}}x",
+    "tierHint": "仓位越大杠杆越低：现在仓位约 {{size}}，这笔本金最多开 {{max}}x",
+    "tierFix": "改成 {{lev}}x"
   },
   "position": {
     "title": "持仓",
@@ -386,7 +390,8 @@
     "exchangeNotPending": "这笔兑换已经处理过了",
     "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。",
     "exchangeTooSmall": "兑换数量太少：扣除手续费、舍去小数后到账不足 1 Bolívar",
-    "broadcastNotFound": "这条动态不存在了"
+    "broadcastNotFound": "这条动态不存在了",
+    "leverageTier": "仓位越大，最高杠杆越低：这么大的仓位开不了这么高的杠杆，请降低杠杆或减少本金"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -409,9 +414,9 @@
     "empty": "榜单还空着 · 快去当第一 🐾",
     "me": "我",
     "unranked": "未上榜",
-    "ineligible": "期初本金需 ≥ {{min}} 才能上榜",
+    "ineligible": "本期平均本金需 ≥ {{min}} 才能上榜",
     "resetsAt": "本期结束于 {{time}}",
-    "formulaHint": "已剔除充值/救济金等外部资金，期初本金 ≥ {{min}}",
+    "formulaHint": "已剔除充值/救济金等外部资金，本期平均本金 ≥ {{min}}",
     "prev": "上一页",
     "next": "下一页",
     "page": "第 {{page}} / {{total}} 页 · 共 {{count}} 人"

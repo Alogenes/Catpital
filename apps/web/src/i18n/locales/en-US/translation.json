@@ -96,7 +96,11 @@
     },
     "highLevWarn": "DEGEN mode! A price gap can wipe out more than your margin and eat into your balance",
     "impactPump": "Whale pump +{{pct}}%",
-    "impactDump": "Whale dump -{{pct}}%"
+    "impactDump": "Whale dump -{{pct}}%",
+    "slippage": "Size slippage {{pct}}%",
+    "tierBlocked": "Position too big: max {{max}}x",
+    "tierHint": "Bigger positions get lower leverage: this would be ≈ {{size}}; this amount can use at most {{max}}x",
+    "tierFix": "Use {{lev}}x"
   },
   "position": {
     "title": "Positions",
@@ -386,7 +390,8 @@
     "exchangeNotPending": "This exchange has already been resolved",
     "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details.",
     "exchangeTooSmall": "Amount too small: less than 1 Bolívar arrives after the fee and rounding down",
-    "broadcastNotFound": "This report no longer exists"
+    "broadcastNotFound": "This report no longer exists",
+    "leverageTier": "Bigger positions get lower leverage: this leverage is too high for a position this size. Lower the leverage or the amount"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -409,9 +414,9 @@
     "empty": "Nobody here yet · go be number one 🐾",
     "me": "You",
     "unranked": "Not ranked",
-    "ineligible": "Need ≥ {{min}} at period start to rank",
+    "ineligible": "Need ≥ {{min}} average capital this period to rank",
     "resetsAt": "Period ends {{time}}",
-    "formulaHint": "Deposits & relief funds excluded, min. start {{min}}",
+    "formulaHint": "Deposits & relief funds excluded, min. average capital {{min}}",
     "prev": "Prev",
     "next": "Next",
     "page": "Page {{page}} / {{total}} · {{count}} players"

@@ -5,8 +5,10 @@ import {
   maxSafeLeverage,
   type OrderSide,
   ONE,
+  ZERO,
   addMargin as addMarginCalc,
   applyFill,
+  effectiveLeverageCap,
   sideOfOrder,
   validateTpSl,
 } from '@catpital/shared';
@@ -101,6 +103,19 @@ export class OrderService {
     return unlocked ? D(maxSafeLeverage(m.maintenanceMarginRate)) : m.maxLeverage;
   }
 
+  /**
+   * 分档杠杆（见 shared/math/whale.ts）：这一单成交后整个仓位的名义价值越大，允许的杠杆越低。
+   * 只减仓、正好平掉的单不受限；翻仓按翻过去之后的仓位算。
+   */
+  private async assertLeverageTier(userId: string, m: MarketSnapshot, input: PlaceOrderInput, price: Decimal, marketCap: Decimal) {
+    if (input.reduceOnly) return;
+    const pos = await this.db.position.findUnique({ where: { openKey: `${userId}:${m.id}` } });
+    const held = pos ? fromDb(pos.quantity) : ZERO;
+    const after = !pos || pos.side === sideOfOrder(input.side) ? held.plus(input.quantity) : input.quantity.minus(held);
+    if (after.lte(0)) return;
+    if (input.leverage.gt(effectiveLeverageCap(marketCap.toNumber(), after.mul(price)))) throw new TradeError('error.leverageTier');
+  }
+
   private validate(m: MarketSnapshot, input: PlaceOrderInput, refPrice: Decimal, maxLeverage: Decimal) {
     if (m.status !== 'ACTIVE') throw new TradeError('error.marketHalted');
     if (input.quantity.lte(0) || !isMultipleOf(input.quantity, m.lotSize)) throw new TradeError('error.invalidQuantity');
@@ -129,13 +144,15 @@ export class OrderService {
       if (dup) return { kind: 'duplicate', order: dup };
     }
     const last = this.lastPrice(m);
-    this.validate(m, input, input.type === 'LIMIT' ? input.limitPrice! : last, await this.leverageCap(userId, m, input.leverage));
+    const marketCap = await this.leverageCap(userId, m, input.leverage);
+    this.validate(m, input, input.type === 'LIMIT' ? input.limitPrice! : last, marketCap);
 
     return this.queue.run(m.id, async () => {
       this.assertTradable(m);
       const now = this.clock();
       const open = isMarketOpen(m.tradingHours, now);
       const price = this.lastPrice(m);
+      await this.assertLeverageTier(userId, m, input, input.type === 'LIMIT' ? input.limitPrice! : price, marketCap);
       const marketable =
         input.type === 'MARKET' ||
         (input.side === 'BUY' ? input.limitPrice!.gte(price) : input.limitPrice!.lte(price));
@@ -167,6 +184,7 @@ export class OrderService {
           takeProfitPrice: input.takeProfitPrice,
           stopLossPrice: input.stopLossPrice,
           enforceMinNotional: true,
+          slip: { worstPrice: input.type === 'LIMIT' ? input.limitPrice : null },
         });
         await this.risk.afterFill(out, m);
         // 只有玩家自己的市价成交会推动价格；TP/SL/强平不产生冲击，避免无限连锁

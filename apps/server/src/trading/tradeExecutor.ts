@@ -8,6 +8,8 @@ import {
   dmax,
   notional,
   settleLiquidation,
+  slippedPrice,
+  whaleSlippage,
 } from '@catpital/shared';
 import type { Liquidation, Order, OrderSource, Position, Prisma, PrismaClient } from '@prisma/client';
 import { fromDb, toDb, toDbOpt } from '../lib/dec.js';
@@ -34,6 +36,11 @@ export interface FillRequest {
   stopLossPrice?: Decimal | null;
   /** 用户主动单校验最小名义价值；TP/SL 平仓单不校验 */
   enforceMinNotional: boolean;
+  /**
+   * 主动成交（市价单、可成交的限价单、触发的止盈止损）加大资金滑点（见 shared/math/whale.ts）。
+   * worstPrice = 可成交限价单的限价，滑点后的成交价不会比它更差。不传 = 不加（挂单成交、系统平仓）
+   */
+  slip?: { worstPrice?: Decimal | null };
 }
 
 export interface FillOutcome {
@@ -104,6 +111,16 @@ export class TradeExecutor {
       const state = pos
         ? { side: pos.side, quantity: fromDb(pos.quantity), entryPrice: fromDb(pos.entryPrice), margin: fromDb(pos.margin) }
         : null;
+      // 大资金滑点：按这一单涉及的仓位保证金（已有持仓 + 这一单新开的）让成交价变差，之后的计算、记账都用滑点后的价格
+      if (req.slip && req.liquidity === 'TAKER') {
+        const pre = applyFill(
+          state,
+          { orderSide: req.side, quantity: req.quantity, price: req.price, leverage: req.leverage, feeRate, reduceOnly: req.reduceOnly },
+          req.market,
+        );
+        const px = slippedPrice(req.price, req.side, whaleSlippage((state?.margin ?? ZERO).plus(pre.openMargin)), req.market.tickSize, req.slip.worstPrice);
+        if (!px.eq(req.price)) req = { ...req, price: px };
+      }
       const fill = applyFill(
         state,
         { orderSide: req.side, quantity: req.quantity, price: req.price, leverage: req.leverage, feeRate, reduceOnly: req.reduceOnly },

@@ -1,4 +1,15 @@
-import { D, type Decimal, type PositionView, applyFill, impactQuote } from '@catpital/shared';
+import {
+  D,
+  type Decimal,
+  type PositionView,
+  ZERO,
+  applyFill,
+  effectiveLeverageCap,
+  impactQuote,
+  maxLeverageForBudget,
+  slippedPrice,
+  whaleSlippage,
+} from '@catpital/shared';
 import { AnimatePresence, motion } from 'framer-motion';
 import { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -79,21 +90,37 @@ export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; l
       buffer: limitOn ? undefined : MARKET_PRICE_BUFFER,
       impact,
     });
-    if (quantity.lte(0)) return { quantity, fill: null, quote: null };
+    if (quantity.lte(0)) return { quantity, fill: null, quote: null, slippage: ZERO, fillPrice: refPrice };
     // 大单冲击：预估成交价（冲击中点）与冲击后价格，与后端同一份公式
     const quote = impact ? impactQuote(refPrice, quantity.mul(refPrice), side, impact, D(market.tickSize)) : null;
-    const fillPrice = quote ? quote.fillPrice : refPrice;
+    let fillPrice = quote ? quote.fillPrice : refPrice;
     // 与后端同一份公式：合并/抵扣后的保证金、手续费、斩杀线
-    const fill = applyFill(
-      toState(position),
-      { orderSide: side, quantity, price: fillPrice, leverage: D(leverage), feeRate, reduceOnly: false },
-      risk,
-    );
-    return { quantity, fill, quote };
+    const order = { orderSide: side, quantity, price: fillPrice, leverage: D(leverage), feeRate, reduceOnly: false };
+    let fill = applyFill(toState(position), order, risk);
+    // 大资金滑点（市价单才有）：按已有持仓保证金 + 这一单新开的保证金算，滑点后的价格重新预估一遍
+    let slippage = ZERO;
+    if (!limitOn) {
+      slippage = whaleSlippage(D(position?.margin ?? 0).plus(fill.openMargin));
+      const px = slippedPrice(fillPrice, side, slippage, D(market.tickSize));
+      if (!px.eq(fillPrice)) {
+        fillPrice = px;
+        fill = applyFill(toState(position), { ...order, price: px }, risk);
+      }
+    }
+    return { quantity, fill, quote, slippage, fillPrice };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [amount, refPrice.toFixed(), leverage, side, limitOn, position, market.code]);
 
-  const notional = sizing?.fill ? sizing.quantity.mul(sizing.quote?.fillPrice ?? refPrice) : null;
+  const notional = sizing?.fill ? sizing.quantity.mul(sizing.fillPrice) : null;
+  // 滑点 ≥ 0.01% 才提示
+  const slipShown = sizing && sizing.slippage.gte('0.0001') ? sizing.slippage : null;
+  // 分档杠杆（与后端同一份规则）：按成交后整个仓位的名义价值查最高杠杆；只减仓 / 正好平掉不受限
+  const held = position ? D(position.quantity) : ZERO;
+  const sameSide = !position || position.side === (side === 'BUY' ? 'LONG' : 'SHORT');
+  const afterQty = sizing ? (sameSide ? held.plus(sizing.quantity) : sizing.quantity.minus(held)) : ZERO;
+  const tierCap = afterQty.gt(0) ? effectiveLeverageCap(maxLev, afterQty.mul(refPrice)) : maxLev;
+  // 超档时，这笔本金最高能用的杠杆（给一键改的按钮用）
+  const tierFix = leverage > tierCap && budget ? maxLeverageForBudget(maxLev, budget, sameSide ? held.mul(refPrice) : ZERO) : null;
   // 冲击 ≥ 0.01% 才提示，避免小单也显示"拉盘 +0.00%"
   const impactPctShown = sizing?.quote && sizing.quote.pct.abs().gte('0.0001') ? sizing.quote.pct : null;
   const liq = sizing?.fill?.position?.liquidationPrice ?? null;
@@ -113,6 +140,7 @@ export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; l
   else if (budget.gt(available)) blocker = t('error.insufficientFunds');
   else if (limitOn && !limitPx) blocker = t('order.enterPrice');
   else if (!sizing?.fill || !notional || notional.lt(market.minNotional)) blocker = t('order.tooSmall', { min: fmt(market.minNotional) });
+  else if (leverage > tierCap) blocker = t('order.tierBlocked', { max: tierFix ?? tierCap });
 
   const pick = (pct: number) => {
     sound.play('click');
@@ -321,6 +349,14 @@ export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; l
               🐋 {t(impactPctShown.gt(0) ? 'order.impactPump' : 'order.impactDump', { pct: fmt(impactPctShown.abs().mul(100), 2) })}
             </span>
           )}
+          {slipShown && (
+            <span
+              className={`mt-0.5 rounded-full bg-candy-sun/15 px-1.5 text-[10px] font-extrabold text-candy-sun ${slipShown.gte('0.005') ? 'animate-wiggle' : ''}`}
+              data-testid="preview-slippage"
+            >
+              💸 {t('order.slippage', { pct: fmt(slipShown.mul(100), 2) })}
+            </span>
+          )}
         </PreviewCard>
         <PreviewCard compact={wide} icon={liq && liq.isZero() ? '🛡️' : '💀'} label={t('order.liqPrice')} tone={liq && liq.isZero() ? 'safe' : 'danger'}>
           <span
@@ -343,6 +379,15 @@ export function OrderPanel({ market, layout = 'stack' }: { market: MarketInfo; l
         <p className="rounded-xl bg-candy-sun/10 px-3 py-1.5 text-xs text-candy-sun">↩ {t('order.closing', { qty: fmt(sizing.fill.closedQuantity, decimalsOf(market.lotSize)) })}</p>
       )}
       {tier === 'degen' && <p className="rounded-xl bg-blood/10 px-3 py-1.5 text-xs text-blood">⚠ {t('order.highLevWarn')}</p>}
+      {/* 分档杠杆：仓位太大时说明原因，并给一键改到允许的杠杆 */}
+      {tierFix !== null && (
+        <p className="flex flex-wrap items-center gap-2 rounded-xl bg-candy-sun/10 px-3 py-1.5 text-xs text-candy-sun" data-testid="tier-warn">
+          <span>📏 {t('order.tierHint', { size: fmt(afterQty.mul(refPrice), 0), max: tierFix })}</span>
+          <button type="button" className="chip px-2 py-0.5 font-mono" onClick={() => setLev(tierFix)} data-testid="tier-fix">
+            {t('order.tierFix', { lev: tierFix })}
+          </button>
+        </p>
+      )}
 
 </>  );
   const submitEl = (

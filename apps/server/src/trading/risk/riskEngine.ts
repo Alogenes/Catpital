@@ -168,6 +168,8 @@ export class RiskEngine {
             source: kind,
             now,
             enforceMinNotional: false,
+            // 止盈止损触发后按市价平仓，和手动市价单一样有大资金滑点
+            slip: {},
           });
           await this.afterFill(out, market);
         }
