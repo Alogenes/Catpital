@@ -391,7 +391,8 @@
     "exchangeNotMigrated": "La base de datos del cambio aún no está actualizada. Reinicia el backend (pnpm dev:server y Docker la actualizan al arrancar); consulta el log del backend para más detalles.",
     "exchangeTooSmall": "Cantidad demasiado pequeña: tras la comisión y el redondeo llega menos de 1 bolívar",
     "broadcastNotFound": "Este reporte ya no existe",
-    "leverageTier": "A más tamaño, menos apalancamiento: es demasiado para una posición tan grande. Baja el apalancamiento o el importe"
+    "leverageTier": "A más tamaño, menos apalancamiento: es demasiado para una posición tan grande. Baja el apalancamiento o el importe",
+    "anchorUnsupported": "En este mercado no se puede cambiar solo el ancla (precio en vivo o sin reversión a la media)"
   },
   "warn": {
     "slBeyondLiquidation": "El stop loss está más allá del precio de liquidación; te liquidarán antes"
@@ -515,7 +516,10 @@
       "clearNews": "Noticias (eventos terminados)",
       "clear": "Borrar",
       "clearConfirm": "Vuelve a pulsar para confirmar (irreversible)",
-      "cleared": "{{code}}: se han borrado {{candles}} velas y {{news}} noticias"
+      "cleared": "{{code}}: se han borrado {{candles}} velas y {{news}} noticias",
+      "anchorOnly": "Solo ancla",
+      "anchorOnlyHint": "\"Solo ancla\" no toca el precio actual; después el precio se acerca al nuevo ancla según la fuerza de reversión",
+      "anchorDone": "{{code}}: ancla {{before}} → {{after}}; el precio no cambia y se irá acercando"
     },
     "exchange": {
       "hint": "Cambios en los que Skylbot no respondió a tiempo y el saldo no cuadra, así que el sistema no pudo decidir solo. Revisa primero los bolívares del jugador en Skylbot y luego elige qué hacer.",

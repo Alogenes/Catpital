@@ -229,6 +229,22 @@ function MarketPriceRow({ m, onDone }: { m: PanelMarket; onDone: () => void }) {
     }
   };
 
+  /** 只改锚点：现价不动，之后按回归力度慢慢靠过去 */
+  const submitAnchor = async () => {
+    if (!target) return;
+    setBusy(true);
+    try {
+      const r = await api.post<{ before: string; after: string }>(`/panel/markets/${m.code}/anchor`, { anchor: price });
+      toast('success', t('panel.market.anchorDone', { code: m.code, before: fmt(r.before, dp), after: fmt(r.after, dp) }));
+      setPrice('');
+      onDone();
+    } catch (err) {
+      notify(err);
+    } finally {
+      setBusy(false);
+    }
+  };
+
   return (
     <div className="rounded-2xl border border-ink-700 p-3" data-testid={`panel-market-${m.code}`}>
       <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -266,16 +282,26 @@ function MarketPriceRow({ m, onDone }: { m: PanelMarket; onDone: () => void }) {
             {change.toFixed(2)}%
           </span>
         )}
-        <button className={`${btn} ml-auto bg-candy-grape text-ink-950`} disabled={!target || busy} onClick={() => void submit()} data-testid={`panel-price-submit-${m.code}`}>
-          {t('panel.market.apply')}
-        </button>
+        <span className="ml-auto flex gap-2">
+          {/* 没有均值回归的市场（κ = 0）改锚点没有意义，不显示 */}
+          {procedural && !noReversion && (
+            <button className={`${btn} bg-ink-700 text-ink-100`} disabled={!target || busy} onClick={() => void submitAnchor()} data-testid={`panel-anchor-submit-${m.code}`}>
+              ⚓ {t('panel.market.anchorOnly')}
+            </button>
+          )}
+          <button className={`${btn} bg-candy-grape text-ink-950`} disabled={!target || busy} onClick={() => void submit()} data-testid={`panel-price-submit-${m.code}`}>
+            {t('panel.market.apply')}
+          </button>
+        </span>
       </div>
-      {/* 没有均值回归的市场（κ = 0）改锚点没有意义，不显示 */}
       {procedural && !noReversion && (
-        <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-ink-300">
-          <input type="checkbox" checked={anchor} onChange={(e) => setAnchor(e.target.checked)} className="accent-candy-grape" />
-          {t('panel.market.anchorToggle')}
-        </label>
+        <>
+          <label className="mt-2 flex cursor-pointer items-center gap-2 text-xs text-ink-300">
+            <input type="checkbox" checked={anchor} onChange={(e) => setAnchor(e.target.checked)} className="accent-candy-grape" />
+            {t('panel.market.anchorToggle')}
+          </label>
+          <p className="mt-1 text-[11px] text-ink-500">⚓ {t('panel.market.anchorOnlyHint')}</p>
+        </>
       )}
       <ClearHistory code={m.code} />
     </div>

@@ -142,6 +142,34 @@ describe('市场定价', () => {
     const cfg = await h.db.marketEngineConfig.findUniqueOrThrow({ where: { marketId: m.id } });
     expect(cfg.meanReversionTarget?.toFixed()).toBe('123');
   });
+
+  it('can move only the anchor, leaving the current price alone', async () => {
+    const H = auth(on, BOSS);
+    const m = h.core.markets.byCode('TEST')!;
+    const engine = h.core.markets.engine(m.id)!;
+    const anchorOnly = (anchor: string, headers = H) => on.inject({ method: 'POST', url: '/api/v1/panel/markets/test/anchor', headers, payload: { anchor } });
+
+    // 测试市场默认没有均值回归：改锚点没有意义，拒绝
+    const none = await anchorOnly('150');
+    expect([none.statusCode, none.json().error]).toEqual([400, 'error.anchorUnsupported']);
+
+    // 打开回归力度；测试用的手动数据源本身不支持改参数，这里记下引擎收到的锚点
+    await h.db.marketEngineConfig.update({ where: { marketId: m.id }, data: { meanReversionSpeed: '2', meanReversionTarget: null } });
+    const received: string[] = [];
+    engine.setAnchor = (p) => (received.push(p.toFixed()), true);
+    const before = h.core.markets.price(m.id)!.toFixed();
+
+    const res = await anchorOnly('150.004'); // 按最小价位取整
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toMatchObject({ code: 'TEST', price: before, before: '100', after: '150' });
+    expect(received).toEqual(['150']);
+    expect(h.core.markets.price(m.id)!.toFixed()).toBe(before); // 现价不动
+    const cfg = await h.db.marketEngineConfig.findUniqueOrThrow({ where: { marketId: m.id } });
+    expect(cfg.meanReversionTarget?.toFixed()).toBe('150');
+
+    expect((await anchorOnly('0')).statusCode).toBe(400);
+    expect((await anchorOnly('150', auth(on, IMPOSTOR))).statusCode).toBe(404);
+  });
 });
 
 describe('提前结束事件', () => {

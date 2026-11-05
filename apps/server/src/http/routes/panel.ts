@@ -115,6 +115,14 @@ export const panelRoutes =
       return result;
     });
 
+    /** 只改均值回归锚点，不动现价（价格之后按回归力度慢慢靠过去） */
+    app.post<{ Params: { code: string } }>('/markets/:code/anchor', async (req) => {
+      const b = z.object({ anchor: positiveDecimal.refine((v) => D(v).gt(0), 'anchor must be > 0') }).parse(req.body);
+      const result = await core.admin.setMarketAnchor(req.params.code.toUpperCase(), D(b.anchor));
+      req.log.info({ admin: req.user.sub, ...result }, 'admin set market anchor');
+      return result;
+    });
+
     app.post<{ Params: { code: string } }>('/markets/:code/clear-history', async (req) => {
       const b = z
         .object({ candles: z.boolean().default(true), news: z.boolean().default(false) })

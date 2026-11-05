@@ -391,7 +391,8 @@
     "exchangeNotMigrated": "The exchange database has not been upgraded yet. Restart the backend (pnpm dev:server and Docker upgrade it on start); see the backend log for details.",
     "exchangeTooSmall": "Amount too small: less than 1 Bolívar arrives after the fee and rounding down",
     "broadcastNotFound": "This report no longer exists",
-    "leverageTier": "Bigger positions get lower leverage: this leverage is too high for a position this size. Lower the leverage or the amount"
+    "leverageTier": "Bigger positions get lower leverage: this leverage is too high for a position this size. Lower the leverage or the amount",
+    "anchorUnsupported": "This market’s anchor can’t be set on its own (live price feed, or no mean reversion)"
   },
   "warn": {
     "slBeyondLiquidation": "Stop loss is beyond the liquidation price; you'll be liquidated first"
@@ -515,7 +516,10 @@
       "clearNews": "News (ended events)",
       "clear": "Clear",
       "clearConfirm": "Click again to confirm (irreversible)",
-      "cleared": "{{code}}: deleted {{candles}} candles and {{news}} news items"
+      "cleared": "{{code}}: deleted {{candles}} candles and {{news}} news items",
+      "anchorOnly": "Anchor only",
+      "anchorOnlyHint": "\"Anchor only\" leaves the current price alone; the price then drifts toward the new anchor at the market’s reversion speed",
+      "anchorDone": "{{code}} anchor {{before}} → {{after}}; the price stays and will drift toward it"
     },
     "exchange": {
       "hint": "Exchanges where Skylbot timed out and the balance didn't add up, so the system couldn't decide on its own. Check the player's Bolívares in Skylbot first, then pick an outcome.",

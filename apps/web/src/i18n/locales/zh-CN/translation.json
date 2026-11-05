@@ -391,7 +391,8 @@
     "exchangeNotMigrated": "兑换功能的数据库还没升级，请重启后端（pnpm dev:server 和 Docker 启动时会自动升级），具体步骤见后端日志。",
     "exchangeTooSmall": "兑换数量太少：扣除手续费、舍去小数后到账不足 1 Bolívar",
     "broadcastNotFound": "这条动态不存在了",
-    "leverageTier": "仓位越大，最高杠杆越低：这么大的仓位开不了这么高的杠杆，请降低杠杆或减少本金"
+    "leverageTier": "仓位越大，最高杠杆越低：这么大的仓位开不了这么高的杠杆，请降低杠杆或减少本金",
+    "anchorUnsupported": "这个市场不能单独改锚点（外部实时行情，或没有均值回归）"
   },
   "warn": {
     "slBeyondLiquidation": "止损价越过了斩杀线，会先被强平"
@@ -515,7 +516,10 @@
       "clearNews": "快讯（已结束的事件）",
       "clear": "清除",
       "clearConfirm": "再点一次确认（不可恢复）",
-      "cleared": "{{code}}：已删除 {{candles}} 根 K 线、{{news}} 条快讯"
+      "cleared": "{{code}}：已删除 {{candles}} 根 K 线、{{news}} 条快讯",
+      "anchorOnly": "只改锚点",
+      "anchorOnlyHint": "「只改锚点」：现价不动，价格之后会按回归力度慢慢靠向新锚点",
+      "anchorDone": "{{code}} 锚点 {{before}} → {{after}}，现价不变，会慢慢靠过去"
     },
     "exchange": {
       "hint": "这里是 Skylbot 超时、余额又对不上，系统没法自动判断的兑换。请先在 Skylbot 里查这个玩家的 Bolívares 有没有变动，再选择处理方式。",

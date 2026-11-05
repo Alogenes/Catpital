@@ -1,4 +1,4 @@
-import { type Decimal, ZERO, netWorth } from '@catpital/shared';
+import { type Decimal, ZERO, dmax, netWorth, roundToStep } from '@catpital/shared';
 import type { Position, PrismaClient } from '@prisma/client';
 import type { Notifier } from '../broadcast/notifier.js';
 import { fromDb, toDb, wire } from '../lib/dec.js';
@@ -28,7 +28,8 @@ export class AdminService {
 
   /** 管理面板的市场列表：现价、初始价、均值回归锚点与力度（看得出这个市场会不会被拉回去） */
   async listMarkets() {
-    const rows = await this.db.market.findMany({ orderBy: { sortOrder: 'asc' }, include: { engineConfig: true } });
+    // 已下架的市场（如被 EUR/USD 替换掉的 NVDA）不再显示
+    const rows = await this.db.market.findMany({ where: { status: { not: 'DELISTED' } }, orderBy: { sortOrder: 'asc' }, include: { engineConfig: true } });
     return rows.map((m) => ({
       code: m.code,
       name: m.name,
@@ -61,6 +62,29 @@ export class AdminService {
       anchored = true;
     }
     return { code: snap.code, before: wire(before), after: wire(after), anchored, revertsInSec: live ? LIVE_PRICE_OVERRIDE_SEC : null };
+  }
+
+  /**
+   * 只改均值回归锚点（仅有均值回归的程序随机市场）：现价不动，之后按回归力度慢慢被拉向新锚点。
+   * 写库，重启后仍然生效（种子数据不会覆盖已设置的锚点）。外部行情、没有回归力度的市场改锚点没有意义，直接拒绝。
+   */
+  async setMarketAnchor(code: string, price: Decimal) {
+    const snap = this.markets.byCode(code);
+    const engine = snap && this.markets.engine(snap.id);
+    if (!snap || !engine) throw new TradeError('error.marketNotFound', 404);
+    if (price.lt(snap.tickSize)) throw new TradeError('error.invalidPrice', 400);
+    const m = await this.db.market.findUniqueOrThrow({ where: { id: snap.id }, include: { engineConfig: true } });
+    const cfg = m.engineConfig;
+    if (!cfg || fromDb(cfg.meanReversionSpeed).isZero()) throw new TradeError('error.anchorUnsupported', 400);
+    const anchor = dmax(snap.tickSize, roundToStep(price, snap.tickSize, 'nearest'));
+    if (!engine.setAnchor(anchor)) throw new TradeError('error.anchorUnsupported', 400);
+    await this.db.marketEngineConfig.update({ where: { marketId: snap.id }, data: { meanReversionTarget: toDb(anchor) } });
+    return {
+      code: snap.code,
+      price: wire(this.markets.price(snap.id) ?? fromDb(m.lastPrice)),
+      before: wire(fromDb(cfg.meanReversionTarget ?? m.initialPrice)),
+      after: wire(anchor),
+    };
   }
 
   /**
